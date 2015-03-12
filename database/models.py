@@ -11,7 +11,18 @@ class User(db.Model):
 
 	def __init__(self,name):
 		self.name=name
-
+class MobileBanner(db.Model):
+	__tablename__='mobile_banner'
+	id=db.Column('id',db.Integer,primary_key=True)
+	name=db.Column('name',db.String(64))
+	picture_url=db.Column('picture_url',db.String(256))
+	link_address=db.Column('link_address',db.String(256))
+	display_order=db.Column('link_address',db.Integer)
+	description=db.Column('description',db.String(512))
+	def get_map(self):
+		result={'id':self.id,'picture_url':self.picture_url,'link_address':self.link_address,'display_order':self.display_order}
+		return result
+	
 class Token(db.Model):
 	__tablename__='token'
 	def __init__(self,user_id,token_type,auth_code,client_id,access_token):
