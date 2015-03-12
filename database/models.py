@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask_sqlalchemy import SQLAlchemy
 from flask import json
+import datetime,time
 db=SQLAlchemy()
 
 class User(db.Model):
@@ -13,16 +14,52 @@ class User(db.Model):
 
 class Token(db.Model):
 	__tablename__='token'
+	def __init__(self,user_id,token_type,auth_code,client_id,access_token):
+		self.user_id=user_id
+		self.token_type=token_type
+		self.auth_code=auth_code
+		self.client_id=client_id
+		self.access_token=access_token
+		self.created_time=datetime.datetime.now()
+		self.updated_time=datetime.datetime.now()
 	id=db.Column('id',db.Integer,primary_key=True)
 	user_id=db.Column('user_id',db.Integer)
-	token_type=db.Column('type',db.Integer)
+	token_type=db.Column('token_type',db.Integer)
 	auth_code=db.Column('auth_code',db.String(128))
 	client_id=db.Column('client_id',db.String(128))
 	access_token=db.Column('access_token',db.String(128))
 	created_time=db.Column('created_time',db.DateTime)
 	updated_time=db.Column('updated_time',db.DateTime)
 	expire=db.Column('expire',db.DateTime)
-
+	
+class Area(db.Model):
+	__tablename__='tb_area_m'
+	area_id=db.Column('AreaID',db.Integer,primary_key=True)
+	area_name=db.Column('AreaName',db.String(20))
+	xzb=db.Column('xzb',db.DECIMAL)
+	yzb=db.Column('yzb',db.DECIMAL)
+	sort=db.Column('Sort',db.String(20))
+	
+	def get_map(self):
+		s=self
+		result={'area_id':s.area_id,'area_name':s.area_name,'xzb':str(s.xzb),'yzb':str(s.yzb),'sort':s.sort}
+		return result
+class Constent(db.Model):
+	__tablename__='tb_constent_m'
+	type_id=db.Column('TypeId',db.String(3),primary_key=True)
+	type_name=db.Column('TypeName',db.String(20))
+	item_id=db.Column('ItemId',db.String(3),primary_key=True)
+	item_name=db.Column('ItemName',db.String(20))
+	
+	def get_map(self):
+		s=self
+		result={'type_id':s.type_id,'type_name':s.type_name,'item_id':s.item_id,'item_name':s.item_name}		
+		return result
+	def get_json(self):
+		s=self
+		result={'type_id':s.type_id,'type_name':s.type_name,'item_id':s.item_id,'item_name':s.item_name}
+		return json.dumps(result)
+	
 class Buyer(db.Model):
 	__tablename__='tb_buyer'
 	buyer_id=db.Column('BuyerID',db.Integer ,primary_key=True)
@@ -41,6 +78,16 @@ class Buyer(db.Model):
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_visable=db.Column('IsVisable',db.String(1)) # 0 否 1是
 	is_validate=db.Column('IsValidate',db.String(1)) # 0否 1是
+	
+	def get_map(self):
+		s=self
+		result={'buyer_id':s.buyer_id,'qquid':s.qquid,'account':s.account,'nick_name':s.nick_name,'real_name':s.real_name,
+	                'sex':s.sex,'email':s.email,'status':s.status,'create_time':s.create_time,'create_ip':s.create_ip,
+	                'last_login_ip':s.last_login_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
+	                'is_visable':s.is_visable,'is_validate':s.is_validate
+	                }
+		return result
+		
 	def get_json(self):
 		s=self
 		result={'buyer_id':s.buyer_id,'qquid':s.qquid,'account':s.account,'nick_name':s.nick_name,'real_name':s.real_name,
@@ -48,7 +95,7 @@ class Buyer(db.Model):
 		     'last_login_ip':s.last_login_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
 		     'is_visable':s.is_visable,'is_validate':s.is_validate
 		     }
-		return json.dumps(result)
+		return json.dumps(self.get_json)
 	
 class BuyerAddress(db.Model):
 	__tablename__='tb_buyeraddress'
@@ -107,24 +154,23 @@ class ShopInfo(db.Model):
 	is_validate=db.Column('IsValidate',db.String(1)) #0否 1是
 	
 	def get_json(self):
+		return json.dumps(get_map())
+	def get_map(self):
 		s=self
 		result={'shop_id':s.shop_id,'qquid':s.qquid,'account':s.account,'shop_type':s.shop_type,'shop_name':s.shop_name,
-		        'email':s.email,'introduce':s.introduce,'business_lisence':s.business_lisence,'shop_photo':s.shop_phone,
-		        'other_lisence':s.other_lisence,'shop_phone':s.shop_phone,'link_man':s.link_man,'mobile':s.mobile,
-		        'weixin':s.weixin,'weixin_photo':s.weixin_photo,'shop_address':s.shop_address,'xzb':str(s.xzb),'yzb':str(s.yzb),
-		        'is_checked':s.is_checked,'sort_no':s.sort_no,'is_recommend':s.is_recommend,'is_top':s.is_top,'default_freight':s.default_freight,
-		        'seo_title':s.seo_title,'seo_key_word':s.seo_key_word,'seo_content':s.seo_content,'status':s.status,
-		        'regist_date':s.regist_date,'regist_ip':s.regist_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
-		        'is_validate':s.is_validate
-		        
-		        }
+			'email':s.email,'introduce':s.introduce,'business_lisence':s.business_lisence,'shop_photo':s.shop_phone,
+			'other_lisence':s.other_lisence,'shop_phone':s.shop_phone,'link_man':s.link_man,'mobile':s.mobile,
+			'weixin':s.weixin,'weixin_photo':s.weixin_photo,'shop_address':s.shop_address,'xzb':str(s.xzb),'yzb':str(s.yzb),
+			'is_checked':s.is_checked,'sort_no':s.sort_no,'is_recommend':s.is_recommend,'is_top':s.is_top,'default_freight':str(s.default_freight),
+			'seo_title':s.seo_title,'seo_key_word':s.seo_key_word,'seo_content':s.seo_content,'status':s.status,
+			'regist_date':s.regist_date,'regist_ip':s.regist_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
+			'is_validate':s.is_validate
 		
-		return json.dumps(result)
-	
-
+			}		
+		return result
 class GoodsType(db.Model):
 	__tablename__='tb_goodstype_m'
-	goods_type_id=db.Column('GoodsTypeID',db.Integer)
+	goods_type_id=db.Column('GoodsTypeID',db.Integer,primary_key=True)
 	goods_type_name=db.Column('GoodsTypeName',db.String(100))
 	parent_id=db.Column('ParentID',db.String(20))
 	
@@ -154,6 +200,44 @@ class ShopCart(db.Model):
 		result={"buyer_id":s.buyer_id,"goods_id":s.goods_id,"quntity":s.quntity,'create_time':s.create_time}
 		return json.dumps(result)
 	
+class Order(db.Model):
+	__tablename__='tb_order_s'
+	order_no=db.Column('OrderNo',db.String(20),primary_key=True)
+	shop_id=db.Column('ShopID',db.Integer)
+	buyer_id=db.Column('BuyerID',db.Integer)
+	sale_money=db.Column('SaleMoney',db.DECIMAL)
+	submit_time=db.Column('SubmitTime',db.DateTime)
+	send_time=db.Column('SendTime',db.DateTime)
+	confirm_time=db.Column('ConfirmTime',db.DateTime)
+	freight=db.Column('Freight',db.DECIMAL)
+	address_id=db.Column('AddressID',db.Integer)
+	send_address=db.Column('SendAddress',db.String(200))
+	receiver=db.Column('Receiver',db.String(20))
+	phone=db.Column('Phone',db.String(20))
+	remark=db.Column('Remark',db.String(200))
+	status=db.Column('Status',db.String(1)) # 0：已提交；1：已发货；2：交易成功；3：交易取消
+	pay_status=db.Column('PayStatus',db.String(1)) # 0:未支付,1:已支付
+	update_time=db.Column('UpdateTime',db.DateTime)
+	
+	def get_map(self):
+		s=self
+		result={"order_no":s.order_no,'shop_id':s.shop_id,'sale_money':str(s.sale_money),'submit_time':s.submit_time,'send_time':s.send_time,
+		        'confirm_time':s.confirm_time,'freight':str(s.freight),'address_id':s.address_id,'send_address':s.send_address,
+		        'receiver':s.receiver,'phone':s.phone,'remark':s.remark,'status':s.status,'pay_status':s.pay_status,'update_time':s.update_time
+		        }
+		return result
+class OrderDetail(db.Model):
+	__tablename__='tb_orderdetail_s'
+	order_no=db.Column('OrderNo',db.String(20),primary_key=True)
+	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
+	batch_no=db.Column('BatchNo',db.Integer,primary_key=True)
+	sale_price=db.Column('SalePrice',db.DECIMAL)
+	quantity=db.Column('Quantity',db.Integer)
+	
+	def get_map(self):
+		s=self
+		result={'order_no':s.order_no,'goods_id':s.goods_id,'batch_no':s.batch_no,'sale_price':str(s.sale_price),'quantity':s.quantity}
+		return result
 	
 class Comment(db.Model):
 	__tablename__='tb_comment'
@@ -188,4 +272,25 @@ class Attention(db.Model):
 	attention_type=db.Column('AttentionType',db.String(3)) # 0商铺  1 商品
 	attention_id=db.Column('AttentionID',db.String(20)) # 商铺id或者 商铺id
 	attention_time=db.Column('AttentionTime',db.DateTime)
+
+class Message(db.Model):
+	__tablename__='tb_message_w'
+	message_id=db.Column('MessageID',db.Integer,primary_key=True)
+	sender_type=db.Column('SenderType',db.String(3))
+	sender=db.Column('Sender',db.Integer)
+	sender_name=db.Column('SenderName',db.String(20))
+	receiver=db.Column('Receiver',db.Integer)
+	receiver_name=db.Column('ReceiverName',db.String(20))
+	send_title=db.Column('SendTitle',db.String(100))
+	send_content=db.Column('SendContent',db.String(1000))
+	reply_time=db.Column('ReplyTime',db.DateTime)
+	is_read=db.Column('IsRead',db.String(1))
 	
+	def get_map(self):
+		s=self
+		result={'message_id':s.message_id,'sender_type':s.sender_type,'sender':s.sender,'sender_name':s.sender_name,
+		        'receiver':s.receiver,'receiver_name':s.receiver_name,'send_title':s.send_title,'send_content':s.send_content,
+		        'reply_time':s.reply_time,'is_read':s.is_read
+		        }
+		return result
+
