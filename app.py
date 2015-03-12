@@ -19,7 +19,9 @@ def hello_world():
 	return jsonify({'hello':'world'})
 
 if __name__ == '__main__':
+	from os import environ
 	##db.create_all(bind='__all__', app=app)
 	app.debug=False
-	app.run()
+	app.run(host='0.0.0.0',port=environ.get("PORT", 5000), processes=2)
+	#app.run('0.0.0.0:5050')
 
