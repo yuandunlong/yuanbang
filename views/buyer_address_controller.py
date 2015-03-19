@@ -58,7 +58,7 @@ def update_address(token_type,user_info):
         result['msg']=e.message
     return Response(json.dumps(result))
         
-@buyer_address_controller.route('/m1/private/get_addresses_by_user',methods=['POST'])
+@buyer_address_controller.route('/m1/private/get_addresses_by_user',methods=['GET'])
 @check_token
 def get_addresses_by_user(token_type,info):
     
