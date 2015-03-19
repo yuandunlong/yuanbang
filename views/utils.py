@@ -26,6 +26,30 @@ def check_token(func):
                         return Response(json.dumps(response))
                     else:
                         info=shop_info
+            else:
+                response['msg']='token not exist'
+                return Response(json.dumps(response))
         result = func(token.token_type,info)
         return result
+    
+    wrapper.__name__=func.__name__
     return wrapper
+
+def result_set_converter(result_set):
+    arr=[]
+    if result_set:
+        for result in result_set:
+            arr.append(result.get_map())
+    return arr
+
+def uniqid(prefix='', more_entropy=False):
+    m = time.time()
+    uniqid = '%8x%05x' %(math.floor(m),(m-math.floor(m))*1000000)
+    if more_entropy:
+        valid_chars = list(set(string.hexdigits.lower()))
+        entropy_string = ''
+        for i in range(0,10,1):
+            entropy_string += random.choice(valid_chars)
+        uniqid = uniqid + entropy_string
+    uniqid = prefix + uniqid
+    return uniqid
