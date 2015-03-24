@@ -17,7 +17,7 @@ def test():
 @buyer_controller.route('/m1/private/get_buyer_info',methods=['POST'])
 @check_token
 def get_buyer_info(token_type,info):
-    result={'code':0,'msg':''}
+    result={'code':1,'msg':''}
     try:
         query=request.get_json()
         what=query['what']
@@ -53,6 +53,7 @@ def get_buyer_info(token_type,info):
             result_set=BuyerAddress.query.filter_by(buyer_id=info.buyer_id).all()
             result['buyer_address']=result_set_converter(result_set)
     except Exception,e:
+        result['code']=1
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
         
