@@ -18,6 +18,15 @@ def get_message_info(token_type,user_info):
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 
+def add_message_info(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/jspn')
+        
 @message_controller.route('/m1/private/revert_message_info')
 @check_token
 def revert_message_info(token_type,user_info):

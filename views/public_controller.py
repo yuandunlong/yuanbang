@@ -21,7 +21,7 @@ def get_shop_types():
 #按照页码获取商铺类别下的商铺
 @public_controller.route('/m1/public/get_shop_lists_by_page',methods=['POST'])
 def get_shop_lists_by_page():
-    result={'code':0,'msg':''}
+    result={'code':1,'msg':''}
     try:
         query=request.get_json()
         page=query.get('page',1)
@@ -42,7 +42,7 @@ def get_shop_lists_by_page():
         result['page_size']=page_size
     except Exception ,e:
         result['msg']=e.message
-        raise e
+        result['code']=0
     return Response(json.dumps(result),content_type="application/json")
 
 def search_shops_by_page():
