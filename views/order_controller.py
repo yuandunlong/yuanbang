@@ -3,7 +3,7 @@ from flask import Blueprint
 from flask import request
 from flask import json,Response
 from database.models import OrderDetail,db,Order
-from utils import check_token,uniqid
+from utils import check_token,build_order_no
 from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
 @order_controller.route('/m1/private/get_order_detail_by_order_no',methods=['POST'])
@@ -42,7 +42,7 @@ def create_order(token_type,user_info):
         freight=query.get('freight')
         
         order=Order()
-        order.order_no=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        order.order_no=build_order_no()
         order.shop_id=shop_id
         order.buyer_id=user_info.buyer_id
         order.freight=freight
@@ -64,6 +64,5 @@ def create_order(token_type,user_info):
     return Response(json.dumps(result),content_type="application/json")
         
     
-def build_order_no():
-    pass
+    
     

@@ -41,7 +41,10 @@ def result_set_converter(result_set):
         for result in result_set:
             arr.append(result.get_map())
     return arr
-
+def row_json_mapping(row,fields):
+    temp={}
+    for field in fields:
+        pass
 def uniqid(prefix='', more_entropy=False):
     m = time.time()
     uniqid = '%8x%05x' %(math.floor(m),(m-math.floor(m))*1000000)
@@ -53,3 +56,12 @@ def uniqid(prefix='', more_entropy=False):
         uniqid = uniqid + entropy_string
     uniqid = prefix + uniqid
     return uniqid
+
+
+def build_order_no():
+    uiq=uniqid()
+    arr=[]
+    for i in range(6):
+        arr.append(str(ord(uiq[7+i])))
+    
+    return (datetime.now().strftime('%Y%m%d')+temp[:8])    

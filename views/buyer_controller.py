@@ -21,8 +21,8 @@ def get_buyer_info(token_type,info):
     try:
         query=request.get_json()
         what=query['what']
-        if what.count('user')>0:
-            result['buyer_info']=info.get_map()
+        if what.count('buyer')>0:
+            result['buyer']=info.get_map()
         if what.count('my_orders')>0:
             orders=Order.query.filter_by(buyer_id=info.buyer_id).all()
             orders_arr=[]

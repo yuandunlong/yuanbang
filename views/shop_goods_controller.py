@@ -87,3 +87,45 @@ def get_shop_goods_count():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
+
+@shop_goods_controller.route('/m1/public/get_shop_goods_for_discount')
+def get_shop_goods_for_discount():
+    result={'code':1,'msh':'ok'}
+    try:
+        data=request.get_json()
+        sql='''SELECT
+            tgs.GoodsID,
+            tgs.ShopID,
+            tgs.GoodsName,
+            IFNULL(tp.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+            tgs.SalePrice,
+            round(tgs.SalePrice * tgs.Discount, 2) AS DisPrice
+            FROM
+                tb_goodsinfo_s tgs
+                LEFT JOIN tb_photo tp ON 
+                    tgs.GoodsID = tp.LinkID
+                    AND tp.IsVisable = '1'
+                    AND tp.IsChecked = '1'
+            WHERE
+                tgs.ShopID = ?
+                AND tgs.`Status` = %s
+                AND tgs.Discount != %s
+            ORDER BY tgs.Discount ASC
+            LIMIT 16
+        
+        '''
+        result_set=db.engine.execute(sql,('0','1'))
+        arr=[]
+        for row in result_set:
+            temp={}
+            temp['goods_id']=row['GoodsID']
+            temp['shop_id']=row['ShopID']
+            temp['goods_name']=row['GoodsName']
+            temp['thumbnail_path']=row['thumbnail_path']
+            temp['sale_price']=row['SalePrice']
+            temp['dis_price']=row['DisPrice']
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+    

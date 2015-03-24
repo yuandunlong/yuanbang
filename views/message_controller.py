@@ -17,11 +17,16 @@ def get_message_info(token_type,user_info):
         result['code']=1
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
-
+@message_controller.route(rule)
 def add_message_info(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
+        data=request.get_json()
         
+        message=Message()
+        
+        message.receiver=data['receiver']
+        message.
     except Exception,e:
         result['code']=0
         result['msg']=e.message
