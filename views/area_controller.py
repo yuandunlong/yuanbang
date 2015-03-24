@@ -29,7 +29,7 @@ def get_area_list():
         result['code']=1        
         result['msg']=e.message
         
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
             
         
         

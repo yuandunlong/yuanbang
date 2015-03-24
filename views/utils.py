@@ -16,19 +16,19 @@ def check_token(func):
                     buyer=Buyer.query.get(token.user_id)
                     if not buyer:
                         response['msg']='wrong token'
-                        return Response(json.dumps(response))
+                        return Response(json.dumps(response),content_type="application/json")
                     else:
                         info=buyer
                 elif token.token_type==2:
                     shop_info=ShopInfo.query.get(token.user_id)
                     if shop_info==None:
                         response['msg']='wrong token'
-                        return Response(json.dumps(response))
+                        return Response(json.dumps(response),content_type="application/json")
                     else:
                         info=shop_info
             else:
                 response['msg']='token not exist'
-                return Response(json.dumps(response))
+                return Response(json.dumps(response),content_type="application/json")
         result = func(token.token_type,info)
         return result
     

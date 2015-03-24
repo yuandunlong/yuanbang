@@ -202,7 +202,7 @@ class ShopCart(db.Model):
 	__tablename__='tb_shoppingcart'
 	buyer_id=db.Column('BuyerID',db.Integer,primary_key=True)
 	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
-	quntity=db.Column('Quntity',db.Integer)
+	quantity=db.Column('Quantity',db.Integer)
 	create_time=db.Column('CreateTime',db.DateTime)
 	
 	def get_map(self):
@@ -304,3 +304,26 @@ class Message(db.Model):
 		        }
 		return result
 
+
+class Photo(db.Model):
+	__tablename__='tb_photo'
+	photo_id=db.Column('PhotoID',db.Integer,primary_key=True)
+	photo_type=db.Column('PhotoType',db.String(3))
+	link_id=db.Column('LinkID',db.Integer)
+	photo_name=db.Column('PhotoName',db.String(100))
+	photo_path=db.Column('PhotoPath',db.String(200))
+	thumbnail_path=db.Column('ThumbnailPath',db.String(200))
+	sort_no=db.Column('SortNo',db.Integer)
+	is_visable=db.Column('IsVisable',db.String(1))
+	is_checked=db.Column('IsChecked',db.String(1))
+	create_time=db.Column('CreateTime',db.DateTime)
+	verify_time=db.Column('VerifyTime',db.DateTime)
+	
+	
+	def get_map(self):
+		s=self
+		result={'photo_id':s.photo_id,'photo_type':s.photo_type,'link_id':s.link_id,'photo_name':s.photo_name,
+		        'photo_path':s.photo_path,'thumbnail_path':s.thumbnail_path,'sort_no':s.sort_no,'is_visable':s.is_visable,
+		        'is_checked':s.is_checked,'create_time':s.create_time,'verify_time':s.verify_time
+		        }
+		return result

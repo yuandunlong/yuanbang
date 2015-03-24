@@ -23,7 +23,7 @@ def get_order_detail_by_order_no():
     except Exception,e:
         result['code']='0'
         result['msg']=e.message
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
 
 @order_controller.route('/m1/private/create_order',methods=['POST'])
 @check_token
@@ -61,7 +61,7 @@ def create_order(token_type,user_info):
     except Exception,e:        
         result['msg']=e.message
         
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
         
     
 def build_order_no():

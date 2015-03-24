@@ -18,6 +18,6 @@ def get_mobile_controller():
         result['code']=0
         result['msg']=e.message
     
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
         
         

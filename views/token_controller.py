@@ -22,7 +22,7 @@ def authorize():
 	except Exception, e:
 		result['msg']=e.message
 
-	return Response(json.dumps(result))
+	return Response(json.dumps(result),content_type="application/json")
 @token_controller.route('/m1/access_token',methods=['POST'])
 def access_token():
 	result={'code':0,'msg':''}
@@ -48,7 +48,7 @@ def access_token():
 					access_token=map(lambda i: chr(random.randint(65,90)),range(32))
 					access_token=string.join(access_token,'')
 					token=Token(buyer.buyer_id,account_type,auth_code,client_id,access_token)
-					Token.query.delete()
+					Token.query.filter_by(user_id=buyer.buyer_id,client_id=client_id,token_type=account_type).delete()
 					db.session.add(token)
 					db.session.commit()
 					result['access_token']=access_token
@@ -80,7 +80,7 @@ def access_token():
 		result['msg']='not enpha params'
 	except Exception, e:
 		result['msg']=e.message 
-	return Response(json.dumps(result),mimetype='application/json')
+	return Response(json.dumps(result),content_type='application/json')
 @token_controller.route('/m1/refresh_token',methods=['POST'])
 def refresh_token():
 	result={'code':0,'msg':''}
@@ -101,7 +101,7 @@ def refresh_token():
 	except Exception ,e:
 		result['msg']=e.message
 		
-	return Response(json.dumps(result))
+	return Response(json.dumps(result),content_type="application/json")
 		
 		
 

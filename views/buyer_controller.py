@@ -12,7 +12,7 @@ def test():
     result_set=db.engine.execute(sql,(12))
     for row in result_set:
         print row['BuyerID']
-    return Response(json.dumps(result),mimetype='application/json')
+    return Response(json.dumps(result),content_type="application/json")
 
 @buyer_controller.route('/m1/private/get_buyer_info',methods=['POST'])
 @check_token
@@ -54,7 +54,7 @@ def get_buyer_info(token_type,info):
             result['buyer_address']=result_set_converter(result_set)
     except Exception,e:
         result['msg']=e.message
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
         
         
         

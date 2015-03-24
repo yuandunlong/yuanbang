@@ -27,7 +27,7 @@ def add_address(token_type,user_info):
         db.session.commit()
     except Exception,e:
         result['msg']=e.message
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
 
 @buyer_address_controller.route('/m1/private/update_address',methods=['POST'])
 @check_token        
@@ -56,7 +56,7 @@ def update_address(token_type,user_info):
     except Exception,e:
         result['code']=0
         result['msg']=e.message
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
         
 @buyer_address_controller.route('/m1/private/get_addresses_by_user',methods=['GET'])
 @check_token
@@ -74,7 +74,7 @@ def get_addresses_by_user(token_type,info):
     except Exception,e:
         result['code']=0
         result['msg']=e.message
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
 
 @buyer_address_controller.route('/m1/private/set_default_address',methods=['POST']) 
 @check_token
@@ -90,7 +90,7 @@ def set_default_address(token_type,user_info):
     except Exception,e:
         result['code']=0
         result['msg']=e.message
-    return Response(json.dumps(result))   
+    return Response(json.dumps(result),content_type="application/json")   
 
 @buyer_address_controller.route('/m1/private/delete_address',methods=['POST'])
 @check_token
@@ -105,7 +105,7 @@ def delete_address(token_type,user_info):
         result['msg']=e.message
         result['code']=0
         
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type="application/json")
         
      
    
