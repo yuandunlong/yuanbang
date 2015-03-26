@@ -40,6 +40,7 @@ def create_order(token_type,user_info):
         phone=query['phone']
         remark=query.get('remark')
         freight=query.get('freight')
+        goods_id=query['goods_id']
         
         order=Order()
         order.order_no=build_order_no()
@@ -55,7 +56,9 @@ def create_order(token_type,user_info):
         db.session.add(order)
         
         order_detail=OrderDetail()
-        order_detail.order_no=''
+        order_detail.order_no=order.order_no
+        order_detail.goods_id=goods_id
+        
         
         
     except Exception,e:        

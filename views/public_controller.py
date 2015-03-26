@@ -7,15 +7,15 @@ public_controller=Blueprint("public_controller",__name__)
 def get_shop_types():
     
     constents=Constent.query.filter_by(type_id='001').all()
-    result={'code':0,'msg':''}
+    result={'code':1,'msg':''}
     
     try:
         shop_types=[]
         for constent in constents:
             shop_types.append({"item_id":constent.item_id,"item_name":constent.item_name})
         result['shop_types']=shop_types
-        result['code']=1
     except Exception,e:
+        result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 #按照页码获取商铺类别下的商铺
@@ -46,7 +46,7 @@ def get_shop_lists_by_page():
     return Response(json.dumps(result),content_type="application/json")
 
 def search_shops_by_page():
-    result={'code':0,'msg':''}
+    result={'code':1,'msg':''}
     try:
         query=request.get_json()
         page=query.get('page',1)

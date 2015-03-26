@@ -32,7 +32,26 @@ def get_area_list():
     return Response(json.dumps(result),content_type="application/json")
             
         
+@area_controller.route('/m1/public/get_area_list_group_by_alfa')        
+def get_area_list_group_by_alfa():
+    result={'code':1,'msg':''}
+    try:
+        result_set=Area.query.filter().order_by('sort',Area.area_id).all()
+        result['areas']={}
+        areas_arr=[]
+        for area in result_set:
+            areas_arr.append(area.get_map())
+            
+        for area_map in areas_arr:
+            if result['areas'].has_key(area_map['sort']):
+                result['areas'][area_map['sort']].append(area_map)
+            else:
+                result['areas'][area_map['sort']]=[]
+                result['areas'][area_map['sort']].append(area_map)
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
         
-    
     
     
