@@ -107,23 +107,25 @@ def get_shop_goods_for_discount():
                     AND tp.IsVisable = '1'
                     AND tp.IsChecked = '1'
             WHERE
-                tgs.ShopID = ?
+                tgs.ShopID = %s
                 AND tgs.`Status` = %s
                 AND tgs.Discount != %s
             ORDER BY tgs.Discount ASC
             LIMIT 16
         
         '''
-        result_set=db.engine.execute(sql,('0','1'))
+        result_set=db.engine.execute(sql,(data['shop_id'],'0','1'))
         arr=[]
         for row in result_set:
             temp={}
             temp['goods_id']=row['GoodsID']
             temp['shop_id']=row['ShopID']
             temp['goods_name']=row['GoodsName']
-            temp['thumbnail_path']=row['thumbnail_path']
+            temp['thumbnail_path']=row['ThumbnailPath']
             temp['sale_price']=row['SalePrice']
             temp['dis_price']=row['DisPrice']
+            arr.append(temp)
+        result['discount_goods']=arr
     except Exception,e:
         result['code']=0
         result['msg']=e.message
