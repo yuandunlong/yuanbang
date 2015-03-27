@@ -265,7 +265,7 @@ class Comment(db.Model):
 	del_flag=db.Column('del_flag',db.String(1)) #0 未删除 1已删除
 	is_read=db.Column('IsRead',db.String(1))
 	
-	def get_json(self):
+	def get_map(self):
 		s=self
 		result={'id':s.id,'buyer_id':int(s.buyer_id),'comment_type':s.comment_type,'order_no':s.order_no,'shop_id':int(s.shop_id),
 		        'goods_id':int(s.goods_id),'level':s.level,'content':s.content,'commit_time':s.commit_time,'reply_content':s.reply_content,
@@ -273,7 +273,7 @@ class Comment(db.Model):
 
 		        }
 		
-		return json.dumps(result)
+		return result
 
 class Attention(db.Model):
 	__tablename__='tb_attention'
@@ -325,5 +325,19 @@ class Photo(db.Model):
 		result={'photo_id':s.photo_id,'photo_type':s.photo_type,'link_id':s.link_id,'photo_name':s.photo_name,
 		        'photo_path':s.photo_path,'thumbnail_path':s.thumbnail_path,'sort_no':s.sort_no,'is_visable':s.is_visable,
 		        'is_checked':s.is_checked,'create_time':s.create_time,'verify_time':s.verify_time
+		        }
+		return result
+	
+
+class Purchase(db.Model):
+	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
+	batch_no=db.Column('BatchNo',db.Integer,primary_key=True)
+	buy_price=db.Column('BuyPrice',db.DECIMAL)
+	quantity=db.Column('Quantity',db.Integer)
+	start_time=db.Column('StartTime',db.DateTime)
+	end_time=db.Column('EndTime',db.DateTime)
+	
+	def get_map(self):
+		result={'goods_id':self.goods_id,'batch_no':self.batch_no,'buy_price':str(self.buy_price),'quantity':self.quantity,'start_time':self.start_time,'end_time':self.end_time
 		        }
 		return result

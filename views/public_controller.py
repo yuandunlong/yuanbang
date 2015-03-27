@@ -25,7 +25,7 @@ def get_shop_lists_by_page():
     try:
         query=request.get_json()
         page=query.get('page',1)
-        page_size=query.get('count',10)
+        page_size=query.get('count',20)
         shop_type=query.get('shop_type')
         if page<1:
             page=1
@@ -39,7 +39,7 @@ def get_shop_lists_by_page():
 
         result['shops']=shops
         result['page']=page
-        result['page_size']=page_size
+        result['count']=page_size
     except Exception ,e:
         result['msg']=e.message
         result['code']=0

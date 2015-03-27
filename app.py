@@ -10,6 +10,8 @@ from views.shopcart_controller import shopcart_controller
 from views.buyer_address_controller import buyer_address_controller
 from views.shop_goods_type_controller import shop_goods_type_controller
 from views.shop_goods_controller import shop_goods_controller
+from views.comment_controller import comment_controller
+from views.attention_controller import attention_controller
 from database.models import db
 app=Flask(__name__)
 db.init_app(app)
@@ -24,6 +26,8 @@ app.register_blueprint(shopcart_controller)
 app.register_blueprint(buyer_address_controller)
 app.register_blueprint(shop_goods_type_controller)
 app.register_blueprint(shop_goods_controller)
+app.register_blueprint(comment_controller)
+app.register_blueprint(attention_controller)
 def has_no_empty_params(rule):
 	defaults = rule.defaults if rule.defaults is not None else ()
 	arguments = rule.arguments if rule.arguments is not None else ()
