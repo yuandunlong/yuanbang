@@ -13,7 +13,7 @@ def get_shopcart_list(token_type,user_info):
             sql='''
             SELECT
             x.ShopID,
-            X.ShopName,
+            x.ShopName,
             a.GoodsID,
             a.CreateTime,
             c.PhotoPath,
