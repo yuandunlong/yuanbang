@@ -16,8 +16,9 @@ class MobileBanner(db.Model):
 	id=db.Column('id',db.Integer,primary_key=True)
 	name=db.Column('name',db.String(64))
 	picture_url=db.Column('picture_url',db.String(256))
-	link_address=db.Column('link_address',db.String(256))
+	target=db.Column('target',db.String(256))
 	display_order=db.Column('display_order',db.Integer)
+	banner_type=db.Column('banner_type',db.Integer) #1 店铺 2商品   3webview链接
 	description=db.Column('description',db.String(512))
 	def get_map(self):
 		result={'id':self.id,'picture_url':self.picture_url,'link_address':self.link_address,'display_order':self.display_order}
@@ -168,7 +169,7 @@ class ShopInfo(db.Model):
 	def get_map(self):
 		s=self
 		result={'shop_id':s.shop_id,'qquid':s.qquid,'account':s.account,'shop_type':s.shop_type,'shop_name':s.shop_name,
-			'email':s.email,'introduce':s.introduce,'business_lisence':s.business_lisence,'shop_photo':s.shop_phone,
+			'email':s.email,'introduce':s.introduce,'business_lisence':s.business_lisence,'shop_photo':s.shop_photo,
 			'other_lisence':s.other_lisence,'shop_phone':s.shop_phone,'link_man':s.link_man,'mobile':s.mobile,
 			'weixin':s.weixin,'weixin_photo':s.weixin_photo,'shop_address':s.shop_address,'xzb':str(s.xzb),'yzb':str(s.yzb),
 			'is_checked':s.is_checked,'sort_no':s.sort_no,'is_recommend':s.is_recommend,'is_top':s.is_top,'default_freight':str(s.default_freight),

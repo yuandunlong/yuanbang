@@ -12,6 +12,8 @@ def get_shopcart_list(token_type,user_info):
     try:
             sql='''
             SELECT
+            x.ShopID,
+            X.ShopName,
             a.GoodsID,
             a.CreateTime,
             c.PhotoPath,
@@ -19,6 +21,7 @@ def get_shopcart_list(token_type,user_info):
             b.SalePrice,
             b.Discount,
             a.Quantity,
+            a.IsSelected,
             b.SetNum,
             b.SetPrice,
             IF (
@@ -38,6 +41,7 @@ def get_shopcart_list(token_type,user_info):
             FROM  tb_shoppingcart a
             LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
             LEFT JOIN tb_photo c ON b.GoodsID = c.LinkID
+            LEFT JOIN tb_shopinfo_s x ON b.ShopID = x.ShopID
             AND c.IsChecked = '1'
             AND c.IsVisable = '1'
             LEFT JOIN (
@@ -59,6 +63,9 @@ def get_shopcart_list(token_type,user_info):
             for rows in result_set:
                 temp={}
                 temp['goods_id']=rows['GoodsID']
+                temp['shop_id']=rows['ShopID']
+                temp['shop_name']=rows['ShopName']
+                temp['is_selected']=rows['IsSelected']
                 temp['goods_name']=rows['GoodsName']
                 temp['sale_price']=str(rows['SalePrice'])
                 temp['photo_path']=rows['PhotoPath']
@@ -68,7 +75,14 @@ def get_shopcart_list(token_type,user_info):
                 temp['set_price']=rows['SetPrice']
                 arr.append(temp)
                 
-            result['shopcart']=arr
+            for item in arr:
+                if item['shop_id']==None:
+                    continue
+                if result.has_key(item['shop_id']):
+                    result[item.shop_id].append(item)
+                else:
+                    result[item['shop_id']]=[]
+                    result[item['shop_id']].append(item)
     except Exception ,e:
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,render_template
 from flask import request
 from flask import json,Response
 from database.models import MobileBanner
@@ -20,4 +20,10 @@ def get_mobile_controller():
     
     return Response(json.dumps(result),content_type="application/json")
         
-        
+
+@mobile_banner_controller.route('/m1/public/display_mobile_banner_manage',methods=['GET'])
+def display_mobile_banner_manage():
+    
+    return render_template('mobile_banner.html')
+    
+    
