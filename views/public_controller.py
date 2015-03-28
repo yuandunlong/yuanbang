@@ -39,7 +39,7 @@ def get_shop_lists_by_page():
         
         '''
         
-        shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').offset(page).limit(page_size).all()
+        shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').offset(page-1).limit(page_size).all()
         for shop in shop_infos:
             shops.append(shop.get_map())
 
@@ -66,9 +66,9 @@ def search_shops_by_page():
             page_size=20
         shops=[]    
         if shop_type:
-            shop_infos=ShopInfo.query.filter_by(shop_type=shop_type).filter(ShopInfo.shop_name.like(key_words)).offset(page).limit(page_size).all()
+            shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset(page-1).limit(page_size).all()
         else:
-            shop_infos=ShopInfo.query.filter(ShopInfo.shop_name.like(key_words)).offset(page).limit(page_size).all()
+            shop_infos=ShopInfo.query.filter_by(is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset(page-1).limit(page_size).all()
         for shop in shop_infos:
             shops.append(shop.get_map())
     
