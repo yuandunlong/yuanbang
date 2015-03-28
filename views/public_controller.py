@@ -27,13 +27,19 @@ def get_shop_lists_by_page():
         page=query.get('page',1)
         page_size=query.get('count',20)
         shop_type=query.get('shop_type')
+        order_by=query.get('order_by')
         if page<1:
             page=1
         if page_size<1:
             page_size=20
         #result_set=ShopInfo.query.outerjoin(Constent,ShopInfo.is_top==Constent.item_id).filter(Constent.type_id=='002').outerjoin(Constent,ShopInfo.status==Constent.item_id).filter(Constent.type_id=='003').all()
-        shops=[]        
-        shop_infos=ShopInfo.query.filter_by(shop_type=shop_type).offset(page).limit(page_size).all()
+        shops=[] 
+        sql='''
+        select * from tb_shopinfo_s
+        
+        '''
+        
+        shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').offset(page).limit(page_size).all()
         for shop in shop_infos:
             shops.append(shop.get_map())
 
@@ -44,7 +50,7 @@ def get_shop_lists_by_page():
         result['msg']=e.message
         result['code']=0
     return Response(json.dumps(result),content_type="application/json")
-
+@public_controller.route('/m1/public/search_shops_by_page',methods=['POST'])
 def search_shops_by_page():
     result={'code':1,'msg':''}
     try:
@@ -53,21 +59,25 @@ def search_shops_by_page():
         page_size=query.get('count',10)
         shop_type=query.get('shop_type')
         key_words=query.get('key_words')
+        print key_words,type(key_words)
         if page<1:
             page=1
         if page_size<1:
             page_size=20
-        
-    except Exception,e:
-        result['mgs']=e.message
-        shops=[]             
-        shop_infos=ShopInfo.query.filter_by(shop_type=shop_type).filter().offset(page).limit(page_size).all()
+        shops=[]    
+        if shop_type:
+            shop_infos=ShopInfo.query.filter_by(shop_type=shop_type).filter(ShopInfo.shop_name.like(key_words)).offset(page).limit(page_size).all()
+        else:
+            shop_infos=ShopInfo.query.filter(ShopInfo.shop_name.like(key_words)).offset(page).limit(page_size).all()
         for shop in shop_infos:
             shops.append(shop.get_map())
     
         result['shops']=shops
         result['page']=page
-        result['page_size']=page_size             
+        result['count']=page_size   
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
         
         
