@@ -23,6 +23,7 @@ def get_order_list(token_type,user_info):
         where buyerid=%s
         '''
         result_set=db.engine.execute(sql,(user_info.buyer_id))
+        result['shoplist']=[]
         for row in result_set:
             temp=row_map_converter(row)
             if result.has_key(row['ShopID']):

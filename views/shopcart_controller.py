@@ -74,15 +74,17 @@ def get_shopcart_list(token_type,user_info):
                 temp['set_num']=rows['SetNum']
                 temp['set_price']=rows['SetPrice']
                 arr.append(temp)
-                
+            
+            shopcarts={}
             for item in arr:
                 if item['shop_id']==None:
                     continue
-                if result.has_key(item['shop_id']):
-                    result[item.shop_id].append(item)
+                if shopcarts.has_key(item['shop_id']):
+                    shopcarts[item.shop_id].append(item)
                 else:
-                    result[item['shop_id']]=[]
-                    result[item['shop_id']].append(item)
+                    shopcarts[item['shop_id']]=[]
+                    shopcarts[item['shop_id']].append(item)
+            result['shopcarts']=shopcarts
     except Exception ,e:
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
