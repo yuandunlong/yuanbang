@@ -23,19 +23,19 @@ def get_order_list(token_type,user_info):
         where buyerid=%s
         '''
         result_set=db.engine.execute(sql,(user_info.buyer_id))
-        orders={}
+        orders=[]
         for row in result_set:
             temp=row_map_converter(row)
-            if orders.has_key(row['ShopID']):
-                orders[row['ShopID']].append(temp)
+            if orders.count({'shop_id':row['ShopID'],'shop_name':row['ShopName']})>0:
+                orders[orders.index({'shop_id':row['ShopID'],'shop_name':row['ShopName']})].append(temp)
             else:
-                orders[row['ShopID']]=[]
-                orders[row['ShopID']].append(temp)
+                temp_arr=[]
+                temp_arr.append(temp)
+                orders.append({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'goods':temp_arr})
         result['orders']=orders
     except Exception,e:
         result['code']=0
         result['msg']=e.message
-        json.dumps(obj)
     return Response(json.dumps(result),content_type='application/json')
         
 @order_controller.route('/m1/private/get_order_detail_by_order_no',methods=['POST'])
