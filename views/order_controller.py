@@ -23,14 +23,15 @@ def get_order_list(token_type,user_info):
         where buyerid=%s
         '''
         result_set=db.engine.execute(sql,(user_info.buyer_id))
-        result['shoplist']=[]
+        orders={}
         for row in result_set:
             temp=row_map_converter(row)
-            if result.has_key(row['ShopID']):
-                result[row['ShopID']].append(temp)
+            if orders.has_key(row['ShopID']):
+                orders[row['ShopID']].append(temp)
             else:
-                result[row['ShopID']]=[]
-                result[row['ShopID']].append(temp)
+                orders[row['ShopID']]=[]
+                orders[row['ShopID']].append(temp)
+        result['orders']=orders
     except Exception,e:
         result['code']=0
         result['msg']=e.message
