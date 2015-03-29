@@ -54,6 +54,7 @@ def hello_world():
 	return jsonify({'hello':'world'})
 
 if __name__ == '__main__':
+	import sys
 	reload(sys) 
 	sys.setdefaultencoding( "utf-8" ) 	
 	from os import environ
