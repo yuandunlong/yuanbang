@@ -21,7 +21,7 @@ class MobileBanner(db.Model):
 	banner_type=db.Column('banner_type',db.Integer) #1 店铺 2商品   3webview链接
 	description=db.Column('description',db.String(512))
 	def get_map(self):
-		result={'id':self.id,'picture_url':self.picture_url,'link_address':self.link_address,'display_order':self.display_order}
+		result={'id':self.id,'picture_url':self.picture_url,'target':self.target,'banner_type':self.banner_type,'display_order':self.display_order,'description':self.description}
 		return result
 	
 class Token(db.Model):
