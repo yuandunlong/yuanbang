@@ -8,7 +8,7 @@ from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
 @order_controller.route('/m1/private/get_order_detail_by_order_no',methods=['POST'])
 @check_token
-def get_order_detail_by_order_no():
+def get_order_detail_by_order_no(token_type,user_info):
     
     result={'code':1,'msg':'ok'}
     
