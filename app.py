@@ -54,6 +54,8 @@ def hello_world():
 	return jsonify({'hello':'world'})
 
 if __name__ == '__main__':
+	reload(sys) 
+	sys.setdefaultencoding( "utf-8" ) 	
 	from os import environ
 	##db.create_all(bind='__all__', app=app)
 	app.debug=False

@@ -59,7 +59,6 @@ def search_shops_by_page():
         page_size=query.get('count',10)
         shop_type=query.get('shop_type')
         key_words=query.get('key_words')
-        print key_words,type(key_words)
         if page<1:
             page=1
         if page_size<1:
