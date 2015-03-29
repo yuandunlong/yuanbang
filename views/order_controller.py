@@ -1,11 +1,41 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint
 from flask import request
-from flask import json,Response
+from flask import Response,json
 from database.models import OrderDetail,db,Order
-from utils import check_token,build_order_no
+from utils import check_token,build_order_no,DecimalEncoder,row_map_converter
 from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
+@order_controller.route('/m1/private/get_order_list',methods=['GET'])
+@check_token
+def get_order_list(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''
+        select a.OrderNo,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.status,a.PayStatus,a.UpdateTime
+        ,b.GoodsID,b.BatchNo,b.SalePrice,b.Quantity,b.DiscountPrice,c.ShopName, 
+        d.GoodsName,e.PhotoID,e.PhotoName,e.PhotoPath,e.ThumbnailPath,e.SortNo
+        from tb_order_s a 
+        left join tb_orderdetail_s b on a.OrderNo=b.OrderNo  
+        left join tb_shopinfo_s c on a.ShopID=c.ShopID 
+        left join tb_goodsinfo_s d on d.GoodsID=b.GoodsID
+        left join tb_photo e on e.LinkID=d.GoodsID
+        where buyerid=%s
+        '''
+        result_set=db.engine.execute(sql,(user_info.buyer_id))
+        for row in result_set:
+            temp=row_map_converter(row)
+            if result.has_key(row['ShopID']):
+                result[row['ShopID']].append(temp)
+            else:
+                result[row['ShopID']]=[]
+                result[row['ShopID']].append(temp)
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+        json.dumps(obj)
+    return Response(json.dumps(result),content_type='application/json')
+        
 @order_controller.route('/m1/private/get_order_detail_by_order_no',methods=['POST'])
 @check_token
 def get_order_detail_by_order_no(token_type,user_info):

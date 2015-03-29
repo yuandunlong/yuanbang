@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask import request,Response,json
 from database.models import db,Token,Buyer,ShopInfo
+from datetime import datetime
+from decimal import Decimal
 def check_token(func):
     def wrapper():
         response={'code':0,'msg':''}
@@ -41,10 +43,18 @@ def result_set_converter(result_set):
         for result in result_set:
             arr.append(result.get_map())
     return arr
-def row_json_mapping(row,fields):
+
+def row_map_converter(row):
     temp={}
-    for field in fields:
-        pass
+    for (k,v) in row.items():
+        if isinstance(v,datetime) or isinstance(v,Decimal):
+            v=str(v)
+        if k.endswith('ID'):
+            key=k.lower()[:-2]+'_id'
+            temp[key]=int(v)
+        else:
+            temp[camel_to_underline(k)]=v
+    return temp
 def uniqid(prefix='', more_entropy=False):
     m = time.time()
     uniqid = '%8x%05x' %(math.floor(m),(m-math.floor(m))*1000000)
@@ -65,3 +75,39 @@ def build_order_no():
         arr.append(str(ord(uiq[7+i])))
     
     return (datetime.now().strftime('%Y%m%d')+temp[:8])    
+
+
+def camel_to_underline(camel_format):
+    '''
+        驼峰命名格式转下划线命名格式
+    '''
+    underline_format=''
+    if isinstance(camel_format, str) or isinstance(camel_format,unicode):
+        i=0
+        for _s_ in camel_format:
+            if _s_.islower() or i==0:
+                underline_format += _s_.lower()
+            else:
+                underline_format +=('_'+_s_.lower())
+            i=i+1
+    return underline_format
+
+def underline_to_camel(underline_format):
+    '''
+        下划线命名格式驼峰命名格式
+    '''
+    camel_format = ''
+    if isinstance(underline_format, str):
+        for _s_ in underline_format.split('_'):
+            camel_format += _s_.capitalize()
+    return camel_format
+
+
+class DecimalEncoder(json.JSONEncoder):
+    def _iterencode(self, o, markers=None):
+        if isinstance(o, decimal.Decimal):
+            # wanted a simple yield str(o) in the next line,
+            # but that would mean a yield on the line with super(...),
+            # which wouldn't work (see my comment below), so...
+            return (str(o) for o in [o])
+        return super(DecimalEncoder, self)._iterencode(o, markers)
