@@ -26,7 +26,7 @@ def get_order_list(token_type,user_info):
         orders=[]
         for row in result_set:
             temp=row_map_converter(row)
-            order=sub_map(temp,['order_no','shop_id','shop_name','buyer_id','sale_money','submit_time','send_time','confirm_time'\
+            order=sub_map(temp,['order_no','shop_id','shop_name','buyer_id','sale_money','submit_time','send_time','confirm_time',\
                                 'freight','send_address','receiver','phone','remark','status','update_time'])
            
             goods=sub_map(temp,['goods_id','batch_no','sale_price','quantity','discount_price','goods_name',\
