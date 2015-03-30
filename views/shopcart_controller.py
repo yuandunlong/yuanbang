@@ -17,6 +17,9 @@ def get_shopcart_list(token_type,user_info):
             a.GoodsID,
             a.CreateTime,
             c.PhotoPath,
+            c.ThumbnailPath,
+            c.PhotoID,
+            c.PhotoName,
             b.GoodsName,
             b.SalePrice,
             b.Discount,
@@ -73,6 +76,9 @@ def get_shopcart_list(token_type,user_info):
                 temp['quantity']=rows['Quantity']
                 temp['set_num']=rows['SetNum']
                 temp['set_price']=rows['SetPrice']
+                temp['thumbnail_path']=rows['ThumbnailPath']
+                temp['photo_id']=rows['PhotoID']
+                temp['photo_name']=rows['PhotoName']
                 arr.append(temp)
             
             shopcarts=[]
