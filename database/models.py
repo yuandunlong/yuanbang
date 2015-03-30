@@ -23,7 +23,11 @@ class MobileBanner(db.Model):
 	def get_map(self):
 		result={'id':self.id,'picture_url':self.picture_url,'target':self.target,'banner_type':self.banner_type,'display_order':self.display_order,'description':self.description}
 		return result
-	
+class PromoteGoodsForHomePage(db.Model):
+	__tablename__='discount_goods'
+	id=db.Column('id',db.Integer,primary_key=True)
+	goods_id=db.Column('goods_id',db.Integer)
+	type=db.Column('type',db.Integer) #1  折扣 #2 人气
 class Token(db.Model):
 	__tablename__='token'
 	def __init__(self,user_id,token_type,auth_code,client_id,access_token):

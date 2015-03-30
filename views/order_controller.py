@@ -12,7 +12,7 @@ def get_order_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         sql='''
-        select a.OrderNo,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.status,a.PayStatus,a.UpdateTime
+        select a.OrderNo,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime
         ,b.GoodsID,b.BatchNo,b.SalePrice,b.Quantity,b.DiscountPrice,c.ShopName, 
         d.GoodsName,e.PhotoID,e.PhotoName,e.PhotoPath,e.ThumbnailPath,e.SortNo
         from tb_order_s a 
@@ -26,12 +26,13 @@ def get_order_list(token_type,user_info):
         orders=[]
         for row in result_set:
             temp=row_map_converter(row)
-            if orders.count({'shop_id':row['ShopID'],'shop_name':row['ShopName']})>0:
-                orders[orders.index({'shop_id':row['ShopID'],'shop_name':row['ShopName']})].append(temp)
+            temp.pop('sale_money')
+            if orders.count({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'sale_money':row['SaleMoney']})>0:
+                orders[orders.index({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'sale_money':row['SaleMoney']})].append(temp)
             else:
                 temp_arr=[]
                 temp_arr.append(temp)
-                orders.append({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'goods':temp_arr})
+                orders.append({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'sale_money':str(row['SaleMoney']),'goods':temp_arr})
         result['orders']=orders
     except Exception,e:
         result['code']=0

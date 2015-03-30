@@ -130,4 +130,15 @@ def get_shop_goods_for_discount():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+
+def shop_goods_list():
+    result={'code':1,'msg':'ok'}
     
+    try:
+        pass
+        
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    
+    return Response(json.dumps(result),content_type='application/json')
