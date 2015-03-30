@@ -2,7 +2,7 @@
 from flask import json,Response,Blueprint,request
 from sqlalchemy import desc
 from database.models import db,Photo
-
+from utils import row_map_converter
 shop_goods_controller=Blueprint('shop_goods_controller',__name__)
 #取得店铺的商品关联图片信息（商品ID）
 @shop_goods_controller.route('/m1/public/get_shop_goods_photos',methods=['POST'])
@@ -130,15 +130,51 @@ def get_shop_goods_for_discount():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-
-def shop_goods_list():
+@shop_goods_controller.route('/m1/private/get_shop_goods_list',methods=['POST'])
+def get_shop_goods_list():
     result={'code':1,'msg':'ok'}
     
     try:
-        pass
+        data=request.get_json()
+        sql='''
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+    round(g.SalePrice * g.Discount, 2) AS DisPrice,
+    IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+    IFNULL(o.Quantity,0) AS Quantity
+    FROM
+        TB_GOODSINFO_S g
+    LEFT JOIN (
+        SELECT
+        sum(t.Quantity) AS SaleQuantity,
+        t.GoodsID
+        FROM
+        tb_order_s d,
+        tb_orderdetail_s t
+        WHERE
+        d.OrderNo = t.OrderNo
+        AND d.`Status` <> '3'
+        GROUP BY
+        t.GoodsID
+        ) o ON g.GoodsID = o.GoodsID
+    LEFT JOIN TB_PHOTO p ON g.GoodsID = p.LinkID
+    AND p.IsVisable = '1'
+    AND p.IsChecked = '1'
+    WHERE
+        g.ShopID = %s
+    and g.Status = 0
+    and (g.GoodsTypeIDs like %s or g.GoodsTypeIDs like %s)
+
         
+        '''
+        shop_id=str(data['shop_id'])
+        goods_type_id=str(data['goods_type_id'])
+        result_set=db.engine.execute(sql,(shop_id,goods_type_id+'%','%'+goods_type_id+'%'))
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+        result['goods']=arr
     except Exception,e:
         result['code']=0
         result['msg']=e.message
-    
     return Response(json.dumps(result),content_type='application/json')

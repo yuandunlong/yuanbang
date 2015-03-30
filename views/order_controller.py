@@ -3,7 +3,7 @@ from flask import Blueprint
 from flask import request
 from flask import Response,json
 from database.models import OrderDetail,db,Order
-from utils import check_token,build_order_no,DecimalEncoder,row_map_converter
+from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map
 from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
 @order_controller.route('/m1/private/get_order_list',methods=['GET'])
@@ -26,13 +26,13 @@ def get_order_list(token_type,user_info):
         orders=[]
         for row in result_set:
             temp=row_map_converter(row)
-            temp.pop('sale_money')
-            if orders.count({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'sale_money':row['SaleMoney']})>0:
-                orders[orders.index({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'sale_money':row['SaleMoney']})].append(temp)
-            else:
-                temp_arr=[]
-                temp_arr.append(temp)
-                orders.append({'shop_id':row['ShopID'],'shop_name':row['ShopName'],'sale_money':str(row['SaleMoney']),'goods':temp_arr})
+            order=sub_map(temp,['order_no','shop_id','shop_name','buyer_id','sale_money','submit_time','send_time','confirm_time'\
+                                'freight','send_address','receiver','phone','remark','status','update_time'])
+           
+            goods=sub_map(temp,['goods_id','batch_no','sale_price','quantity','discount_price','goods_name',\
+                                'photo_id','photo_path','thumbnail_path','sort_no'])
+            order['goods']=goods
+            orders.append(order)
         result['orders']=orders
     except Exception,e:
         result['code']=0

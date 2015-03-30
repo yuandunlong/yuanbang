@@ -55,6 +55,14 @@ def row_map_converter(row):
         else:
             temp[camel_to_underline(k)]=v
     return temp
+def sub_map(src,keys):
+    result={}
+    for key in keys:
+        if src.has_key(key):
+            result[key]=src[key]
+    
+    return result
+
 def uniqid(prefix='', more_entropy=False):
     m = time.time()
     uniqid = '%8x%05x' %(math.floor(m),(m-math.floor(m))*1000000)
