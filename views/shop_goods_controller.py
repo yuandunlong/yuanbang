@@ -88,7 +88,7 @@ def get_shop_goods_count():
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 
-@shop_goods_controller.route('/m1/public/get_shop_goods_for_discount')
+@shop_goods_controller.route('/m1/public/get_shop_goods_for_discount',methods=['POST'])
 def get_shop_goods_for_discount():
     result={'code':1,'msh':'ok'}
     try:
