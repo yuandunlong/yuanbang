@@ -56,7 +56,7 @@ def get_order_list(token_type,user_info):
         c.PhotoID ,c.PhotoName,c.PhotoPath,c.ThumbnailPath,c.SortNo
         from tb_orderdetail_s a
         left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
-        left join tb_photo c on c.LinkID=a.GoodsID
+        left join tb_photo c on c.LinkID=a.GoodsID and c.IsChecked=1 and c.IsVisable=1
         where OrderNo=%s
         '''
         print sql

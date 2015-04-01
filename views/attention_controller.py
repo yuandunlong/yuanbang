@@ -23,6 +23,29 @@ def get_attention_shops(token_type,user_info):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+@attention_controller.route('/m1/private/get_attention_goods',methods=['GET'])
+@check_token
+def get_attention_goods(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''
+        select a.*,b.* ,
+        c.PhotoID,c.PhotoName,c.PhotoPath,c.ThumbnailPath
+        from tb_attention a 
+        inner join tb_goodsinfo_s b on a.AttentionID=b.GoodsID and a.AttentionType=3
+        left join tb_photo c on c.LinkID=b.GoodsID and c.IsChecked=1 and c.IsVisable=1
+        where BuyerID=%s
+        '''
+        result_set=db.engine.execute(sql,(user_info.buyer_id))
+        
+        goods=[]
+        for row in result_set:
+            goods.append(row_map_converter(row))
+        result['goods']=goods
+    except Exception ,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
         
 @attention_controller.route('/m1/private/add_attention_shop',methods=['POST'])
 @check_token
