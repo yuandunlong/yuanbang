@@ -122,8 +122,8 @@ def get_shop_goods_for_discount():
             temp['shop_id']=row['ShopID']
             temp['goods_name']=row['GoodsName']
             temp['thumbnail_path']=row['ThumbnailPath']
-            temp['sale_price']=row['SalePrice']
-            temp['dis_price']=row['DisPrice']
+            temp['sale_price']=str(row['SalePrice'])
+            temp['dis_price']=str(row['DisPrice'])
             arr.append(temp)
         result['discount_goods']=arr
     except Exception,e:
