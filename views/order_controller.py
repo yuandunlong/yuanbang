@@ -52,7 +52,7 @@ def get_order_list(token_type,user_info):
         '''
         sql_detail='''
 
-        select a.* ,
+        select a.* ,b.GoodsName,
         c.PhotoID ,c.PhotoName,c.PhotoPath,c.ThumbnailPath,c.SortNo
         from tb_orderdetail_s a
         left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
