@@ -4,8 +4,26 @@ from flask import request
 from flask import json,Response
 from database.models import Attention,db
 from datetime import datetime
-from utils import check_token
+from utils import check_token,row_map_converter
 attention_controller=Blueprint('attention_controller',__name__)
+@attention_controller.route('/m1/private/get_attention_shops',methods=['GET'])
+@check_token
+def get_attention_shops(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''
+        select a.* ,b.*from tb_attention a,tb_shopinfo_s b where a.AttentionID=b.ShopID and a.AttentionType=0 and a.BuyerID=%s
+        '''
+        result_set=db.engine.execute(sql,(user_info.buyer_id))
+        shops=[]
+        for row in result_set:
+            shops.append(row_map_converter(row))
+        result['shops']=shops
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
 @attention_controller.route('/m1/private/add_attention_shop',methods=['POST'])
 @check_token
 def add_attention_shop(token_type,user_info):
