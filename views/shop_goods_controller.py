@@ -130,8 +130,8 @@ def get_shop_goods_for_discount():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-@shop_goods_controller.route('/m1/private/get_shop_goods_list',methods=['POST'])
-def get_shop_goods_list():
+@shop_goods_controller.route('/m1/private/get_shop_goods_by_type',methods=['POST'])
+def get_shop_goods_by_type():
     result={'code':1,'msg':'ok'}
     
     try:
@@ -140,9 +140,9 @@ def get_shop_goods_list():
         SELECT g.GoodsID,g.GoodsName,g.SalePrice,
     round(g.SalePrice * g.Discount, 2) AS DisPrice,
     IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
-    IFNULL(o.Quantity,0) AS Quantity
+    IFNULL(o.SaleQuantity,0) AS TotalSale
     FROM
-        TB_GOODSINFO_S g
+        tb_goodsinfo_s g
     LEFT JOIN (
         SELECT
         sum(t.Quantity) AS SaleQuantity,
@@ -156,14 +156,13 @@ def get_shop_goods_list():
         GROUP BY
         t.GoodsID
         ) o ON g.GoodsID = o.GoodsID
-    LEFT JOIN TB_PHOTO p ON g.GoodsID = p.LinkID
-    AND p.IsVisable = '1'
-    AND p.IsChecked = '1'
-    WHERE
-        g.ShopID = %s
-    and g.Status = 0
-    and (g.GoodsTypeIDs like %s or g.GoodsTypeIDs like %s)
-
+        INNER JOIN TB_PHOTO p ON g.GoodsID = p.LinkID
+        AND p.IsVisable = '1'
+        AND p.IsChecked = '1'
+        WHERE
+                g.ShopID = %s
+        and g.Status = 0
+        and (g.GoodsTypeIDs like %s or g.GoodsTypeIDs like %s)
         
         '''
         shop_id=str(data['shop_id'])
