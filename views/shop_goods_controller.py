@@ -156,7 +156,7 @@ def get_shop_goods_by_type():
         GROUP BY
         t.GoodsID
         ) o ON g.GoodsID = o.GoodsID
-        INNER JOIN tb_phonto p ON g.GoodsID = p.LinkID
+        INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
         AND p.IsVisable = '1'
         AND p.IsChecked = '1'
         WHERE
