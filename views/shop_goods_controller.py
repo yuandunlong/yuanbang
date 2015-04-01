@@ -178,3 +178,49 @@ def get_shop_goods_by_type():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+
+@shop_goods_controller.route('/m1/public/get_latest_shop_goods',methods=['POST'])
+def get_latest_shop_goods():
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+    round(g.SalePrice * g.Discount, 2) AS DisPrice,
+    IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+    IFNULL(o.SaleQuantity,0) AS TotalSale
+    FROM
+        tb_goodsinfo_s g
+    LEFT JOIN (
+        SELECT
+        sum(t.Quantity) AS SaleQuantity,
+        t.GoodsID
+        FROM
+        tb_order_s d,
+        tb_orderdetail_s t
+        WHERE
+        d.OrderNo = t.OrderNo
+        AND d.`Status` <> '3'
+        GROUP BY
+        t.GoodsID
+        ) o ON g.GoodsID = o.GoodsID
+        INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+        AND p.IsVisable = '1'
+        AND p.IsChecked = '1'
+        WHERE
+            g.ShopID = %s
+        and g.Status = 0 order by g.CreateTime desc limit %s
+        '''
+        shop_id=str(data['shop_id'])
+        count=data.get('count',4)
+        result_set=db.engine.execute(sql,(shop_id,count))
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+        result['goods']=arr        
+    
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
