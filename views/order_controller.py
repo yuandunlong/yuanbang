@@ -48,11 +48,13 @@ def get_order_list(token_type,user_info):
         c.ShopName
         from tb_order_s a 
         left join tb_shopinfo_s c on a.ShopID=c.ShopID 
-        where buyerid=%s
+        where BuyerID=%s
         '''
         sql_detail='''
 
-        select a.* from tb_orderdetail_s a
+        select a.* ,
+        c.PhotoID ,c.PhotoName,c.PhotoPath,c.ThumbnailPath,c.SortNo
+        from tb_orderdetail_s a
         left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
         left join tb_photo c on c.LinkID=a.GoodsID
         where OrderNo=%s
