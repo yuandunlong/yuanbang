@@ -3,12 +3,11 @@ from flask import Blueprint
 from flask import request
 from flask import Response,json
 from database.models import OrderDetail,db,Order
-from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map
+from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter
 from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
-@order_controller.route('/m1/private/get_order_list',methods=['GET'])
-@check_token
-def get_order_list(token_type,user_info):
+
+def get_order_listss(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         sql='''
@@ -35,6 +34,42 @@ def get_order_list(token_type,user_info):
             orders.append(order)
         result['orders']=orders
     except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
+@order_controller.route('/m1/private/get_order_list',methods=['GET'])
+@check_token
+def get_order_list(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''
+        select a.OrderNo,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime,
+        c.ShopName
+        from tb_order_s a 
+        left join tb_shopinfo_s c on a.ShopID=c.ShopID 
+        where buyerid=%s
+        '''
+        sql_detail='''
+
+        select a.* from tb_orderdetail_s a
+        left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
+        left join tb_photo c on c.LinkID=a.GoodsID
+        where OrderNo=%s
+        '''
+        print sql
+        result_set=db.engine.execute(sql,(user_info.buyer_id))
+        orders=[]
+        for row in result_set:
+            order_map=row_map_converter(row)
+            order_detail_result_set=db.engine.execute(sql_detail,(order_map['order_no']))
+            order_detail_arr=[]
+            for item in order_detail_result_set:
+                order_detail_arr.append(row_map_converter(item))
+            order_map['goods']=order_detail_arr
+            orders.append(order_map)
+        result['orders']=orders
+    except Exception, e:
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
