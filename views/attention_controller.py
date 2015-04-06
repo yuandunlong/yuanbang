@@ -71,7 +71,8 @@ def cancle_attention_shop(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['shop_id'],attention_type='0').first().delete()
+        Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['shop_id'],attention_type='0').delete()
+        db.session.commit()
     except Exception,e:
         result['code']=0
         result['msg']=e.message
@@ -101,7 +102,8 @@ def cancle_attention_goods(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['goods_id'],attention_type='3').first().delete()
+        Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['goods_id'],attention_type='3').delete()
+        db.session.commit()
     except Exception,e:
         result['code']=0
         result['msg']=e.message

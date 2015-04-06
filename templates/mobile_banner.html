@@ -74,7 +74,7 @@ th.specalt {
 html>body td{ font-size:11px;}
 --></mce:style><style type="text/css" mce_bogus="1">/* CSS Document */
 body {
- font: normal 11px auto "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+ font: normal 14px auto "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
  color: #4f6b72;
  margin 0 auto;
  background: #E6EAE9;
@@ -83,19 +83,14 @@ a {
  color: #c75f3e;
 }
 #mytable {
- width: 700px;
+ width: 1024px;
  padding: 0;
  margin: 0;
  margin:0 auto;
 }
-caption {
- padding: 0 0 5px 0;
- width: 700px; 
- font: italic 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
- text-align: right;
-}
+
 th {
- font: bold 11px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
+ font: bold 14px "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
  color: #4f6b72;
  border-right: 1px solid #C1DAD7;
  border-bottom: 1px solid #C1DAD7;
@@ -116,7 +111,7 @@ td {
  border-right: 1px solid #C1DAD7;
  border-bottom: 1px solid #C1DAD7;
  background: #fff;
- font-size:11px;
+ font-size:14px;
  padding: 6px 6px 6px 12px;
  color: #4f6b72;
 }
@@ -140,33 +135,48 @@ th.specalt {
 }
 /*---------for IE 5.x bug*/
 html>body td{ font-size:11px;}
+#toolbox{
 
+  height:50px;
+  width:100%;
+}
+#toolbox a{
 
+float:right;
+margin-right:120px;
+margin-top:25px;
+}
 </style>
 <body>
-<div>
-<href></href>
+
+
+<div id='toolbox'>
+<a href='display_add_or_update_mobile_bannner/-1'>创建</a>
 </div>
 <table id="mytable" cellspacing="0" summary="The technical specifications of the Apple PowerMac G5 series">
-<caption>&nbsp;</caption>
   <tr>
     <th width="10%">编号</th>
     <th width="10%">名称</th>
     <th width='30%'>图片地址</th>
-    <th width='10%'>banner类型</th>
+    <th width='15%'>类型</th>
     <th width='10%'>排序</th>
     <th width='10%'>描述</th>
-    <th width='20%'>操作</th>
+    <th width='15%'>操作</th>
   </tr>
-  <tr>
-    <td class="spec">lipeng</td>
-    <td>M9454LL/A</td>
-    <td>M9455LL/A</td>
-    <td>M9457LL/A</td>
-    <td>M9457LL/A</td>
-     <td>M9457LL/A</td>
-     <td>M9457LL/A</td>
-  </tr>
+  
+  {% for banner in mobile_banners%}
+
+     <tr>
+    <td>{{banner.id}}</td>
+    <td>{{banner.name}}</td>
+    <td>{{banner.picture_url}}</td>
+    <td>{{banner.banner_type}}</td>
+     <td>{{banner.display_order}}</td>
+     <td>{{banner.description}}</td>
+     <td><a href='/m1/public/delete_mobile_banner?id={{banner.id}}'>删除</a>&nbsp <a href='/m1/public/display_add_or_update_mobile_bannner/{{banner.id}}'>更新</a></td>
+  </tr>  
+  {% endfor %}
+
  
 </table>
 </body>

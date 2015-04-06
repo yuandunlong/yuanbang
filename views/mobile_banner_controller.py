@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint,render_template
 from flask import request
-from flask import json,Response
-from database.models import MobileBanner
+from flask import json,Response,redirect
+from database.models import MobileBanner,db
 mobile_banner_controller=Blueprint('mobile_banner_controller',__name__)
 
 @mobile_banner_controller.route('/m1/public/get_mobile_banners',methods=['GET'])
@@ -23,7 +23,36 @@ def get_mobile_controller():
 
 @mobile_banner_controller.route('/m1/public/display_mobile_banner_manage',methods=['GET'])
 def display_mobile_banner_manage():
+    items=MobileBanner.query.filter().all()
+    mobile_banners=[]
+    for item in items:
+        mobile_banners.append(item.get_map())
+    return render_template('mobile_banner.html',mobile_banners=mobile_banners)
     
-    return render_template('mobile_banner.html')
+
+@mobile_banner_controller.route('/m1/public/display_add_or_update_mobile_bannner/<banner_id>')
+def display_add_or_update_mobile_bannner(banner_id):
+    m=None
+    if int(banner_id)>0:
+        m=MobileBanner.query.get(banner_id)
+    return render_template('add_or_update_banner.html',banner=m)
     
     
+@mobile_banner_controller.route('/m1/public/save_mobile_banner',methods=['POST'])    
+def save_mobile_banner():
+    
+    m=MobileBanner()
+    m.name=request.form.get('name')
+    m.picture_url=request.form.get('picture_url')
+    m.target=request.form.get('target')
+    m.banner_type=request.form.get('banner_type')
+    db.session.add(m)
+    db.session.commit()
+    return redirect('/m1/public/display_mobile_banner_manage')
+@mobile_banner_controller.route('/m1/public/delete_mobile_banner',methods=['GET'])
+def delete_mobile_banner():
+    
+    id=request.args['id']
+    sql='delete from mobile_banner where id=%s'
+    db.engine.execute(sql,(id))
+    return redirect('/m1/public/display_mobile_banner_manage')
