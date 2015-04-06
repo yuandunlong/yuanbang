@@ -17,15 +17,23 @@ def add_address(token_type,user_info):
         buyer_address.consignee=data.get('consignee')
         buyer_address.phone=data.get('phone')
         buyer_address.detail_address=data.get('detail_address')
-        buyer_address.xzb=Decimal(data.get('xzb'))
-        buyer_address.yzb=Decimal(data.get('yzb'))
+        xzb=data.get('xzb','')
+        if xzb=='':
+            xzb=0
+        yzb=data.get('yzb','')
+        if yzb=='':
+            yzb=0
+        buyer_address.xzb=Decimal(xzb)
+        buyer_address.yzb=Decimal(yzb)
         buyer_address.is_default=data.get('is_default')
         #如果是默认地址
         if buyer_address.is_default=="1":
             db.engine.execute('update tb_buyeraddress set IsDefault=0 where BuyerID=%s',(user_info.buyer_id))
         db.session.add(buyer_address)
         db.session.commit()
+        result['buyer_address']=buyer_address.get_map();  
     except Exception,e:
+        result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 
