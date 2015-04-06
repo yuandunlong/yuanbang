@@ -53,13 +53,15 @@ def add_attention_shop(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        attention=Attention()
-        attention.buyer_id=user_info.buyer_id
-        attention.attention_id=data['shop_id']
-        attention.attention_type='0'
-        attention.attention_time=datetime.today()
-        db.session.add(attention)
-        db.session.commit()
+        attention=Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['shop_id'],attention_type='0').first()
+        if not attention:
+            attention=Attention()
+            attention.buyer_id=user_info.buyer_id
+            attention.attention_id=data['shop_id']
+            attention.attention_type='0'
+            attention.attention_time=datetime.today()
+            db.session.add(attention)
+            db.session.commit()
         
     except Exception,e:
         result['code']=0
@@ -84,13 +86,15 @@ def add_attention_goods(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        attention=Attention()
-        attention.attention_id=data['goods_id']
-        attention.buyer_id=user_info.buyer_id
-        attention.attention_time=datetime.today()
-        attention.attention_type='3'
-        db.session.add(attention)
-        db.session.commit()
+        attention=Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['goods_id'],attention_type='3').first()
+        if not attention:
+            attention=Attention()
+            attention.attention_id=data['goods_id']
+            attention.buyer_id=user_info.buyer_id
+            attention.attention_time=datetime.today()
+            attention.attention_type='3'
+            db.session.add(attention)
+            db.session.commit()
     except Exception,e:
         result['code']=0
         result['msg']=e.message
