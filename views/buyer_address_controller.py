@@ -61,7 +61,7 @@ def update_address(token_type,user_info):
                 yzb=0
                 buyer_address.yzb=Decimal(yzb)
             if data.get('is_default'):
-                buyer_address.is_default=data.get('is_default')
+                buyer_address.is_default=str(data.get('is_default'))
                 if buyer_address.is_default=='1' or buyer_address.is_default==1:
                     db.engine.execute('update tb_buyeraddress set IsDefault=0 where BuyerID=%s',(user_info.buyer_id))
             db.session.commit()
