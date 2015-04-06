@@ -52,10 +52,14 @@ def update_address(token_type,user_info):
                 buyer_address.consignee=data.get('consignee')
             if data.get('phone'):
                 buyer_address.phone=data.get('phone')
-            if data.get('xzb'):
-                buyer_address.xzb=Decimal(data.get('xzb'))
-            if data.get('yzb'):
-                buyer_address.yzb=Decimal(data.get('yzb'))
+            xzb=data.get('xzb','')
+            if xzb=='':
+                xzb=0
+                buyer_address.xzb=Decimal(xzb)
+            yzb=data.get('yzb','')
+            if yzb=='':
+                yzb=0
+                buyer_address.yzb=Decimal(yzb)
             if data.get('is_default'):
                 buyer_address.is_default=data.get('is_default')
                 if buyer_address.is_default=='1' or buyer_address.is_default==1:
