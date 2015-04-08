@@ -209,6 +209,7 @@ class ShopCart(db.Model):
 	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
 	quantity=db.Column('Quantity',db.Integer)
 	create_time=db.Column('CreateTime',db.DateTime)
+	is_selected=db.Column('IsSelected',db.String(1))  #0未选中 1选中
 	
 	def get_map(self):
 		s=self

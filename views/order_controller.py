@@ -109,7 +109,7 @@ def create_order(token_type,user_info):
         receiver=query['receiver']
         phone=query['phone']
         remark=query.get('remark')
-        freight=query.get('freight')
+        freight=query['freight']
         goods_id=query['goods_id']
         
         order=Order()

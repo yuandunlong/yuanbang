@@ -105,10 +105,12 @@ def add_goods_into_shopcart(token_type,user_info):
         data=request.get_json()
         goods_id=data['goods_id']
         quantity=data['quantity']
+        is_selected=data.get('is_selected','1')
         shop_cart=ShopCart()
         shop_cart.buyer_id=user_info.buyer_id
         shop_cart.goods_id=goods_id
         shop_cart.quantity=quantity
+        shop_cart.is_selected=is_selected
         shop_cart.create_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         db.session.add(shop_cart)
         db.session.commit()
@@ -199,14 +201,39 @@ def update_goods_quantity(token_type,user_info):
 @check_token
 def clear_shopcart(token_type,user_info):
     
-    result={}
+    result={'code':1,'msg':'ok'}
     
     try:
-        db.engine.execute('delete from tb_shopingcart where BuyerID=%s',(user_info.buyer_id))
+        db.engine.execute('delete from tb_shoppingcart where BuyerID=%s',(user_info.buyer_id))
     except Exception,e:
         result['code']=0
         result['msg']=e.message
         
     return Response(json.dumps(result),content_type="application/json")
         
+
+@shopcart_controller.route('/m1/private/select_shopcart_goods',methods=['POST'])
+@check_token
+def select_shopcart_goods(token_type,user_info):
+    result={'code':1,'msg':'ok'}
     
+    try:
+        data=request.get_json()
+        db.engine.execute('update tb_shoppingcart set IsSelected=1 where BuyerID=%s and GoodsID=%s',(user_info.buyer_id,data['goods_id']))
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
+@shopcart_controller.route('/m1/private/unselect_shopcart_goods',methods=['POST'])
+@check_token
+def unselect_shopcart_goods(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        db.engine.execute('update tb_shoppingcart set IsSelected=0 where BuyerID=%s and GoodsID=%s',(user_info.buyer_id,data['goods_id']))
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
