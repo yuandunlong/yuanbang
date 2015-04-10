@@ -131,7 +131,7 @@ def get_shop_goods_for_discount():
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
 
-@shop_goods_controller.route('/m1/private/get_shop_goods_by_type',methods=['POST'])
+@shop_goods_controller.route('/m1/public/get_shop_goods_by_type',methods=['POST'])
 def get_shop_goods_by_type():
     result={'code':1,'msg':'ok'}
     
