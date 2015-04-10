@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint,request,Response,json
 from database.models import Constent,db,ShopInfo
+from utils import row_map_converter
 public_controller=Blueprint("public_controller",__name__)
 #获取商铺类别
 @public_controller.route('/m1/public/get_shop_types',methods=['GET'])
@@ -19,8 +20,8 @@ def get_shop_types():
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 #按照页码获取商铺类别下的商铺
-@public_controller.route('/m1/public/get_shop_lists_by_page',methods=['POST'])
-def get_shop_lists_by_page():
+#@public_controller.route('/m1/public/get_shop_lists_by_page',methods=['POST'])
+def get_shop_lists_by_page_bak():
     result={'code':1,'msg':''}
     try:
         query=request.get_json()
@@ -50,6 +51,91 @@ def get_shop_lists_by_page():
         result['msg']=e.message
         result['code']=0
     return Response(json.dumps(result),content_type="application/json")
+
+#按照页码获取商铺类别下的商铺
+@public_controller.route('/m1/public/get_shop_lists_by_page',methods=['POST'])
+def get_shop_lists_by_page():
+    result={'code':1,'msg':'ok'}
+    try:
+        query=request.get_json()
+        page=query.get('page',1)
+        page_size=query.get('count',20)
+        shop_type=query.get('shop_type')
+        order_by=query.get('order_by')
+        xzb=query.get('xzb')
+        yzb=query.get('yzb')
+        
+        sql='''
+        SELECT s.ShopName,s.ShopPhoto,s.ShopID,
+        '''
+        if xzb and yzb:
+            sql=sql+'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
+        else:
+            sql=sql+"'' AS Distance,"
+        sql=sql+'''
+                            IFNULL(v.VisitCount,0) AS VisitCount,
+                            IFNULL(o.Quantity,0) AS SaleCount
+                            FROM
+                                    tb_shopinfo_s s
+                                    LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM TB_VISITCOUNT_S GROUP BY ShopID) v ON s.ShopID = v.ShopID
+                                    LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
+                            WHERE
+                                    s.IsChecked = '2'
+                            AND	(s.xzb is not null or s.xzb <> '')
+                            AND (s.yzb is not null or s.yzb <> '')
+                            AND s.ShopType LIKE %s 
+    
+        '''
+        
+        if "saleasc"==order_by:
+            sql=sql+'order by SaleCount asc'
+        elif "saledesc"==order_by:
+            sql=sql+'order by SaleCount desc'
+        elif 'visitasc'==order_by:
+            sql=sql+'order by VisitCount asc'
+        elif 'visitdesc'==order_by:
+            sql=sql+'order by VisitCount desc'
+        elif 'distanceasc'==order_by:
+            sql=sql+'order by Distance asc'
+        elif 'distancedesc'==order_by:
+            sql=sql+'order by Distance desc'
+        else:
+            sql=sql+'order by SaleCount desc'
+        
+        sql=sql+' limit %s,%s'
+        if xzb and yzb:
+            result_set=db.engine.execute(sql,(xzb,yzb,'%'+shop_type+'%',page-1,page_size))
+        else:
+            result_set=db.engine.execute(sql,('%'+shop_type+'%',page-1,page_size))
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+        count_sql='''
+        select count(*) as total from tb_shopinfo_s s
+                                 LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM TB_VISITCOUNT_S GROUP BY ShopID) v ON s.ShopID = v.ShopID
+					LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
+				WHERE
+					s.IsChecked = '2'
+				AND	(s.xzb is not null or s.xzb <> '')
+				AND (s.yzb is not null or s.yzb <> '')
+				AND s.ShopType LIKE %s
+        '''
+        row=db.engine.execute(count_sql,('%'+shop_type+'%')).fetchone()
+        if row:
+            result['total_count']=row['total']
+        
+        result['shops']=arr
+        result['page']=page
+        result['count']=page_size
+        result['order_by']=order_by
+    except Exception ,e:
+        result['msg']=e.message
+        result['code']=0
+    return  Response(json.dumps(result),content_type="application/json")
+    
+    
+    
 @public_controller.route('/m1/public/search_shops_by_page',methods=['POST'])
 def search_shops_by_page():
     result={'code':1,'msg':''}
