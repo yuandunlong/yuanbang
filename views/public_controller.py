@@ -77,7 +77,7 @@ def get_shop_lists_by_page():
                             IFNULL(o.Quantity,0) AS SaleCount
                             FROM
                                     tb_shopinfo_s s
-                                    LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM tb_visitcount_s GROUP BY ShopID) v ON s.ShopID = v.ShopID
+                                    LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM  tb_visitcount_s GROUP BY ShopID) v ON s.ShopID = v.ShopID
                                     LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
                             WHERE
                                     s.IsChecked = '2'
