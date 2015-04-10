@@ -11,7 +11,7 @@ def get_shop_goods_photos():
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        photos=Photo.query.filter_by(link_id=data['goods_id'],is_cheked='1').order_by(desc(Photo.is_visable),desc(Photo.sort_no)).all()
+        photos=Photo.query.filter_by(link_id=data['goods_id'],is_checked='1').order_by(desc(Photo.is_visable),desc(Photo.sort_no)).all()
         arr=[]
         for photo in photos:
             arr.append(photo.get_map())
