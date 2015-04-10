@@ -1,3 +1,4 @@
 *.pyc
 /.codeintel/
 /doc/
+/app.cfg
