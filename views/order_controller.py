@@ -2,7 +2,7 @@
 from flask import Blueprint
 from flask import request
 from flask import Response,json
-from database.models import OrderDetail,db,Order
+from database.models import OrderDetail,db,Order,BuyerAddress
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter
 from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
@@ -161,5 +161,120 @@ def cancle_order(token_type,user_info):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result))
+
+@order_controller.route('/m1/private/create_order_by_shopcart')
+@check_token
+def create_order_by_shopcart(token_type,user_info):
+    try:
+        result={'code':1,'msg':'ok'}
+        data=request.get_json()
+        address_id=data['address_id']
+        buyerAddress=BuyerAddress.query.filter_by(address_id=address_id).first()
+        carGrouptList=getOrderCartList(user_info.buyer_id, address_id)
+        for ordr_info in carGrouptList:
+            order=Order()
+            order.order_no=build_order_no()
+            order.shop_id=order_info['shop_id']
+            order.buyer_id=user_info.buyer_id
+            order.sale_money=order_info['sum_the_shop']
+            order.freight=order_info['freight']
+            order.submit_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            order.address_id=address_id
+            order.send_address=buyerAddress.detail_address
+            order.receiver=buyerAddress.consignee
+            order.phone=buyerAddress.phone
+            order.remark=data.get('remark','')
+            db.session.add(order)
+            #goods_list=
+            
         
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result))
     
+        
+def getOrderCartList(user_id,address_id):
+    sql='''
+    
+        SELECT
+            a.BuyerID,
+            b.ShopID,
+            d.ShopName,
+            d.HasAlipay,
+            d.HasOnlineBank,
+                SUM(
+        
+                    IF (
+                        a.Quantity >= b.SetNum,
+                        round(b.SetPrice * a.Quantity, 2),
+                        round(
+                            round(b.SalePrice * b.Discount, 2) * a.Quantity,
+                            2
+                        )
+                    )
+                    ) AS sumTheShop,
+        
+            IF (
+                ROUND(
+                    SQRT(
+                        POW(s.mktxzb - d.mktxzb, 2) + POW(s.mktyzb - d.mktyzb, 2)
+                    )
+                    ) > FreeDistance,
+                ROUND(
+                    SQRT(
+                        POW(s.mktxzb - d.mktxzb, 2) + POW(s.mktyzb - d.mktyzb, 2)
+                    ) 
+                    ) - d.FreeDistance,
+                0
+                ) /1000* d.Freight AS Freight
+            FROM
+                tb_shoppingcart a
+            LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+            LEFT JOIN tb_shopinfo_s d ON d.ShopID = b.ShopID
+            LEFT JOIN tb_buyeraddress s ON s.BuyerID = a.BuyerID
+            AND s.AddressID = %s
+            WHERE
+                a.BuyerID = %s
+            AND a.IsSelected = 1
+            GROUP BY
+                b.ShopID,
+                a.BuyerID    
+    '''
+    result_set=db.engine.execute(sql,(address_id,user_id))
+    
+    arr=[]
+    for row in result_set:
+        row_map=row_map_converter(row)
+        arr.append(row_map)
+    return arr
+    
+def getGoodsList(shop_id,user_id):
+    sql='''SELECT
+    a.GoodsID,
+    a.Quantity,
+        b.SalePrice,
+        b.SetNum,
+        b.SetPrice,
+        b.SalePrice,
+
+    IF(
+        a.Quantity >= b.SetNum,
+        b.SetPrice,
+        round(b.SalePrice * b.Discount, 2) 
+        )AS DiscountPrice
+
+    FROM
+        tb_shoppingcart a
+    INNER JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+    INNER JOIN tb_shopinfo_s c ON c.ShopID = b.ShopID
+    WHERE
+        c.ShopID = %s
+    AND a.BuyerID = %s
+        AND a.Isselected = '1'''
+    result_set=db.engine.execute(sql,(shop_id,user_id))
+    arr=[]
+    for row in result_set:
+        row_map=row_map_converter(row)
+        arr.append(row_map)
+    return arr

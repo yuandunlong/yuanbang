@@ -66,7 +66,8 @@ def get_shop_lists_by_page():
         yzb=query.get('yzb')
         
         sql='''
-        SELECT s.ShopName,s.ShopPhoto,s.ShopID,
+        SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
+        s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,
         '''
         if xzb and yzb:
             sql=sql+'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
