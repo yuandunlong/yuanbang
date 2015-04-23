@@ -2,8 +2,8 @@
 from flask import Blueprint
 from flask import request
 from flask import json,jsonify,Response
-from database.models import Comment
-from views.utils import result_set_converter
+from database.models import Comment,db
+from views.utils import row_map_converter
 comment_controller=Blueprint('comment_controller',__name__)
 @comment_controller.route('/m1/public/get_shop_goods_comment',methods=['POST'])
 def get_shop_goods_commnet():
@@ -11,9 +11,34 @@ def get_shop_goods_commnet():
     try:
         data=request.get_json()
         page=data.get('page',1)
-        count=data.get('count',20)
-        comments=Comment.query.filter_by(shop_id=data['shop_id'],goods_id=data['goods_id']).offset(page).limit(count).all()
-        result['comments']=result_set_converter(comments)
+        page_size=data.get('page_size',20)
+       
+        comment_sql=''' 
+        select c.*,b.NickName ,b.Account from tb_comment c 
+           left join tb_buyer b on c.BuyerID =b.BuyerID  where ShopID=%s and GoodsID=%s limit %s,%s;
+        '''
+        result_set=db.engine.execute(comment_sql,(data['shop_id'],data['goods_id'],page-1,page_size))
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+            
+        result['comments']=arr
+        
+        sql='''
+        select avg(Level) as avg_level from tb_comment where ShopID=%s and GoodsID=%s;
+        '''
+        row=db.engine.execute(sql,(data['shop_id'],data['goods_id'])).fetchone()
+        if row:
+            result['avg_level']=int(row['avg_level'])
+        total_sql='''
+        select count(*) as total from tb_comment  where ShopID=%s and GoodsID=%s
+        '''
+        totalrow=db.engine.execute(total_sql,(data['shop_id'],data['goods_id'])).fetchone()
+        if totalrow:
+            result['total']=totalrow['total']
+        result['page']=page
+        result['page_size']=page_size
     except Exception,e:
         result['code']=0
         result['msg']=e.message

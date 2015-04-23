@@ -268,7 +268,7 @@ class Comment(db.Model):
 	commit_time=db.Column('CommitTime',db.DateTime)
 	reply_content=db.Column('ReplyContent',db.String(1000))
 	reply_time=db.Column('ReplyTime',db.DateTime)
-	del_flag=db.Column('del_flag',db.String(1)) #0 未删除 1已删除
+	del_flag=db.Column('DelFlag',db.String(1)) #0 未删除 1已删除
 	is_read=db.Column('IsRead',db.String(1))
 	
 	def get_map(self):
