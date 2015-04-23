@@ -14,8 +14,8 @@ def get_shop_goods_commnet():
         page_size=data.get('page_size',20)
        
         comment_sql=''' 
-        select c.*,b.NickName ,b.Account from tb_comment c 
-           left join tb_buyer b on c.BuyerID =b.BuyerID  where ShopID=%s and GoodsID=%s limit %s,%s;
+        select c.*,IFNULL(IF(b.NickName = '',NULL,b.NickName),b.Account) AS BuyerName from tb_comment c 
+           left join tb_buyer b on c.BuyerID =b.BuyerID  where ShopID=%s and GoodsID=%s order by c.CommitTime DESC limit %s,%s;
         '''
         result_set=db.engine.execute(comment_sql,(data['shop_id'],data['goods_id'],page-1,page_size))
         arr=[]
