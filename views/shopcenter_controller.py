@@ -19,7 +19,7 @@ def get_goods(token_type,shop):
     result={'code':1,'msg':'ok'}
     
     try:
-        
+        pass
     except Exception,e:
         result['code']=0
         result['msg']=e.message
@@ -30,7 +30,7 @@ def get_goods(token_type,shop):
 def get_orders(token_type,shop):
     result={'code':1,'msg':'ok'}
     try:
-        
+        pass
     except Exception,e:
         result['code']=0
         result['msg']=e.message
@@ -44,7 +44,7 @@ def get_msgs(token_type,shop):
     
     result={'code':1,'msg':'ok'}
     try:
-        
+        pass
     except Exception,e:
         result['code']=0
         result['msg']=e.message

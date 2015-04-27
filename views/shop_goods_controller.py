@@ -130,7 +130,45 @@ def get_shop_goods_for_discount():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-
+@shop_goods_controller.route('/m1/public/get_goods_by_id',methods=['POST'])
+def get_goods_by_id():
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''
+            SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+            round(g.SalePrice * g.Discount, 2) AS DisPrice,
+            IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+            IFNULL(o.SaleQuantity,0) AS TotalSale
+            FROM
+            tb_goodsinfo_s g
+            LEFT JOIN (
+            SELECT
+            sum(t.Quantity) AS SaleQuantity,
+            t.GoodsID
+            FROM
+            tb_order_s d,
+            tb_orderdetail_s t
+            WHERE
+            d.OrderNo = t.OrderNo
+            AND d.`Status` <> '3'
+            GROUP BY
+            t.GoodsID
+            ) o ON g.GoodsID = o.GoodsID
+            INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+            AND p.IsVisable = '1'
+            AND p.IsChecked = '1'
+            WHERE
+            g.GoodsID = %s
+            and g.Status = 0   '''     
+    
+        row=db.engine.execute(sql,(data['goods_id'])).fetchone()
+        if row:
+            result['goods_info']=row_map_converter(row)
+    except Exception, e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
 @shop_goods_controller.route('/m1/public/get_shop_goods_by_type',methods=['POST'])
 def get_shop_goods_by_type():
     result={'code':1,'msg':'ok'}
