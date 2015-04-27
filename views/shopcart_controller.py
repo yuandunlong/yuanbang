@@ -20,6 +20,8 @@ def get_shopcart_list(token_type,user_info):
             c.ThumbnailPath,
             c.PhotoID,
             c.PhotoName,
+            c.OrderAmount,
+            c.FarthestDistance,
             b.GoodsName,
             b.SalePrice,
             b.Discount,
@@ -79,6 +81,9 @@ def get_shopcart_list(token_type,user_info):
                 temp['thumbnail_path']=rows['ThumbnailPath']
                 temp['photo_id']=rows['PhotoID']
                 temp['photo_name']=rows['PhotoName']
+                temp['dis_price']=str(rows['DisPrice'])
+                temp['money']=str(rows['Money'])
+                temp['sum_quantity']=str(rows['SumQuantity'])
                 arr.append(temp)
             
             shopcarts=[]
@@ -153,23 +158,28 @@ def goods_exist_incart(token_type,user_info):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
-@shopcart_controller.route('/m1/private/add_or_update_goods_into_shopcart')
+@shopcart_controller.route('/m1/private/add_or_update_goods_into_shopcart',methods=['POST'])
 @check_token
 def add_or_update_goods_into_shopcart(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
         goods_id=data['goods_id']
+        quantity=data['quantity']
         result_set=db.engine.execute('select * from tb_shoppingcart where BuyerID=%s and GoodsID=%s',(user_info.buyer_id,goods_id))
         if result_set.rowcount>=1:
             shop_cart=ShopCart.query.filter_by(goods_id=goods_id,buyer_id=user_info.buyer_id).first()
             if shop_cart:
                 shop_cart.quantity=quantity  
+            if data.has_key("is_selected"):
+                shop_cart.is_selected=data.get('is_selected',"1")
+                
         else:
             shop_cart=ShopCart()
             shop_cart.buyer_id=user_info.buyer_id
             shop_cart.goods_id=goods_id
             shop_cart.quantity=quantity
+            shop_cart.is_selected=data.get('is_selected',"1")
             shop_cart.create_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             db.session.add(shop_cart)            
         db.session.commit()

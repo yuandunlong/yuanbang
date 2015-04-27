@@ -3,6 +3,54 @@ from flask import Blueprint,request,Response,json
 from database.models import Constent,db,ShopInfo
 from utils import row_map_converter
 public_controller=Blueprint("public_controller",__name__)
+
+def get_shop_by_id():
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''
+         SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
+                s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,
+            '''
+        if xzb and yzb:
+            sql=sql+'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
+        else:
+            sql=sql+"'' AS Distance,"
+        sql=sql+'''
+                            IFNULL(v.VisitCount,0) AS VisitCount,
+                            IFNULL(o.Quantity,0) AS SaleCount
+                            FROM
+                                    tb_shopinfo_s s
+                                    LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM  tb_visitcount_s GROUP BY ShopID) v ON s.ShopID = v.ShopID
+                                    LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
+                            WHERE
+                                    s.IsChecked = '2' and s.ShopID=%s                     
+        ''' 
+        row=db.engine.execute(sql,(data['shop_id'])).fetchone()
+        if row:
+            result['shop_info']=row_map_converter(row)
+        
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+def get_goods_by_id():
+    
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''
+        '''
+        row=db.engine.execute(sql,(data['goods_id'])).fetchone()
+        if row:
+            result['goods']=row_map_converter(row)
+        
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
 #获取商铺类别
 @public_controller.route('/m1/public/get_shop_types',methods=['GET'])
 def get_shop_types():
