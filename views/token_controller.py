@@ -67,7 +67,7 @@ def access_token():
 				
 				if pass_code==check_code:
 					access_token=map(lambda i: chr(random.randint(65,90)),range(32))
-					access_token=string.join(token,'')
+					access_token=string.join(access_token,'')
 					token=Token(shop_info.shop_id,account_type,auth_code,client_id,access_token)
 					db.session.add(token)
 					db.session.commit()					
