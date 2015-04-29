@@ -280,7 +280,7 @@ def get_most_discount_goods():
                 INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
                 AND p.IsVisable = '1'
                 AND p.IsChecked = '1'
-                order by Discount  desc limit 10
+                order by Discount  asc limit 10
             '''        
         result_set=db.engine.execute(sql)
         arr=[]
