@@ -219,7 +219,7 @@ def get_most_sale_goods():
     result={'code':1,'msg':'ok'}
     try:
         sql='''
-       SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+       SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
             round(g.SalePrice * g.Discount, 2) AS DisPrice,
             IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
             IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -253,6 +253,116 @@ def get_most_sale_goods():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+@public_controller.route('/m1/public/get_most_discount_goods',methods=['GET','POST'])            
+def get_most_discount_goods():
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''
+           SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
+                round(g.SalePrice * g.Discount, 2) AS DisPrice,
+                IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+                IFNULL(o.SaleQuantity,0) AS TotalSale
+                FROM
+                tb_goodsinfo_s g
+                LEFT JOIN (
+                SELECT
+                sum(t.Quantity) AS SaleQuantity,
+                t.GoodsID
+                FROM
+                tb_order_s d,
+                tb_orderdetail_s t
+                WHERE
+                d.OrderNo = t.OrderNo
+                AND d.`Status` <> '3'
+                GROUP BY
+                t.GoodsID
+                ) o ON g.GoodsID = o.GoodsID
+                INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+                AND p.IsVisable = '1'
+                AND p.IsChecked = '1'
+                order by Discount  desc limit 10
+            '''        
+        result_set=db.engine.execute(sql)
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+        result['goods_infos']=arr        
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+@public_controller.route('/m1/public/seach_goods_by_page',methods=['POST'])       
+def seach_goods_by_page():
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        page=data.get('page',1)
+        page_size=data.get('page_size',20)
+        sql='''
+               SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
+                    round(g.SalePrice * g.Discount, 2) AS DisPrice,
+                    IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+                    IFNULL(o.SaleQuantity,0) AS TotalSale
+                    FROM
+                    tb_goodsinfo_s g
+                    LEFT JOIN (
+                    SELECT
+                    sum(t.Quantity) AS SaleQuantity,
+                    t.GoodsID
+                    FROM
+                    tb_order_s d,
+                    tb_orderdetail_s t
+                    WHERE
+                    d.OrderNo = t.OrderNo
+                    AND d.`Status` <> '3'
+                    GROUP BY
+                    t.GoodsID
+                    ) o ON g.GoodsID = o.GoodsID
+                    INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+                    AND p.IsVisable = '1'
+                    AND p.IsChecked = '1'
+                    
+                    and GoodsName like %s limit %s,%s
+                '''    
+        result_set=db.engine.execute(sql,('%'+data['key_words']+'%',page-1,page_size))
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+        result['goods_infos']=arr
+        result['page']=page
+        result['page_size']=page_size
         
-    
+        count_sql='''
+         SELECT count(*) as total_count
+                    FROM
+                    tb_goodsinfo_s g
+                    LEFT JOIN (
+                    SELECT
+                    sum(t.Quantity) AS SaleQuantity,
+                    t.GoodsID
+                    FROM
+                    tb_order_s d,
+                    tb_orderdetail_s t
+                    WHERE
+                    d.OrderNo = t.OrderNo
+                    AND d.`Status` <> '3'
+                    GROUP BY
+                    t.GoodsID
+                    ) o ON g.GoodsID = o.GoodsID
+                    INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+                    AND p.IsVisable = '1'
+                    AND p.IsChecked = '1'
+                    
+                    and GoodsName like %s 
+        '''
+        row=db.engine.execute(count_sql,('%'+data['keyword']+'%')).fetchone()
+        if row:
+            result['total_count']=row['total_count']
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
     
