@@ -17,7 +17,7 @@ def get_shop_goods_comment():
         select c.*,IFNULL(IF(b.NickName = '',NULL,b.NickName),b.Account) AS BuyerName from tb_comment c 
            left join tb_buyer b on c.BuyerID =b.BuyerID  where GoodsID=%s order by c.CommitTime DESC limit %s,%s;
         '''
-        result_set=db.engine.execute(comment_sql,(data['shop_id'],data['goods_id'],page-1,page_size))
+        result_set=db.engine.execute(comment_sql,(data['goods_id'],page-1,page_size))
         arr=[]
         for row in result_set:
             temp=row_map_converter(row)
@@ -33,9 +33,9 @@ def get_shop_goods_comment():
             if row['avg_level']:
                 result['avg_level']=int(row['avg_level'])
         total_sql='''
-        select count(*) as total from tb_comment  where ShopID=%s and GoodsID=%s
+        select count(*) as total from tb_comment  where  GoodsID=%s
         '''
-        totalrow=db.engine.execute(total_sql,(data['shop_id'],data['goods_id'])).fetchone()
+        totalrow=db.engine.execute(total_sql,(data['goods_id'])).fetchone()
         if totalrow:
             result['total']=totalrow['total']
         result['page']=page
@@ -45,17 +45,21 @@ def get_shop_goods_comment():
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
         
-@comment_controller.route('/m1/public/get_shop_goods_comment',methods=['POST'])
+@comment_controller.route('/m1/public/get_shop_avg_level_comment',methods=['POST'])
 def get_shop_avg_level_comment():
     result={'code':1,'msg':'ok'}
+    avg_levle=5
     try:
+        data=request.get_json()
         sql='''
-            select avg(Level) as avg_level from tb_comment where ShopID=%s ;'''    
+            select avg(Level) as avg_level from tb_comment where ShopID=%s ;'''   
+        row=db.engine.execute(sql,(data['shop_id'])).fetchone()
         if row:
             if row['avg_level']:
-                result['avg_level']=int(row['avg_level'])        
+                avg_levle=int(row['avg_level'])    
+        result['avg_level']=avg_levle
     except Exception,e:
-        result['code']=1
+        result['code']=0
         result['msg']='ok'
     return Response(json.dumps(result),content_type='application/json')
         

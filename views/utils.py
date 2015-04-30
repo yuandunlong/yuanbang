@@ -51,7 +51,10 @@ def row_map_converter(row):
             v=str(v)
         if k.endswith('ID'):
             key=k.lower()[:-2]+'_id'
-            temp[key]=int(v)
+            if str.isdigit(str(v)):
+                temp[key]=int(v)
+            else:
+                temp[key]=str(v)
         else:
             temp[camel_to_underline(k)]=v
     return temp

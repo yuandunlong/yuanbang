@@ -1,103 +1,101 @@
 # -*- coding: utf-8 -*-
 from flask import json,Response,Blueprint,request
-from utils import check_token
+from utils import check_token,row_map_converter
 from datetime import datetime
 from database.models import db,ShopCart
 shopcart_controller=Blueprint('shopcart_controller',__name__)
 
-@shopcart_controller.route('/m1/private/get_shopcart_list',methods=['GET','POST'])
+@shopcart_controller.route('/m1/private/get_shopcart_list',methods=['POST'])
 @check_token
 def get_shopcart_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
-            sql='''
-            SELECT
-            x.ShopID,
-            x.ShopName,
-            a.GoodsID,
-            a.CreateTime,
-            c.PhotoPath,
-            c.ThumbnailPath,
-            c.PhotoID,
-            c.PhotoName,
-            a.OrderAmount,
-            c.FarthestDistance,
-            b.GoodsName,
-            b.SalePrice,
-            b.Discount,
-            a.Quantity,
-            a.IsSelected,
-            b.SetNum,
+        data=request.get_json()
+        sql='''
+        SELECT
+        x.ShopID,
+        x.ShopName,
+        a.GoodsID,
+        a.CreateTime,
+        c.PhotoPath,
+        c.ThumbnailPath,
+        c.PhotoID,
+        c.PhotoName,
+        x.OrderAmount,
+        x.FarthestDistance,
+        x.Freight,
+        x.FreeDistance,
+        b.GoodsName,
+        b.SalePrice,
+        b.Discount,
+        a.Quantity,
+        a.IsSelected,
+        b.SetNum,
+        b.SetPrice,
+        IF (
+            a.Quantity >= b.SetNum,
             b.SetPrice,
+            round(b.SalePrice * b.Discount, 2)
+            ) AS DisPrice,
             IF (
                 a.Quantity >= b.SetNum,
-                b.SetPrice,
-                round(b.SalePrice * b.Discount, 2)
-                ) AS DisPrice,
-                IF (
-                    a.Quantity >= b.SetNum,
-                    round(b.SetPrice * a.Quantity, 2),
-                    round(
-                        round(b.SalePrice * b.Discount, 2) * a.Quantity,
-                        2
-                    )
-                    ) AS Money,
-                IFNULL(d.Quantity,0) AS SumQuantity
-            FROM  tb_shoppingcart a
-            LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
-            LEFT JOIN tb_photo c ON b.GoodsID = c.LinkID
-            LEFT JOIN tb_shopinfo_s x ON b.ShopID = x.ShopID
-            AND c.IsChecked = '1'
-            AND c.IsVisable = '1'
-            LEFT JOIN (
-                SELECT
-                GoodsID,
-                SUM(Quantity) AS Quantity
-                FROM
-                tb_purchase_s
-                GROUP BY
-                GoodsID
-                ) d ON a.GoodsID = d.GoodsID
-            WHERE
-                a.BuyerID = %s
-            ORDER BY
-                b.ShopID,a.GoodsID ;
-            '''
-            result_set=db.engine.execute(sql,[user_info.buyer_id])
-            arr=[]
-            for rows in result_set:
-                temp={}
-                temp['goods_id']=rows['GoodsID']
-                temp['shop_id']=rows['ShopID']
-                temp['shop_name']=rows['ShopName']
-                temp['is_selected']=rows['IsSelected']
-                temp['goods_name']=rows['GoodsName']
-                temp['sale_price']=str(rows['SalePrice'])
-                temp['photo_path']=rows['PhotoPath']
-                temp['discount']=str(rows['Discount'])
-                temp['quantity']=rows['Quantity']
-                temp['set_num']=rows['SetNum']
-                temp['set_price']=rows['SetPrice']
-                temp['thumbnail_path']=rows['ThumbnailPath']
-                temp['photo_id']=rows['PhotoID']
-                temp['photo_name']=rows['PhotoName']
-                temp['dis_price']=str(rows['DisPrice'])
-                temp['money']=str(rows['Money'])
-                temp['sum_quantity']=str(rows['SumQuantity'])
-                arr.append(temp)
+                round(b.SetPrice * a.Quantity, 2),
+                round(
+                    round(b.SalePrice * b.Discount, 2) * a.Quantity,
+                    2
+                )
+                ) AS Money,
+            IFNULL(d.Quantity,0) AS SumQuantity
+        FROM  tb_shoppingcart a
+        LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+        LEFT JOIN tb_photo c ON b.GoodsID = c.LinkID
+        LEFT JOIN tb_shopinfo_s x ON b.ShopID = x.ShopID 
+        AND c.IsChecked = '1'
+        AND c.IsVisable = '1'
+        LEFT JOIN (
+            SELECT
+            GoodsID,
+            SUM(Quantity) AS Quantity
+            FROM
+            tb_purchase_s
+            GROUP BY
+            GoodsID
+            ) d ON a.GoodsID = d.GoodsID
+        WHERE
+            a.BuyerID = %s
+        ORDER BY
+            b.ShopID,a.GoodsID ;
+        '''
+        result_set=db.engine.execute(sql,[user_info.buyer_id])
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+        
+        shopcarts=[]
+        for item in arr:
+            if item['shop_id']==None or item['shop_id']=='None':
+                continue            
+            temp_shop={
+                'shop_id':item['shop_id'],
+                'shop_name':item['shop_name'],
+                'free_distance':item['free_distance'],
+                'freight':item['freight']
             
-            shopcarts=[]
-            for item in arr:
-                if item['shop_id']==None:
-                    continue
-                if shopcarts.count({'shop_id':item['shop_id'],'shop_name':item['shop_name']})>0:
-                    
-                    shopcarts[shopcarts.index({'shop_id':item['shop_id'],'shop_name':item['shop_name']})]['goods'].append(item)
-                else:
-                    temp_arr=[]
-                    temp_arr.append(item)
-                    shopcarts.append({'shop_id':item['shop_id'],'shop_name':item['shop_name'],'goods':temp_arr})
-            result['shopcarts']=shopcarts
+            }
+            
+            count=0
+            for shopcart in shopcarts:
+                count=count+1
+                if shopcart['shop_id']==item['shop_id']:
+                    shopcart['goods'].append(item)
+                    break
+            if count==len(shopcarts):
+                temp_arr=[]
+                temp_arr.append(item)
+                temp_shop['goods']=temp_arr
+                shopcarts.append(temp_shop)
+        result['shopcarts']=shopcarts
     except Exception ,e:
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
