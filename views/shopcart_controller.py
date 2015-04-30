@@ -20,7 +20,7 @@ def get_shopcart_list(token_type,user_info):
             c.ThumbnailPath,
             c.PhotoID,
             c.PhotoName,
-            c.OrderAmount,
+            a.OrderAmount,
             c.FarthestDistance,
             b.GoodsName,
             b.SalePrice,

@@ -15,7 +15,7 @@ def get_shop_goods_comment():
        
         comment_sql=''' 
         select c.*,IFNULL(IF(b.NickName = '',NULL,b.NickName),b.Account) AS BuyerName from tb_comment c 
-           left join tb_buyer b on c.BuyerID =b.BuyerID  where ShopID=%s and GoodsID=%s order by c.CommitTime DESC limit %s,%s;
+           left join tb_buyer b on c.BuyerID =b.BuyerID  where GoodsID=%s order by c.CommitTime DESC limit %s,%s;
         '''
         result_set=db.engine.execute(comment_sql,(data['shop_id'],data['goods_id'],page-1,page_size))
         arr=[]
@@ -26,9 +26,9 @@ def get_shop_goods_comment():
         result['comments']=arr
         
         sql='''
-        select avg(Level) as avg_level from tb_comment where ShopID=%s and GoodsID=%s;
+        select avg(Level) as avg_level from tb_comment where GoodsID=%s;
         '''
-        row=db.engine.execute(sql,(data['shop_id'],data['goods_id'])).fetchone()
+        row=db.engine.execute(sql,(data['goods_id'])).fetchone()
         if row:
             if row['avg_level']:
                 result['avg_level']=int(row['avg_level'])
@@ -43,6 +43,20 @@ def get_shop_goods_comment():
     except Exception,e:
         result['code']=0
         result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+@comment_controller.route('/m1/public/get_shop_goods_comment',methods=['POST'])
+def get_shop_avg_level_comment():
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''
+            select avg(Level) as avg_level from tb_comment where ShopID=%s ;'''    
+        if row:
+            if row['avg_level']:
+                result['avg_level']=int(row['avg_level'])        
+    except Exception,e:
+        result['code']=1
+        result['msg']='ok'
     return Response(json.dumps(result),content_type='application/json')
         
     
