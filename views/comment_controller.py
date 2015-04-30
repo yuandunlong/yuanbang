@@ -6,7 +6,7 @@ from database.models import Comment,db
 from views.utils import row_map_converter
 comment_controller=Blueprint('comment_controller',__name__)
 @comment_controller.route('/m1/public/get_shop_goods_comment',methods=['POST'])
-def get_shop_goods_commnet():
+def get_shop_goods_comment():
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
@@ -30,7 +30,8 @@ def get_shop_goods_commnet():
         '''
         row=db.engine.execute(sql,(data['shop_id'],data['goods_id'])).fetchone()
         if row:
-            result['avg_level']=int(row['avg_level'])
+            if row['avg_level']:
+                result['avg_level']=int(row['avg_level'])
         total_sql='''
         select count(*) as total from tb_comment  where ShopID=%s and GoodsID=%s
         '''
