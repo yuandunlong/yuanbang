@@ -292,8 +292,9 @@ def get_most_discount_goods():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-@public_controller.route('/m1/public/seach_goods_by_page',methods=['POST'])       
-def seach_goods_by_page():
+
+@public_controller.route('/m1/public/search_goods_by_page',methods=['POST'])       
+def search_goods_by_page():
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
@@ -357,7 +358,7 @@ def seach_goods_by_page():
                     
                     and GoodsName like %s 
         '''
-        row=db.engine.execute(count_sql,('%'+data['keyword']+'%')).fetchone()
+        row=db.engine.execute(count_sql,('%'+data['key_words']+'%')).fetchone()
         if row:
             result['total_count']=row['total_count']
     except Exception,e:
