@@ -76,7 +76,7 @@ html>body td{ font-size:11px;}
 body {
  font: normal 14px auto "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
  color: #4f6b72;
- margin 0 auto;
+ margin: 0 auto;
  background: #E6EAE9;
 }
 a {
@@ -157,7 +157,7 @@ margin-top:25px;
   <tr>
     <th width="10%">编号</th>
     <th width="10%">名称</th>
-    <th width='30%'>图片地址</th>
+    <th width='30%'>图片</th>
     <th width='15%'>类型</th>
     <th width='10%'>排序</th>
     <th width='10%'>描述</th>
@@ -169,7 +169,7 @@ margin-top:25px;
      <tr>
     <td>{{banner.id}}</td>
     <td>{{banner.name}}</td>
-    <td>{{banner.picture_url}}</td>
+    <td><img style='width:200px;height:100px' src='http://www.yuanbangshop.com/{{banner.picture_url}}'/></td>
     <td>{{banner.banner_type}}</td>
      <td>{{banner.display_order}}</td>
      <td>{{banner.description}}</td>

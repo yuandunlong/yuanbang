@@ -54,7 +54,8 @@ def site_map():
 @app.route('/')
 def hello_world():
 	return jsonify({'hello':'world'})
-
+UPLOAD_FOLDER = '../uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if __name__ == '__main__':
 	import sys
 	reload(sys) 
