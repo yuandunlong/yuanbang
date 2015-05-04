@@ -62,8 +62,9 @@ def save_mobile_banner():
     if request.files.has_key('image'):
         f=request.files['image']
         file_name='_'+str(int(time.mktime(time.localtime())))+secure_filename(f.filename)
-        m.picture_url='uploads/'+file_name
-        f.save(os.path.join('/Users/yuandunlong/uploads/',file_name))
+        if f.filename!='':
+            m.picture_url='uploads/'+file_name
+            f.save(os.path.join(r'D:\\wamp\www\\uploads\\',file_name))
     if not m.id:
         db.session.add(m)
     db.session.commit()

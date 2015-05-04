@@ -253,6 +253,16 @@ def get_most_sale_goods():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+
+def get_home_page_shop_goods():
+    result={'code':1,'msg':'ok'}
+    try:
+        
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+        
+
 @public_controller.route('/m1/public/get_most_discount_goods',methods=['GET','POST'])            
 def get_most_discount_goods():
     result={'code':1,'msg':'ok'}
