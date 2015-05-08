@@ -76,7 +76,7 @@ html>body td{ font-size:11px;}
 body {
  font: normal 14px auto "Trebuchet MS", Verdana, Arial, Helvetica, sans-serif;
  color: #4f6b72;
- margin 0 auto;
+ margin: 0 auto;
  background: #E6EAE9;
 }
 a {
@@ -157,7 +157,7 @@ margin-top:25px;
   <tr>
     <th width="10%">编号</th>
     <th width="10%">名称</th>
-    <th width='30%'>图片地址</th>
+    <th width='30%'>图片</th>
     <th width='15%'>类型</th>
     <th width='10%'>排序</th>
     <th width='10%'>描述</th>
@@ -169,8 +169,21 @@ margin-top:25px;
      <tr>
     <td>{{banner.id}}</td>
     <td>{{banner.name}}</td>
-    <td>{{banner.picture_url}}</td>
-    <td>{{banner.banner_type}}</td>
+    <td><img style='width:200px;height:100px' src='http://www.yuanbangshop.com/{{banner.picture_url}}'/></td>
+    <td>{%if banner.banner_type==1%}
+              商铺
+    
+        {%endif%}
+        {%if banner.banner_type==2%}
+              商品
+    
+        {%endif%}
+        {%if banner.banner_type==3%}
+              链接
+    
+        {%endif%}
+    
+    </td>
      <td>{{banner.display_order}}</td>
      <td>{{banner.description}}</td>
      <td><a href='/m1/public/delete_mobile_banner?id={{banner.id}}'>删除</a>&nbsp <a href='/m1/public/display_add_or_update_mobile_bannner/{{banner.id}}'>更新</a></td>

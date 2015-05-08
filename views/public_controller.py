@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint,request,Response,json
-from database.models import Constent,db,ShopInfo
+from database.models import Constent,db,ShopInfo,BuyerAddress
 from utils import row_map_converter
 public_controller=Blueprint("public_controller",__name__)
 
@@ -253,6 +253,86 @@ def get_most_sale_goods():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+@public_controller.route('/m1/public/get_home_page_shop_goods',methods=['POST'])
+def get_home_page_shop_goods():
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        buyer_id=data.get('buyer_id')
+        page_size=int(data.get('page_size',10))
+        page=int(data.get('page',1))
+        xzb=None
+        yzb=None
+        if data.get('xzb') and data.get('yzb'):
+            xzb=data['xzb']
+            yzb=data['yzb']
+        elif buyer_id:
+            buyer_address=BuyerAddress.query.filter_by(buyer_id=buyer_id,is_default='1').first()
+            if buyer_address:
+                xzb=buyer_address.xzb
+                yzb=buyer_address.yzb
+        if xzb and yzb:
+            sql='''
+            
+              select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop order by Distance limit %s,%s
+            '''
+            shops=db.engine.execute(sql,(xzb,yzb,page-1,page_size))
+        else:
+            sql='''
+            select shop.* from tb_shopinfo_s shop limit %s,%s
+    
+            '''
+            shops=db.engine.execute(sql,(page-1,page_size))
+        shop_arr=[]
+        for shop in shops:
+            shop_temp=row_map_converter(shop)
+            
+            temp_sql='''
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
+        round(g.SalePrice * g.Discount, 2) AS DisPrice,
+        IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+        IFNULL(o.SaleQuantity,0) AS TotalSale
+        FROM
+        tb_goodsinfo_s g
+        LEFT JOIN (
+            SELECT
+            sum(t.Quantity) AS SaleQuantity,
+            t.GoodsID
+            FROM
+            tb_order_s d,
+            tb_orderdetail_s t
+            WHERE
+            d.OrderNo = t.OrderNo
+            AND d.`Status` <> '3'
+            GROUP BY
+            t.GoodsID
+            ) o ON g.GoodsID = o.GoodsID
+        INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+        AND p.IsVisable = '1'
+        AND p.IsChecked = '1'
+        
+        where ShopID=%s
+        order by Discount  asc limit 2
+            
+            '''
+            goods=db.engine.execute(temp_sql,(shop_temp['shop_id']))
+            goods_arr=[]
+            for good in goods:
+                good_temp=row_map_converter(good)
+                goods_arr.append(good_temp)
+            shop_temp['most_discount_goods']=goods_arr
+            
+            shop_arr.append(shop_temp)
+        result['shopinfos']=shop_arr
+            
+        result['page_size']=page_size
+        result['page']=page
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+
 @public_controller.route('/m1/public/get_most_discount_goods',methods=['GET','POST'])            
 def get_most_discount_goods():
     result={'code':1,'msg':'ok'}
@@ -365,5 +445,42 @@ def search_goods_by_page():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+@public_controller.route('/m1/public/search_goods_by_bar_code',methods=['POST'])       
+def search_goods_by_bar_code():
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
+    round(g.SalePrice * g.Discount, 2) AS DisPrice,
+    IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+    IFNULL(o.SaleQuantity,0) AS TotalSale
+    FROM
+    tb_goodsinfo_s g
+    LEFT JOIN (
+        SELECT
+        sum(t.Quantity) AS SaleQuantity,
+        t.GoodsID
+        FROM
+        tb_order_s d,
+        tb_orderdetail_s t
+        WHERE
+        d.OrderNo = t.OrderNo
+        AND d.`Status` <> '3'
+        GROUP BY
+        t.GoodsID
+        ) o ON g.GoodsID = o.GoodsID
+    INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+    AND p.IsVisable = '1'
+    AND p.IsChecked = '1'
+
+    and BarCode = %s 
+        '''
+        row=db.engine.execute(sql,(data['bar_code'])).fetchone()
+        if row:
+            result['goods']=row_map_converter(row)
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
         
-    
