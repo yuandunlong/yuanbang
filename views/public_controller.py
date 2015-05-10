@@ -579,6 +579,8 @@ def search_goods_by_page_ex():
             temp=row_map_converter(row)
             goods.append(temp)
         result['goods']=goods
+        result['page']=page
+        result['page_size']=page_size
     except Exception,e:
         result['code']=0
         result['msg']=e.message
