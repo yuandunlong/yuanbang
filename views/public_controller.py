@@ -380,6 +380,7 @@ def search_goods_by_page():
         data=request.get_json()
         page=data.get('page',1)
         page_size=data.get('page_size',20)
+        order_by=data.get('order_by')
         sql='''
                SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
                     round(g.SalePrice * g.Discount, 2) AS DisPrice,
@@ -483,4 +484,104 @@ def search_goods_by_bar_code():
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+        
+        
+
+@public_controller.route('/m1/public/search_goods_by_page_ex',methods=['POST'])
+def search_goods_by_page_ex():
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        xzb=data.get('xzb',None)
+        yzb=data.get('yzb',None)
+        page=data.get('page',1)
+        page_size=data.get('page_size',10)
+        order_by=data.get('order_by','')
+        sql='''
+        SELECT g.ShopID,g.GoodsID,g.GoodsName,g.SalePrice,round(g.SalePrice * g.Discount, 2) AS DisPrice,
+        p.ThumbnailPath,
+        IFNULL(o.Quantity, 0) AS Quantity,
+        s.ShopName,
+        '''
+        if  xzb and  yzb:
+            sql+='ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance '
+            
+        else:
+            sql+=''' 0 as Distance '''
+            
+            
+        sql+='''
+        FROM TB_GOODSINFO_S g
+        INNER JOIN tb_shopinfo_s s ON s.ShopID = g.ShopID
+        AND s.IsChecked = '2'
+        AND (
+            s.ShopType IS NOT NULL
+            OR s.ShopType <> ''
+        )
+        AND (s.xzb IS NOT NULL OR s.xzb <> '')
+        AND (s.yzb IS NOT NULL OR s.yzb <> '')
+        
+        LEFT JOIN (
+                SELECT
+                sum(t.Quantity) AS Quantity,
+                t.GoodsID
+                FROM
+                tb_order_s d,
+                tb_orderdetail_s t
+                WHERE
+                d.OrderNo = t.OrderNo
+                AND d.`Status` <> '3'
+                GROUP BY
+                t.GoodsID
+                ) o ON g.GoodsID = o.GoodsID
+                INNER JOIN TB_PHOTO p ON g.GoodsID = p.LinkID
+                AND p.IsVisable = '1'
+                AND p.IsChecked = '1'
+                LEFT JOIN TB_GOODSTYPE_M m on m.GoodsTypeID = g.GoodsTypeID
+                WHERE g.Status = 0
+                AND	(g.GoodsName LIKE %s
+                OR  g.GoodsLocality LIKE %s
+                OR  g.GoodsBrand LIKE %s
+                OR  g.GoodsSpec LIKE %s
+                OR  m.GoodsTypeName LIKE %s
+                OR  g.Remark LIKE %s)
+        
+        '''
+        
+        if order_by=='saleasc':
+            sql+='ORDER BY IFNULL(o.Quantity,0) asc'
+        elif order_by=='saledesc':
+            sql+='ORDER BY IFNULL(o.Quantity,0) desc '
+        elif order_by=='distancedesc':
+            sql+='ORDER BY Distance desc '
+        elif order_by=='distanceasc':
+            sql+='ORDER BY Distance asc'
+        elif order_by=='pricedesc':
+            sql+='ORDER BY round(g.SalePrice * g.Discount, 2) desc '
+        elif order_by=='priceasc':
+            sql+='ORDER BY round(g.SalePrice * g.Discount, 2) asc'
+        else:
+            sql+='ORDER BY Distance asc'
+        
+        sql+=' limit %s,%s'
+        
+        search_words='%'+data['key_words']+'%'
+        
+        if  xzb and yzb:
+            result_set=db.engine.execute(sql,(xzb,yzb,search_words,search_words,search_words,search_words,search_words,search_words,page-1,page_size))
+            
+        else:
+            result_set=db.engine.execute(sql,(search_words,search_words,search_words,search_words,search_words,search_words,page-1,page_size))
+            
+            
+        goods=[]   
+        for row in result_set:
+            temp=row_map_converter(row)
+            goods.append(temp)
+        result['goods']=goods
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
         
