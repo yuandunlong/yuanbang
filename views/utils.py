@@ -2,6 +2,8 @@
 from flask import request,Response,json
 from database.models import db,Token,Buyer,ShopInfo
 from datetime import datetime
+import time
+import math
 from decimal import Decimal
 def check_token(func):
     def wrapper():
@@ -84,6 +86,7 @@ def build_order_no():
     arr=[]
     for i in range(6):
         arr.append(str(ord(uiq[7+i])))
+    temp=''.join(arr)
     
     return (datetime.now().strftime('%Y%m%d')+temp[:8])    
 

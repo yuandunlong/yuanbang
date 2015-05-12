@@ -2,7 +2,7 @@
 from flask import Blueprint
 from flask import request
 from flask import Response,json
-from database.models import OrderDetail,db,Order,BuyerAddress
+from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter
 from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
@@ -162,16 +162,18 @@ def cancle_order(token_type,user_info):
         result['msg']=e.message
     return Response(json.dumps(result))
 
-@order_controller.route('/m1/private/create_order_by_shopcart')
+@order_controller.route('/m1/private/submit_order_by_shopcart',methods=['POST'])
 @check_token
-def create_order_by_shopcart(token_type,user_info):
+def submit_order_by_shopcart(token_type,user_info):
+    result={'code':1,'msg':'ok'}
     try:
-        result={'code':1,'msg':'ok'}
         data=request.get_json()
-        address_id=data['address_id']
-        buyerAddress=BuyerAddress.query.filter_by(address_id=address_id).first()
-        carGrouptList=getOrderCartList(user_info.buyer_id, address_id)
-        for ordr_info in carGrouptList:
+        buyerAddress=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
+        if not buyerAddress:
+            raise Exception('user dont have default address')
+        carGrouptList=getOrderCartList(user_info.buyer_id, buyerAddress.address_id)
+        
+        for order_info in carGrouptList:
             order=Order()
             order.order_no=build_order_no()
             order.shop_id=order_info['shop_id']
@@ -179,20 +181,156 @@ def create_order_by_shopcart(token_type,user_info):
             order.sale_money=order_info['sum_the_shop']
             order.freight=order_info['freight']
             order.submit_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            order.address_id=address_id
+            order.address_id=buyerAddress.address_id
             order.send_address=buyerAddress.detail_address
             order.receiver=buyerAddress.consignee
             order.phone=buyerAddress.phone
             order.remark=data.get('remark','')
+            order.status='0' #已提交
             db.session.add(order)
-            #goods_list=
+            goods_list=getGoodsList(order.shop_id,order.buyer_id)
             
+            for goods_info in goods_list:
+                purchases=Purchase.query.filter_by(goods_id=goods_info['goods_id']).order_by(Purchase.batch_no)
+                quantity=goods_info['quantity']
+                for purchase_info in purchases:
+                    if purchase_info.quantity>=quantity:
+                        purchase_info.quantity-=quantity
+                        #生成订单明细表
+                        order_detail=OrderDetail()
+                        order_detail.order_no=order.order_no
+                        order_detail.goods_id=goods_info['goods_id']
+                        order_detail.batch_no=purchase_info.batch_no
+                        order_detail.sale_price=goods_info['sale_price']
+                        order_detail.quantity=quantity
+                        order_detail.discount_price=goods_info['discount_price']
+                        db.session.add(order_detail)
+                    else:
+                        purchase_info.quantity=0
+                        order_detail=OrderDetail()
+                        order_detail.order_no=order.order_no
+                        order_detail.goods_id=goods_info['goods_id']
+                        order_detail.batch_no=purchase_info.batch_no
+                        order_detail.sale_price=goods_info['sale_price']
+                        order_detail.quantity=purchase_info.quantity
+                        order_detail.discount_price=goods_info['discount_price']
+                        db.session.add(order_detail)                        
+                        quantity-=purchase_info.quantity
+            message=Message()
+            message.sender_type='3'
+            message.sender_name='系统消息'
+            message.receiver_type='1' #商铺
+            message.receiver=order_info['shop_id']
+            message.receiver_name=order_info['shop_name']
+            message.send_title=r'您有一个新订单：'+order.order_no
+            message.send_content=r'''您有一个新的订单：<a style='text-decoration:underline' href='index.php/Display/OrderDetailPage?OrderNo=".$OrderNo."'>".$OrderNo."</a><br/><div class='date'>点击订单编号查看详细信息！</div> '''
+            message.send_time=datetime.now()
+                
+            db.session.add(message)
+            db.session.commit()
+            
+        #删除购物车
+        delete_cart_sql='''
+        delete from tb_shoppingcart where BuyerID=%s and IsSelected=1
+        '''
+        db.engine.execute(delete_cart_sql,(user_info.buyer_id))
+        db.session.commit()
         
     except Exception,e:
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result))
     
+#下单前的界面get_preview_orders_by_shopcart
+@order_controller.route('/m1/private/get_preview_orders_by_shopcart',methods=['POST'])
+@check_token
+def get_preview_orders_by_shopcart(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        buyer_address=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
+        if not buyer_address:
+            raise Exception('user dont have default address')
+        xzb=buyer_address.xzb
+        yzb=buyer_address.yzb
+        is_selected=data.get('is_selected',None)
+        
+        sql='''
+        SELECT
+        a.GoodsID,
+        c.ShopID,
+        c.ShopName,
+        a.quantity,
+        b.SalePrice,
+        b.Discount,
+        b.SetNum,
+        b.SetPrice,
+        c.FarthestDistance/1000 as FarthestDistance,
+        c.Freight as FreightPerKilometre,
+        '''
+        
+        if xzb and yzb:
+            sql+='''ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2))/1000,2) AS Distance,'''
+            sql+='''
+            
+                IF (
+                    ROUND(
+                        SQRT(
+                            POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
+                            ),
+                        2
+                        ) > c.FreeDistance,
+                    CEIL(
+                        ROUND(
+                            SQRT(
+                                POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
+                                ),
+                            2
+                            ) - FreeDistance
+                        ) /1000* Freight,
+                    0
+                    ) AS TotalFreight,sum(
+                
+                    IF (
+                        a.Quantity >= b.SetNum,
+                        round(b.SetPrice * a.Quantity, 2),
+                        round(
+                            round(b.SalePrice * b.Discount, 2) * a.Quantity,
+                            2
+                        )
+                    )
+                    )AS Money
+                    FROM
+                        tb_shoppingcart a
+                    LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+                    LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
+                    WHERE
+                        a.BuyerID = %s
+            '''
+        if is_selected=='1' or is_selected==1:
+            sql+='and a.IsSelected=1'
+        sql+='''
+                    GROUP BY
+                    c.ShopID,
+                    c.ShopName
+                    ORDER BY
+                        c.ShopID
+            '''
+        if xzb and yzb:
+            result_set=db.engine.execute(sql,(xzb,yzb,xzb,yzb,xzb,yzb,user_info.buyer_id))
+        else:
+            result_set=db.engine.execute(sql,(user_info.buyer_id))
+        shop_orders=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            shop_orders.append(temp)
+            
+        result['shop_orders']=shop_orders
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
         
 def getOrderCartList(user_id,address_id):
     sql='''
@@ -251,12 +389,12 @@ def getOrderCartList(user_id,address_id):
     
 def getGoodsList(shop_id,user_id):
     sql='''SELECT
-    a.GoodsID,
-    a.Quantity,
+        a.GoodsID,
+        a.Quantity,
         b.SalePrice,
         b.SetNum,
         b.SetPrice,
-        b.SalePrice,
+       
 
     IF(
         a.Quantity >= b.SetNum,
@@ -271,7 +409,7 @@ def getGoodsList(shop_id,user_id):
     WHERE
         c.ShopID = %s
     AND a.BuyerID = %s
-        AND a.Isselected = '1'''
+        AND a.IsSelected = 1 '''
     result_set=db.engine.execute(sql,(shop_id,user_id))
     arr=[]
     for row in result_set:
