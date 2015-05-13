@@ -14,6 +14,7 @@ from views.comment_controller import comment_controller
 from views.attention_controller import attention_controller
 from views.shopcenter_controller import shopcenter_controller
 from database.models import db
+from views.rong_token_controller import rong_token_controller
 app=Flask(__name__)
 db.init_app(app)
 app.config.from_pyfile('app.cfg')
@@ -30,6 +31,7 @@ app.register_blueprint(shop_goods_controller)
 app.register_blueprint(comment_controller)
 app.register_blueprint(attention_controller)
 app.register_blueprint(shopcenter_controller)
+app.register_blueprint(rong_token_controller)
 def has_no_empty_params(rule):
 	defaults = rule.defaults if rule.defaults is not None else ()
 	arguments = rule.arguments if rule.arguments is not None else ()
