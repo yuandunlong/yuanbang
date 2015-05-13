@@ -1,22 +1,24 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint,request,Response,json
-from database.models import Constent,db,ShopInfo,BuyerAddress
+from flask import Blueprint, request, Response, json
+from database.models import Constent, db, ShopInfo, BuyerAddress
 from utils import row_map_converter
-public_controller=Blueprint("public_controller",__name__)
+
+public_controller = Blueprint("public_controller", __name__)
+
 
 def get_shop_by_id():
-    result={'code':1,'msg':'ok'}
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        sql='''
+        data = request.get_json()
+        sql = '''
          SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
                 s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,
             '''
         if xzb and yzb:
-            sql=sql+'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
+            sql = sql + 'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
         else:
-            sql=sql+"'' AS Distance,"
-        sql=sql+'''
+            sql = sql + "'' AS Distance,"
+        sql = sql + '''
                             IFNULL(v.VisitCount,0) AS VisitCount,
                             IFNULL(o.Quantity,0) AS SaleCount
                             FROM
@@ -25,103 +27,107 @@ def get_shop_by_id():
                                     LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
                             WHERE
                                     s.IsChecked = '2' and s.ShopID=%s                     
-        ''' 
-        row=db.engine.execute(sql,(data['shop_id'])).fetchone()
-        if row:
-            result['shop_info']=row_map_converter(row)
-        
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-def get_goods_by_id():
-    
-    result={'code':1,'msg':'ok'}
-    try:
-        data=request.get_json()
-        sql='''
         '''
-        row=db.engine.execute(sql,(data['goods_id'])).fetchone()
+        row = db.engine.execute(sql, (data['shop_id'])).fetchone()
         if row:
-            result['goods']=row_map_converter(row)
-        
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-#获取商铺类别
-@public_controller.route('/m1/public/get_shop_types',methods=['GET'])
-def get_shop_types():
-    
-    constents=Constent.query.filter_by(type_id='001').all()
-    result={'code':1,'msg':''}
-    
+            result['shop_info'] = row_map_converter(row)
+
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+def get_goods_by_id():
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        shop_types=[]
+        data = request.get_json()
+        sql = '''
+        '''
+        row = db.engine.execute(sql, (data['goods_id'])).fetchone()
+        if row:
+            result['goods'] = row_map_converter(row)
+
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+# 获取商铺类别
+@public_controller.route('/m1/public/get_shop_types', methods=['GET'])
+def get_shop_types():
+    constents = Constent.query.filter_by(type_id='001').all()
+    result = {'code': 1, 'msg': ''}
+
+    try:
+        shop_types = []
         for constent in constents:
-            shop_types.append({"item_id":constent.item_id,"item_name":constent.item_name})
-        result['shop_types']=shop_types
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type="application/json")
-#按照页码获取商铺类别下的商铺
+            shop_types.append({"item_id": constent.item_id, "item_name": constent.item_name})
+        result['shop_types'] = shop_types
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type="application/json")
+
+
+# 按照页码获取商铺类别下的商铺
 #@public_controller.route('/m1/public/get_shop_lists_by_page',methods=['POST'])
 def get_shop_lists_by_page_bak():
-    result={'code':1,'msg':''}
+    result = {'code': 1, 'msg': ''}
     try:
-        query=request.get_json()
-        page=query.get('page',1)
-        page_size=query.get('count',20)
-        shop_type=query.get('shop_type')
-        order_by=query.get('order_by')
-        if page<1:
-            page=1
-        if page_size<1:
-            page_size=20
+        query = request.get_json()
+        page = query.get('page', 1)
+        page_size = query.get('count', 20)
+        shop_type = query.get('shop_type')
+        order_by = query.get('order_by')
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 20
         #result_set=ShopInfo.query.outerjoin(Constent,ShopInfo.is_top==Constent.item_id).filter(Constent.type_id=='002').outerjoin(Constent,ShopInfo.status==Constent.item_id).filter(Constent.type_id=='003').all()
-        shops=[] 
-        sql='''
+        shops = []
+        sql = '''
         select * from tb_shopinfo_s
         
         '''
-        
-        shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').offset(page-1).limit(page_size).all()
+
+        shop_infos = ShopInfo.query.filter_by(shop_type=shop_type, is_checked='2', status='0').offset(page - 1).limit(
+            page_size).all()
         for shop in shop_infos:
             shops.append(shop.get_map())
 
-        result['shops']=shops
-        result['page']=page
-        result['count']=page_size
-    except Exception ,e:
-        result['msg']=e.message
-        result['code']=0
-    return Response(json.dumps(result),content_type="application/json")
+        result['shops'] = shops
+        result['page'] = page
+        result['count'] = page_size
+    except Exception, e:
+        result['msg'] = e.message
+        result['code'] = 0
+    return Response(json.dumps(result), content_type="application/json")
+
 
 #按照页码获取商铺类别下的商铺
-@public_controller.route('/m1/public/get_shop_lists_by_page',methods=['POST'])
+@public_controller.route('/m1/public/get_shop_lists_by_page', methods=['POST'])
 def get_shop_lists_by_page():
-    result={'code':1,'msg':'ok'}
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        query=request.get_json()
-        page=query.get('page',1)
-        page_size=query.get('count',20)
-        shop_type=query.get('shop_type')
-        order_by=query.get('order_by')
-        xzb=query.get('xzb')
-        yzb=query.get('yzb')
-        
-        sql='''
+        query = request.get_json()
+        page = query.get('page', 1)
+        page_size = query.get('count', 20)
+        shop_type = query.get('shop_type')
+        order_by = query.get('order_by')
+        xzb = query.get('xzb')
+        yzb = query.get('yzb')
+
+        sql = '''
         SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
         s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,
         '''
         if xzb and yzb:
-            sql=sql+'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
+            sql = sql + 'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
         else:
-            sql=sql+"'' AS Distance,"
-        sql=sql+'''
+            sql = sql + "'' AS Distance,"
+        sql = sql + '''
                             IFNULL(v.VisitCount,0) AS VisitCount,
                             IFNULL(o.Quantity,0) AS SaleCount
                             FROM
@@ -135,32 +141,32 @@ def get_shop_lists_by_page():
                             AND s.ShopType LIKE %s 
     
         '''
-        
-        if "saleasc"==order_by:
-            sql=sql+'order by SaleCount asc'
-        elif "saledesc"==order_by:
-            sql=sql+'order by SaleCount desc'
-        elif 'visitasc'==order_by:
-            sql=sql+'order by VisitCount asc'
-        elif 'visitdesc'==order_by:
-            sql=sql+'order by VisitCount desc'
-        elif 'distanceasc'==order_by:
-            sql=sql+'order by Distance asc'
-        elif 'distancedesc'==order_by:
-            sql=sql+'order by Distance desc'
+
+        if "saleasc" == order_by:
+            sql = sql + 'order by SaleCount asc'
+        elif "saledesc" == order_by:
+            sql = sql + 'order by SaleCount desc'
+        elif 'visitasc' == order_by:
+            sql = sql + 'order by VisitCount asc'
+        elif 'visitdesc' == order_by:
+            sql = sql + 'order by VisitCount desc'
+        elif 'distanceasc' == order_by:
+            sql = sql + 'order by Distance asc'
+        elif 'distancedesc' == order_by:
+            sql = sql + 'order by Distance desc'
         else:
-            sql=sql+'order by SaleCount desc'
-        
-        sql=sql+' limit %s,%s'
+            sql = sql + 'order by SaleCount desc'
+
+        sql = sql + ' limit %s,%s'
         if xzb and yzb:
-            result_set=db.engine.execute(sql,(xzb,yzb,'%'+shop_type+'%',page-1,page_size))
+            result_set = db.engine.execute(sql, (xzb, yzb, '%' + shop_type + '%', page - 1, page_size))
         else:
-            result_set=db.engine.execute(sql,('%'+shop_type+'%',page-1,page_size))
-        arr=[]
+            result_set = db.engine.execute(sql, ('%' + shop_type + '%', page - 1, page_size))
+        arr = []
         for row in result_set:
-            temp=row_map_converter(row)
+            temp = row_map_converter(row)
             arr.append(temp)
-        count_sql='''
+        count_sql = '''
         select count(*) as total from tb_shopinfo_s s
                                  LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM  tb_visitcount_s GROUP BY ShopID) v ON s.ShopID = v.ShopID
 					LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
@@ -170,55 +176,57 @@ def get_shop_lists_by_page():
 				AND (s.yzb is not null or s.yzb <> '')
 				AND s.ShopType LIKE %s
         '''
-        row=db.engine.execute(count_sql,('%'+shop_type+'%')).fetchone()
+        row = db.engine.execute(count_sql, ('%' + shop_type + '%')).fetchone()
         if row:
-            result['total_count']=row['total']
-        
-        result['shops']=arr
-        result['page']=page
-        result['count']=page_size
-        result['order_by']=order_by
-    except Exception ,e:
-        result['msg']=e.message
-        result['code']=0
-    return  Response(json.dumps(result),content_type="application/json")
-    
-    
-    
-@public_controller.route('/m1/public/search_shops_by_page',methods=['POST'])
+            result['total_count'] = row['total']
+
+        result['shops'] = arr
+        result['page'] = page
+        result['count'] = page_size
+        result['order_by'] = order_by
+    except Exception, e:
+        result['msg'] = e.message
+        result['code'] = 0
+    return Response(json.dumps(result), content_type="application/json")
+
+
+@public_controller.route('/m1/public/search_shops_by_page', methods=['POST'])
 def search_shops_by_page():
-    result={'code':1,'msg':''}
+    result = {'code': 1, 'msg': ''}
     try:
-        query=request.get_json()
-        page=query.get('page',1)
-        page_size=query.get('count',10)
-        shop_type=query.get('shop_type')
-        key_words=query.get('key_words')
-        if page<1:
-            page=1
-        if page_size<1:
-            page_size=20
-        shops=[]    
+        query = request.get_json()
+        page = query.get('page', 1)
+        page_size = query.get('count', 10)
+        shop_type = query.get('shop_type')
+        key_words = query.get('key_words')
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 20
+        shops = []
         if shop_type:
-            shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset(page-1).limit(page_size).all()
+            shop_infos = ShopInfo.query.filter_by(shop_type=shop_type, is_checked='2', status='0').filter(
+                ShopInfo.shop_name.like('%' + key_words + '%')).offset(page - 1).limit(page_size).all()
         else:
-            shop_infos=ShopInfo.query.filter_by(is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset(page-1).limit(page_size).all()
+            shop_infos = ShopInfo.query.filter_by(is_checked='2', status='0').filter(
+                ShopInfo.shop_name.like('%' + key_words + '%')).offset(page - 1).limit(page_size).all()
         for shop in shop_infos:
             shops.append(shop.get_map())
-    
-        result['shops']=shops
-        result['page']=page
-        result['count']=page_size   
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type="application/json")
-        
-@public_controller.route('/m1/public/get_most_sale_goods',methods=['GET','POST'])      
+
+        result['shops'] = shops
+        result['page'] = page
+        result['count'] = page_size
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type="application/json")
+
+
+@public_controller.route('/m1/public/get_most_sale_goods', methods=['GET', 'POST'])
 def get_most_sale_goods():
-    result={'code':1,'msg':'ok'}
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''
+        sql = '''
        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
             round(g.SalePrice * g.Discount, 2) AS DisPrice,
             IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
@@ -243,51 +251,53 @@ def get_most_sale_goods():
             AND p.IsChecked = '1'
             order by TotalSale  desc limit 10
         '''
-        result_set=db.engine.execute(sql)
-        arr=[]
+        result_set = db.engine.execute(sql)
+        arr = []
         for row in result_set:
-            temp=row_map_converter(row)
+            temp = row_map_converter(row)
             arr.append(temp)
-        result['goods_infos']=arr
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-@public_controller.route('/m1/public/get_home_page_shop_goods',methods=['POST'])
+        result['goods_infos'] = arr
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@public_controller.route('/m1/public/get_home_page_shop_goods', methods=['POST'])
 def get_home_page_shop_goods():
-    result={'code':1,'msg':'ok'}
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        buyer_id=data.get('buyer_id')
-        page_size=int(data.get('page_size',10))
-        page=int(data.get('page',1))
-        xzb=None
-        yzb=None
+        data = request.get_json()
+        buyer_id = data.get('buyer_id')
+        page_size = int(data.get('page_size', 10))
+        page = int(data.get('page', 1))
+        xzb = None
+        yzb = None
         if data.get('xzb') and data.get('yzb'):
-            xzb=data['xzb']
-            yzb=data['yzb']
+            xzb = data['xzb']
+            yzb = data['yzb']
         elif buyer_id:
-            buyer_address=BuyerAddress.query.filter_by(buyer_id=buyer_id,is_default='1').first()
+            buyer_address = BuyerAddress.query.filter_by(buyer_id=buyer_id, is_default='1').first()
             if buyer_address:
-                xzb=buyer_address.xzb
-                yzb=buyer_address.yzb
+                xzb = buyer_address.xzb
+                yzb = buyer_address.yzb
         if xzb and yzb:
-            sql='''
+            sql = '''
             
               select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop order by Distance limit %s,%s
             '''
-            shops=db.engine.execute(sql,(xzb,yzb,page-1,page_size))
+            shops = db.engine.execute(sql, (xzb, yzb, page - 1, page_size))
         else:
-            sql='''
+            sql = '''
             select shop.* from tb_shopinfo_s shop limit %s,%s
     
             '''
-            shops=db.engine.execute(sql,(page-1,page_size))
-        shop_arr=[]
+            shops = db.engine.execute(sql, (page - 1, page_size))
+        shop_arr = []
         for shop in shops:
-            shop_temp=row_map_converter(shop)
-            
-            temp_sql='''
+            shop_temp = row_map_converter(shop)
+
+            temp_sql = '''
         SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
         round(g.SalePrice * g.Discount, 2) AS DisPrice,
         IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
@@ -315,29 +325,29 @@ def get_home_page_shop_goods():
         order by Discount  asc limit 2
             
             '''
-            goods=db.engine.execute(temp_sql,(shop_temp['shop_id']))
-            goods_arr=[]
+            goods = db.engine.execute(temp_sql, (shop_temp['shop_id']))
+            goods_arr = []
             for good in goods:
-                good_temp=row_map_converter(good)
+                good_temp = row_map_converter(good)
                 goods_arr.append(good_temp)
-            shop_temp['most_discount_goods']=goods_arr
-            
-            shop_arr.append(shop_temp)
-        result['shopinfos']=shop_arr
-            
-        result['page_size']=page_size
-        result['page']=page
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
+            shop_temp['most_discount_goods'] = goods_arr
 
-@public_controller.route('/m1/public/get_most_discount_goods',methods=['GET','POST'])            
+            shop_arr.append(shop_temp)
+        result['shopinfos'] = shop_arr
+
+        result['page_size'] = page_size
+        result['page'] = page
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@public_controller.route('/m1/public/get_most_discount_goods', methods=['GET', 'POST'])
 def get_most_discount_goods():
-    result={'code':1,'msg':'ok'}
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''
+        sql = '''
            SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
                 round(g.SalePrice * g.Discount, 2) AS DisPrice,
                 IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
@@ -361,26 +371,27 @@ def get_most_discount_goods():
                 AND p.IsVisable = '1'
                 AND p.IsChecked = '1'
                 order by Discount  asc limit 10
-            '''        
-        result_set=db.engine.execute(sql)
-        arr=[]
+            '''
+        result_set = db.engine.execute(sql)
+        arr = []
         for row in result_set:
-            temp=row_map_converter(row)
+            temp = row_map_converter(row)
             arr.append(temp)
-        result['goods_infos']=arr        
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['goods_infos'] = arr
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
-@public_controller.route('/m1/public/search_goods_by_page',methods=['POST'])       
+
+@public_controller.route('/m1/public/search_goods_by_page', methods=['POST'])
 def search_goods_by_page():
-    result={'code':1,'msg':'ok'}
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        page=data.get('page',1)
-        page_size=data.get('page_size',20)
-        sql='''
+        data = request.get_json()
+        page = data.get('page', 1)
+        page_size = data.get('page_size', 20)
+        sql = '''
                SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
                     round(g.SalePrice * g.Discount, 2) AS DisPrice,
                     IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
@@ -405,17 +416,17 @@ def search_goods_by_page():
                     AND p.IsChecked = '1'
                     
                     and GoodsName like %s limit %s,%s
-                '''    
-        result_set=db.engine.execute(sql,('%'+data['key_words']+'%',page-1,page_size))
-        arr=[]
+                '''
+        result_set = db.engine.execute(sql, ('%' + data['key_words'] + '%', page - 1, page_size))
+        arr = []
         for row in result_set:
-            temp=row_map_converter(row)
+            temp = row_map_converter(row)
             arr.append(temp)
-        result['goods_infos']=arr
-        result['page']=page
-        result['page_size']=page_size
-        
-        count_sql='''
+        result['goods_infos'] = arr
+        result['page'] = page
+        result['page_size'] = page_size
+
+        count_sql = '''
          SELECT count(*) as total_count
                     FROM
                     tb_goodsinfo_s g
@@ -438,19 +449,21 @@ def search_goods_by_page():
                     
                     and GoodsName like %s 
         '''
-        row=db.engine.execute(count_sql,('%'+data['key_words']+'%')).fetchone()
+        row = db.engine.execute(count_sql, ('%' + data['key_words'] + '%')).fetchone()
         if row:
-            result['total_count']=row['total_count']
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-@public_controller.route('/m1/public/search_goods_by_bar_code',methods=['POST'])       
+            result['total_count'] = row['total_count']
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@public_controller.route('/m1/public/search_goods_by_bar_code', methods=['POST'])
 def search_goods_by_bar_code():
-    result={'code':1,'msg':'ok'}
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        sql='''
+        data = request.get_json()
+        sql = '''
         SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
     round(g.SalePrice * g.Discount, 2) AS DisPrice,
     IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
@@ -476,11 +489,11 @@ def search_goods_by_bar_code():
 
     and BarCode = %s 
         '''
-        row=db.engine.execute(sql,(data['bar_code'])).fetchone()
+        row = db.engine.execute(sql, (data['bar_code'])).fetchone()
         if row:
-            result['goods']=row_map_converter(row)
-    except Exception,e:
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+            result['goods'] = row_map_converter(row)
+    except Exception, e:
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
         
