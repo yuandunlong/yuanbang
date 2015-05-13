@@ -249,6 +249,7 @@ class OrderDetail(db.Model):
 	batch_no=db.Column('BatchNo',db.Integer,primary_key=True)
 	sale_price=db.Column('SalePrice',db.DECIMAL)
 	quantity=db.Column('Quantity',db.Integer)
+	discount_price=db.Column('DiscountPrice',db.DECIMAL)
 	
 	def get_map(self):
 		s=self
@@ -301,12 +302,13 @@ class Message(db.Model):
 	send_content=db.Column('SendContent',db.String(1000))
 	reply_time=db.Column('ReplyTime',db.DateTime)
 	is_read=db.Column('IsRead',db.String(1))
-	
+	receiver_type=db.Column('ReceiverType',db.String(3))
+	send_time=db.Column('SendTime',db.DateTime)
 	def get_map(self):
 		s=self
 		result={'message_id':s.message_id,'sender_type':s.sender_type,'sender':s.sender,'sender_name':s.sender_name,
 		        'receiver':s.receiver,'receiver_name':s.receiver_name,'send_title':s.send_title,'send_content':s.send_content,
-		        'reply_time':s.reply_time,'is_read':s.is_read
+		        'reply_time':s.reply_time,'is_read':s.is_read,'receiver_type':s.receiver_type,'send_time':s.send_time
 		        }
 		return result
 
@@ -336,6 +338,7 @@ class Photo(db.Model):
 	
 
 class Purchase(db.Model):
+	__tablename__='tb_purchase_s'
 	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
 	batch_no=db.Column('BatchNo',db.Integer,primary_key=True)
 	buy_price=db.Column('BuyPrice',db.DECIMAL)

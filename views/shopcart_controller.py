@@ -5,7 +5,7 @@ from datetime import datetime
 from database.models import db,ShopCart
 shopcart_controller=Blueprint('shopcart_controller',__name__)
 
-@shopcart_controller.route('/m1/private/get_shopcart_list',methods=['POST'])
+@shopcart_controller.route('/m1/private/get_shopcart_list',methods=['GET'])
 @check_token
 def get_shopcart_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
