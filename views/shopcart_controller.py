@@ -245,3 +245,28 @@ def unselect_shopcart_goods(token_type,user_info):
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
         
+        
+@shopcart_controller.route('/m1/private/unselect_all_shopcart_goods',methods=['POST','GET'])
+@check_token
+def unselect_all_shopcart_goods(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        db.engine.execute('update tb_shoppingcart set IsSelected=0 where BuyerID=%s ',(user_info.buyer_id))
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
+@shopcart_controller.route('/m1/private/select_all_shopcart_goods',methods=['POST','GET'])
+@check_token
+def select_all_shopcart_goods(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        db.engine.execute('update tb_shoppingcart set IsSelected=1 where BuyerID=%s ',(user_info.buyer_id))
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+    
