@@ -7,8 +7,8 @@ import logging
 import os
 rong_token_controller=Blueprint("rong_token_controller",__name__)
 logging.basicConfig(level=logging.INFO)
-os.environ.setdefault('rongcloud_app_key', '25wehl3uwrdpw')
-os.environ.setdefault('rongcloud_app_secret', '35e67qtddK')
+os.environ.setdefault('rongcloud_app_key', 'c9kqb3rdkhm3j')
+os.environ.setdefault('rongcloud_app_secret', 'phsiqN68xW')
 @rong_token_controller.route('/m1/private/get_chat_token',methods=['POST','GET'])
 @check_token
 def get_chat_token(token_type,user_info):

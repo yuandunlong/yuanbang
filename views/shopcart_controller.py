@@ -109,14 +109,19 @@ def add_goods_into_shopcart(token_type,user_info):
         goods_id=data['goods_id']
         quantity=data['quantity']
         is_selected=data.get('is_selected','1')
-        shop_cart=ShopCart()
-        shop_cart.buyer_id=user_info.buyer_id
-        shop_cart.goods_id=goods_id
-        shop_cart.quantity=quantity
-        shop_cart.is_selected=is_selected
-        shop_cart.create_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        db.session.add(shop_cart)
-        db.session.commit()
+        shop_cart=ShopCart.query.filter_by(goods_id=goods_id,buyer_id=user_info.buyer_id).first()
+        if shop_cart:
+            shop_cart.quantity+=int(quantity)
+            db.session.commit()
+        else:
+            shop_cart=ShopCart()
+            shop_cart.buyer_id=user_info.buyer_id
+            shop_cart.goods_id=goods_id
+            shop_cart.quantity=quantity
+            shop_cart.is_selected=is_selected
+            shop_cart.create_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            db.session.add(shop_cart)
+            db.session.commit()
     except Exception,e:
         result['code']=0
         result['msg']=e.message
@@ -244,4 +249,3 @@ def unselect_shopcart_goods(token_type,user_info):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-        
