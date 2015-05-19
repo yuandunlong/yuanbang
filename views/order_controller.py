@@ -257,10 +257,10 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         
         sql='''
         SELECT
-        a.GoodsID,
+        a.* ,
         c.ShopID,
         c.ShopName,
-        a.quantity,
+        b.GoodsName,
         b.SalePrice,
         b.Discount,
         b.SetNum,
@@ -268,6 +268,11 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         c.FarthestDistance/1000 as FarthestDistance,
         c.FreeDistance,
         c.Freight as FreightPerKilometre,
+        
+        d.PhotoPath,
+        d.ThumbnailPath,
+        d.PhotoID,
+        d.PhotoName,
         '''
         
         if xzb and yzb:
@@ -305,6 +310,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
                         tb_shoppingcart a
                     LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
                     LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
+                    LEFT JOIN tb_photo d ON b.GoodsID = d.LinkID
                     WHERE
                         a.BuyerID = %s
             '''
@@ -352,6 +358,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
     except Exception,e:
         result['code']=0
         result['msg']=e.message
+        
     return Response(json.dumps(result),content_type='application/json')
         
         
