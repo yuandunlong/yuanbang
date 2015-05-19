@@ -171,8 +171,8 @@ def add_or_update_goods_into_shopcart(token_type,user_info):
         quantity=data['quantity']
         shop_cart=ShopCart.query.filter_by(goods_id=goods_id,buyer_id=user_info.buyer_id).first()
         if shop_cart:
-            if data.has_key("is_selected"):
-                shop_cart.is_selected=data.get('is_selected',"1")
+            shop_cart.is_selected=data.get('is_selected',"1")
+            shop_cart.quantity+=int(quantity)
                 
         else:
             shop_cart=ShopCart()
