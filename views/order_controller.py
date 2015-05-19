@@ -266,6 +266,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         b.SetNum,
         b.SetPrice,
         c.FarthestDistance/1000 as FarthestDistance,
+        c.FreeDistance,
         c.Freight as FreightPerKilometre,
         '''
         
@@ -320,12 +321,34 @@ def get_preview_orders_by_shopcart(token_type,user_info):
             result_set=db.engine.execute(sql,(xzb,yzb,xzb,yzb,xzb,yzb,user_info.buyer_id))
         else:
             result_set=db.engine.execute(sql,(user_info.buyer_id))
-        shop_orders=[]
+        arr=[]
         for row in result_set:
             temp=row_map_converter(row)
-            shop_orders.append(temp)
-            
-        result['shop_orders']=shop_orders
+            arr.append(temp)
+        orders=[]
+        for item in arr:
+            if item['shop_id']==None or item['shop_id']=='None':
+                continue  
+            temp_shop={
+                'shop_id':item['shop_id'],
+                'shop_name':item['shop_name'],
+                'free_distance':item['free_distance'],
+                'freight':item['freight_per_kilometre']
+        
+            }
+        
+            count=0            
+            for order in orders:
+                count=count+1
+                if order['shop_id']==item['shop_id']:
+                    order['goods'].append(item)
+                    break
+            if count==len(orders):
+                temp_arr=[]
+                temp_arr.append(item)
+                temp_shop['goods']=temp_arr
+                orders.append(temp_shop)            
+        result['orders']=orders
     except Exception,e:
         result['code']=0
         result['msg']=e.message
