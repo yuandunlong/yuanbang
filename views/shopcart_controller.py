@@ -169,11 +169,8 @@ def add_or_update_goods_into_shopcart(token_type,user_info):
         data=request.get_json()
         goods_id=data['goods_id']
         quantity=data['quantity']
-        result_set=db.engine.execute('select * from tb_shoppingcart where BuyerID=%s and GoodsID=%s',(user_info.buyer_id,goods_id))
-        if result_set.rowcount>=1:
-            shop_cart=ShopCart.query.filter_by(goods_id=goods_id,buyer_id=user_info.buyer_id).first()
-            if shop_cart:
-                shop_cart.quantity=quantity  
+        shop_cart=ShopCart.query.filter_by(goods_id=goods_id,buyer_id=user_info.buyer_id).first()
+        if shop_cart:
             if data.has_key("is_selected"):
                 shop_cart.is_selected=data.get('is_selected',"1")
                 
