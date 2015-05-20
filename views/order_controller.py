@@ -160,7 +160,7 @@ def cancle_order(token_type,user_info):
     except Exception,e:
         result['code']=0
         result['msg']=e.message
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type='application/json')
 
 @order_controller.route('/m1/private/submit_order_by_shopcart',methods=['POST'])
 @check_token
@@ -239,7 +239,7 @@ def submit_order_by_shopcart(token_type,user_info):
     except Exception,e:
         result['code']=0
         result['msg']=e.message
-    return Response(json.dumps(result))
+    return Response(json.dumps(result),content_type='application/json')
     
 #下单前的界面get_preview_orders_by_shopcart
 @order_controller.route('/m1/private/get_preview_orders_by_shopcart',methods=['POST'])
