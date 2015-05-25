@@ -350,3 +350,30 @@ class Purchase(db.Model):
 		result={'goods_id':self.goods_id,'batch_no':self.batch_no,'buy_price':str(self.buy_price),'quantity':self.quantity,'start_time':self.start_time,'end_time':self.end_time
 		        }
 		return result
+	
+
+class Activity(db.Model):
+	__tablename__='tb_activities_w'
+	id=db.Column('ID',db.Integer,primary_key=True)
+	type=db.Column('Type',db.String(3))
+	shop_id=db.Column('ShopID',db.Integer)
+	title=db.Column('Title',db.String(100))
+	content=db.Column('Content',db.Text)
+	count=db.Column('Count',db.Integer)
+	sort_no=db.Column('SortNo',db.Integer)
+	is_top=db.Column('IsTop',db.String(1))
+	is_hot=db.Column('IsHot',db.String(1))
+	publisher=db.Column('Publisher',db.String(20))
+	publish_time=db.Column('PublishTime',db.DateTime)
+	updater=db.Column('Updater',db.String(20))
+	update_time=db.Column('UpdateTime',db.DateTime)
+	seo_title=db.Column('SEOTitle',db.String(100))
+	seo_key_word=db.Column('SEOKeyWord',db.String(100))
+	seo_content=db.Column('SEOContent',db.String(100))
+	del_flag=db.Column('DelFlag',db.String(1))
+	call_index=db.Column('CallIndex',db.String(10))
+	
+	def get_map(self):
+		s=self
+		result={'id':s.id,'type':s.type,'shop_id':s.shop_id,'title':s.title,'content':s.content,'count':s.count,'sort_no':s.sort_no,'is_top':s.is_top,'is_hot':s.is_hot,'publisher':s.publisher,'publish_time':s.publish_time,'updater':s.updater,'update_time':s.update_time,'seo_title':s.seo_title,'seo_content':s.seo_content,'del_flag':s.del_flag,'call_index':s.call_index }
+		return result

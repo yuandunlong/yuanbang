@@ -705,3 +705,12 @@ def search_goods_by_page_ex():
     return Response(json.dumps(result),content_type='application/json')
         
         
+@public_controller.route('/m1/public/get_activities_by_shop_id',methods=['GET'])        
+def get_activities_by_shop_id():
+    result={'code':1,'msg':'ok'}
+    try:
+        
+    except Exception,e:
+        result['code']=0
+        
+        
