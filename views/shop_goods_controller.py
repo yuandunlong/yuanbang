@@ -23,7 +23,7 @@ def get_shop_goods_photos():
     return Response(json.dumps(result),content_type="application/json")
         
 
-@shop_goods_controller.route('/m1/public/get_shop_goods_detail')
+@shop_goods_controller.route('/m1/public/get_shop_goods_detail',methods=['POST'])
 #取得店铺的商品详情信息（商品ID）
 def get_shop_goods_detail():
     result={'code':1,'msg':'ok'}
