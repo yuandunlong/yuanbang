@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import json, jsonify, Response
 from database.models import Buyer, BuyerAddress, Order, Message, Attention, db
@@ -57,7 +57,8 @@ def get_buyer_info(token_type, info):
             result_set = BuyerAddress.query.filter_by(buyer_id=info.buyer_id).all()
             result['buyer_address'] = result_set_converter(result_set)
     except Exception, e:
-        result['code'] = 1
+        current_app.logger.exception(e)
+        result['code'] = 0
         result['msg'] = e.message
     return Response(json.dumps(result), content_type="application/json")
         

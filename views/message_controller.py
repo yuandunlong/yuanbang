@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import json,Response,Blueprint,request
+from flask import json,Response,Blueprint,request,current_app
 from database.models import Message
 from utils import check_token
 message_controller=Blueprint('message_controller',__name__)
@@ -14,7 +14,8 @@ def get_message_info(token_type,user_info):
         if m:
             result['message']=m.get_map()
     except Exception,e:
-        result['code']=1
+        current_app.logger.exception(e)
+        result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 @message_controller.route(rule)
@@ -26,8 +27,9 @@ def add_message_info(token_type,user_info):
         message=Message()
         
         message.receiver=data['receiver']
-        message.
+        
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/jspn')
@@ -40,6 +42,7 @@ def revert_message_info(token_type,user_info):
         data=request.get_json()
         m=Message
     except Exception,e:
+        current_app.logger.exception(e)
         result['msg']=e.message
         result['code']=0
     return Response(json.dumps(result),content_type="application/json")

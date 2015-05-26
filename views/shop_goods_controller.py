@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import json,Response,Blueprint,request
+from flask import json,Response,Blueprint,request,current_app
 from sqlalchemy import desc
 from database.models import db,Photo
 from utils import row_map_converter
@@ -17,6 +17,7 @@ def get_shop_goods_photos():
             arr.append(photo.get_map())
         result['photos']=arr
     except Exception ,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -56,6 +57,7 @@ def get_shop_goods_detail():
             arr.append(temp)
         result['goods_detail']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
         
@@ -84,6 +86,7 @@ def get_shop_goods_count():
         result['shop_id']=data['shop_id']
         result['goods_id']=data['goods_id']
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -127,6 +130,7 @@ def get_shop_goods_for_discount():
             arr.append(temp)
         result['discount_goods']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -166,6 +170,7 @@ def get_goods_by_id():
         if row:
             result['goods_info']=row_map_converter(row)
     except Exception, e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -213,6 +218,7 @@ def get_shop_goods_by_type():
             arr.append(temp)
         result['goods']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -259,6 +265,7 @@ def get_latest_shop_goods():
         result['goods']=arr        
     
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

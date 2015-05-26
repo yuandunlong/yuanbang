@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import Response,json
 from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart
@@ -34,6 +34,7 @@ def get_order_listss(token_type,user_info):
             orders.append(order)
         result['orders']=orders
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -72,6 +73,7 @@ def get_order_list(token_type,user_info):
             orders.append(order_map)
         result['orders']=orders
     except Exception, e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -91,52 +93,11 @@ def get_order_detail_by_order_no(token_type,user_info):
         else:
             result['order_detail']={}
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']='0'
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 
-@order_controller.route('/m1/private/create_order',methods=['POST'])
-@check_token
-def create_order(token_type,user_info):
-    result={'code':1,'msg':'ok'}
-    
-    try:
-        query=request.get_json()
-        shop_id=query['shop_id']
-        address_id=query['address_id']
-        sale_money=query['sale_money']
-        send_address=query['send_address']
-        receiver=query['receiver']
-        phone=query['phone']
-        remark=query.get('remark')
-        freight=query['freight']
-        goods_id=query['goods_id']
-        
-        order=Order()
-        order.order_no=build_order_no()
-        order.shop_id=shop_id
-        order.buyer_id=user_info.buyer_id
-        order.freight=freight
-        order.receiver=receiver
-        order.send_address=send_address
-        order.address_id=address_id
-        order.sale_money=sale_money
-        order.phone=phone
-        order.submit_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        db.session.add(order)
-        
-        order_detail=OrderDetail()
-        order_detail.order_no=order.order_no
-        order_detail.goods_id=goods_id
-        order_detail.quantity=data['quantity']
-        db.session.add(order_detail)
-        
-        
-        
-    except Exception,e:        
-        result['msg']=e.message
-        
-    return Response(json.dumps(result),content_type="application/json")
 @order_controller.route('/m1/private/cancle_order',methods=['POST'])
 @check_token
 def cancle_order(token_type,user_info):
@@ -158,6 +119,7 @@ def cancle_order(token_type,user_info):
         db.session.commit()
                 
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -191,31 +153,20 @@ def submit_order_by_shopcart(token_type,user_info):
             goods_list=getGoodsList(order.shop_id,order.buyer_id)
             
             for goods_info in goods_list:
-                purchases=Purchase.query.filter_by(goods_id=goods_info['goods_id']).order_by(Purchase.batch_no)
+                purchase=Purchase.query.filter_by(goods_id=goods_info['goods_id']).order_by(Purchase.batch_no).first()
                 quantity=goods_info['quantity']
-                for purchase_info in purchases:
-                    if purchase_info.quantity>=quantity:
-                        purchase_info.quantity-=quantity
-                        #生成订单明细表
-                        order_detail=OrderDetail()
-                        order_detail.order_no=order.order_no
-                        order_detail.goods_id=goods_info['goods_id']
-                        order_detail.batch_no=purchase_info.batch_no
-                        order_detail.sale_price=goods_info['sale_price']
-                        order_detail.quantity=quantity
-                        order_detail.discount_price=goods_info['discount_price']
-                        db.session.add(order_detail)
-                    else:
-                        purchase_info.quantity=0
-                        order_detail=OrderDetail()
-                        order_detail.order_no=order.order_no
-                        order_detail.goods_id=goods_info['goods_id']
-                        order_detail.batch_no=purchase_info.batch_no
-                        order_detail.sale_price=goods_info['sale_price']
-                        order_detail.quantity=purchase_info.quantity
-                        order_detail.discount_price=goods_info['discount_price']
-                        db.session.add(order_detail)                        
-                        quantity-=purchase_info.quantity
+                if purchase:
+                    purchase_info.quantity-=quantity
+                    db.session.commit()
+                order_detail=OrderDetail()
+                order_detail.order_no=order.order_no
+                order_detail.goods_id=goods_info['goods_id']
+                if purchase:
+                    order_detail.batch_no=purchase.batch_no
+                order_detail.sale_price=goods_info['sale_price']
+                order_detail.quantity=quantity
+                order_detail.discount_price=goods_info['discount_price'] 
+                db.session.add(order_detail)
             message=Message()
             message.sender_type='3'
             message.sender_name='系统消息'
@@ -237,6 +188,7 @@ def submit_order_by_shopcart(token_type,user_info):
         db.session.commit()
         
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -356,6 +308,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
                 orders.append(temp_shop)            
         result['orders']=orders
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
         

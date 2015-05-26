@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import json,Response,Blueprint,request
+from flask import json,Response,Blueprint,request,current_app
 from utils import check_token,row_map_converter
 from datetime import datetime
 from database.models import db,ShopCart
@@ -97,6 +97,7 @@ def get_shopcart_list(token_type,user_info):
                 shopcarts.append(temp_shop)
         result['shopcarts']=shopcarts
     except Exception ,e:
+        current_app.logger.exception(e)
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
     
@@ -123,6 +124,7 @@ def add_goods_into_shopcart(token_type,user_info):
             db.session.add(shop_cart)
             db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -138,6 +140,7 @@ def delete_shopcart_goods_by_id(token_type,user_info):
             db.engine.execute('delete from tb_shoppingcart where BuyerID=%s and GoodsID=%s',(user_info.buyer_id,goods_id))
             
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     
@@ -158,6 +161,7 @@ def goods_exist_incart(token_type,user_info):
             else:
                 result['exist']=False
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -184,6 +188,7 @@ def add_or_update_goods_into_shopcart(token_type,user_info):
             db.session.add(shop_cart)            
         db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
         
@@ -202,6 +207,8 @@ def update_goods_quantity(token_type,user_info):
         db.session.commit()
         
     except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
         result['msg']=e.message
     
     return Response(json.dumps(result),content_type="application/json")
@@ -216,6 +223,7 @@ def clear_shopcart(token_type,user_info):
     try:
         db.engine.execute('delete from tb_shoppingcart where BuyerID=%s',(user_info.buyer_id))
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
         
@@ -231,6 +239,7 @@ def select_shopcart_goods(token_type,user_info):
         data=request.get_json()
         db.engine.execute('update tb_shoppingcart set IsSelected=1 where BuyerID=%s and GoodsID=%s',(user_info.buyer_id,data['goods_id']))
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -243,6 +252,7 @@ def unselect_shopcart_goods(token_type,user_info):
         data=request.get_json()
         db.engine.execute('update tb_shoppingcart set IsSelected=0 where BuyerID=%s and GoodsID=%s',(user_info.buyer_id,data['goods_id']))
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -256,6 +266,7 @@ def unselect_all_shopcart_goods(token_type,user_info):
         data=request.get_json()
         db.engine.execute('update tb_shoppingcart set IsSelected=0 where BuyerID=%s ',(user_info.buyer_id))
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -268,6 +279,7 @@ def select_all_shopcart_goods(token_type,user_info):
         data=request.get_json()
         db.engine.execute('update tb_shoppingcart set IsSelected=1 where BuyerID=%s ',(user_info.buyer_id))
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

@@ -1,5 +1,5 @@
 
-from flask import Blueprint,Response,json,request
+from flask import Blueprint,Response,json,request,current_app
 from rong import ApiClient
 from views.utils import uniqid,check_token
 from database.models import Buyer,ShopInfo
@@ -34,6 +34,7 @@ def get_chat_token(token_type,user_info):
         
         result['token']=token
     except Exception ,e:
+        current_app.logger.exception(e)
         result['code']=1
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -51,10 +52,10 @@ def get_chat_userId(token_type,user_info):
         elif data['user_type']=='buyer':
             buyer=Buyer.query.filter_by(buyer_id=to_id).first()
             if buyer:
-                result['userId']='shop'+str(buyer.buyer_id)+buyer.account
-                
-        
+                result['userId']='buyer'+str(buyer.buyer_id)+buyer.account
+            
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

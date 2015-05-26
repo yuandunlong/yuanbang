@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
 from database.models import db
@@ -39,6 +39,7 @@ def get_shop_goods_type_parent():
             arr.append(temp)
         result['shop_goods_type_parent']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -76,6 +77,7 @@ def get_shop_goods_type_child():
             arr.append(temp)  
         result['shop_goods_type_child']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import json, jsonify, Response
 from database.models import Comment, db
 from views.utils import row_map_converter
 
 comment_controller = Blueprint('comment_controller', __name__)
-
 
 @comment_controller.route('/m1/public/get_shop_goods_comment', methods=['POST'])
 def get_shop_goods_comment():
@@ -44,6 +43,7 @@ def get_shop_goods_comment():
         result['page'] = page
         result['page_size'] = page_size
     except Exception, e:
+        current_app.logger.exception(e)
         result['code'] = 0
         result['msg'] = e.message
     return Response(json.dumps(result), content_type='application/json')
@@ -63,6 +63,7 @@ def get_shop_avg_level_comment():
                 avg_levle = int(row['avg_level'])
         result['avg_level'] = avg_levle
     except Exception, e:
+        current_app.logger.exception(e)
         result['code'] = 0
         result['msg'] = 'ok'
     return Response(json.dumps(result), content_type='application/json')

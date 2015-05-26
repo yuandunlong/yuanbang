@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
 from database.models import BuyerAddress,db
@@ -33,6 +33,7 @@ def add_address(token_type,user_info):
         db.session.commit()
         result['buyer_address']=buyer_address.get_map();  
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -66,6 +67,7 @@ def update_address(token_type,user_info):
                     db.engine.execute('update tb_buyeraddress set IsDefault=0 where BuyerID=%s',(user_info.buyer_id))
             db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -84,6 +86,7 @@ def get_addresses_by_user(token_type,info):
                 buyer_addresses.append(buyer_address.get_map())
         result['buyer_addresses']=buyer_addresses
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -100,6 +103,7 @@ def set_default_address(token_type,user_info):
         db.engine.execute(sql1,(user_info.buyer_id))
         db.engine.execute(sql2,(user_info.buyer_id,address_id))        
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")   
@@ -114,6 +118,7 @@ def delete_address(token_type,user_info):
         address_id=data['address_id']
         db.engine.execute('delete from tb_buyeraddress where AddressID =%s',(address_id))
     except Exception,e:
+        current_app.logger.exception(e)
         result['msg']=e.message
         result['code']=0
         

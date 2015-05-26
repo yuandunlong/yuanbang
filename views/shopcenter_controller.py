@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import json,Response,Blueprint,request,json
+from flask import json,Response,Blueprint,request,json,current_app
 from database.models import db
 from views.utils import check_token,row_map_converter
 shopcenter_controller=Blueprint('shopcenter_controller',__name__)
@@ -10,6 +10,7 @@ def get_shop_info(token_type,shop):
     try:
         result['shop_info']=shop.get_map()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -90,6 +91,7 @@ def get_goods_by_page(token_type,shop):
         result['page']=page
         result['page_size']=page_size
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -154,6 +156,7 @@ def get_orders_by_page(token_type,shop):
         result['page']=page
         result['page_size']=page_size
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -168,6 +171,7 @@ def up_goods_by_id(token_type,shop):
         db.engine.execute(sql,(data['goods_id']))
         db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
 @shopcenter_controller.route('/m1/private/shopcenter/down_goods_by_id',methods=['POST'])    
@@ -180,6 +184,7 @@ def down_goods_by_id(token_type,shop):
         db.engine.execute(sql,(data['goods_id']))
         db.session.commit()        
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=1
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -224,6 +229,7 @@ def get_msgs_by_page(token_type,shop):
         result['page']=page
         result['page_size']=page_size
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -240,6 +246,7 @@ def update_msg_2_is_read(token_type,shop):
         db.engine.execute(sql,(data['msg_id']))
         db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -279,6 +286,7 @@ def get_goods_type_root(token_type,shop):
             arr.append(temp)
         result['shop_goods_type_root']=arr        
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -318,6 +326,7 @@ def get_shop_goods_type_child(token_type,shop):
         result['shop_goods_type_child']=arr        
 
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint,request,Response,json
+from flask import Blueprint,request,Response,json,current_app
 from database.models import Constent,db,ShopInfo,BuyerAddress
 from utils import row_map_converter
 public_controller=Blueprint("public_controller",__name__)
@@ -38,6 +38,7 @@ def get_shop_by_id():
             result['shop_info']=row_map_converter(row)
         
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -54,6 +55,7 @@ def get_goods_by_id():
             result['goods']=row_map_converter(row)
         
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -71,6 +73,7 @@ def get_shop_types():
             shop_types.append({"item_id":constent.item_id,"item_name":constent.item_name})
         result['shop_types']=shop_types
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -103,6 +106,7 @@ def get_shop_lists_by_page_bak():
         result['page']=page
         result['count']=page_size
     except Exception ,e:
+        current_app.logger.exception(e)
         result['msg']=e.message
         result['code']=0
     return Response(json.dumps(result),content_type="application/json")
@@ -186,6 +190,7 @@ def get_shop_lists_by_page():
         result['count']=page_size
         result['order_by']=order_by
     except Exception ,e:
+        current_app.logger.exception(e)
         result['msg']=e.message
         result['code']=0
     return  Response(json.dumps(result),content_type="application/json")
@@ -217,6 +222,7 @@ def search_shops_by_page():
         result['page']=page
         result['count']=page_size   
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -257,6 +263,7 @@ def get_most_sale_goods():
             arr.append(temp)
         result['goods_infos']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -335,6 +342,7 @@ def get_home_page_shop_goods():
         result['page_size']=page_size
         result['page']=page
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -376,6 +384,7 @@ def get_most_discount_goods():
             arr.append(temp)
         result['goods_infos']=arr        
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -450,6 +459,7 @@ def search_goods_by_page():
         if row:
             result['total_count']=row['total_count']
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -488,6 +498,7 @@ def search_goods_by_bar_code():
         if row:
             result['goods']=row_map_converter(row)
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -587,6 +598,7 @@ def search_goods_in_shop_by_page():
         result['page']=page
         result['page_size']=page_size
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')    
@@ -687,6 +699,7 @@ def search_goods_by_page_ex():
         result['page']=page
         result['page_size']=page_size
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

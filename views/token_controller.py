@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
 import datetime
@@ -20,6 +20,7 @@ def authorize():
 			result['auth_code']=string.join(auth_code,'')
 			result['code']=1
 	except Exception, e:
+		current_app.logger.exception(e)
 		result['msg']=e.message
 
 	return Response(json.dumps(result),content_type="application/json")
@@ -77,8 +78,10 @@ def access_token():
 					result['code']=0
 
 	except KeyError,key_error:
+		current_app.logger.exception(e)
 		result['msg']='not enpha params'
 	except Exception, e:
+		current_app.logger.exception(e)
 		result['msg']=e.message 
 	return Response(json.dumps(result),content_type='application/json')
 @token_controller.route('/m1/refresh_token',methods=['POST'])
@@ -99,6 +102,7 @@ def refresh_token():
 			result['msg']='invalid access_token '+post_json['access_token']
 		
 	except Exception ,e:
+		current_app.logger.exception(e)
 		result['msg']=e.message
 		
 	return Response(json.dumps(result),content_type="application/json")
