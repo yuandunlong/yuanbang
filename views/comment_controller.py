@@ -19,7 +19,7 @@ def get_shop_goods_comment():
         select c.*,IFNULL(IF(b.NickName = '',NULL,b.NickName),b.Account) AS BuyerName from tb_comment c 
            left join tb_buyer b on c.BuyerID =b.BuyerID  where GoodsID=%s order by c.CommitTime DESC limit %s,%s;
         '''
-        result_set = db.engine.execute(comment_sql, (data['goods_id'], page - 1, page_size))
+        result_set = db.engine.execute(comment_sql, (data['goods_id'], (page - 1)*page_size, page_size))
         arr = []
         for row in result_set:
             temp = row_map_converter(row)

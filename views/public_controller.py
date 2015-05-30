@@ -291,15 +291,15 @@ def get_home_page_shop_goods():
         if xzb and yzb:
             sql='''
             
-              select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop order by Distance limit %s,%s
+              select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop where ShopID <>1 order by Distance limit %s,%s
             '''
-            shops=db.engine.execute(sql,(xzb,yzb,page-1,page_size))
+            shops=db.engine.execute(sql,(xzb,yzb,(page-1)*page_size,page_size))
         else:
             sql='''
-            select shop.* from tb_shopinfo_s shop limit %s,%s
+            select shop.* from tb_shopinfo_s shop where ShopID<>1 order by ShopID asc limit %s,%s
     
             '''
-            shops=db.engine.execute(sql,(page-1,page_size))
+            shops=db.engine.execute(sql,((page-1)*page_size,page_size))
         shop_arr=[]
         for shop in shops:
             shop_temp=row_map_converter(shop)
@@ -426,7 +426,7 @@ def search_goods_by_page():
                     
                     and GoodsName like %s limit %s,%s
                 '''    
-        result_set=db.engine.execute(sql,('%'+data['key_words']+'%',page-1,page_size))
+        result_set=db.engine.execute(sql,('%'+data['key_words']+'%',(page-1)*page_size,page_size))
         arr=[]
         for row in result_set:
             temp=row_map_converter(row)
@@ -587,10 +587,10 @@ def search_goods_in_shop_by_page():
         search_words='%'+data['key_words']+'%'
 
         if  xzb and yzb:
-            result_set=db.engine.execute(sql,(xzb,yzb,search_words,search_words,search_words,search_words,search_words,search_words,data['shop_id'],page-1,page_size))
+            result_set=db.engine.execute(sql,(xzb,yzb,search_words,search_words,search_words,search_words,search_words,search_words,data['shop_id'],(page-1)*page_size,page_size))
 
         else:
-            result_set=db.engine.execute(sql,(search_words,search_words,search_words,search_words,search_words,search_words,data['shop_id'],page-1,page_size))
+            result_set=db.engine.execute(sql,(search_words,search_words,search_words,search_words,search_words,search_words,data['shop_id'],(page-1)*page_size,page_size))
 
 
         goods=[]   
@@ -688,10 +688,10 @@ def search_goods_by_page_ex():
         search_words='%'+data['key_words']+'%'
         
         if  xzb and yzb:
-            result_set=db.engine.execute(sql,(xzb,yzb,search_words,search_words,search_words,search_words,search_words,search_words,page-1,page_size))
+            result_set=db.engine.execute(sql,(xzb,yzb,search_words,search_words,search_words,search_words,search_words,search_words,(page-1)*page_size,page_size))
             
         else:
-            result_set=db.engine.execute(sql,(search_words,search_words,search_words,search_words,search_words,search_words,page-1,page_size))
+            result_set=db.engine.execute(sql,(search_words,search_words,search_words,search_words,search_words,search_words,(page-1)*page_size,page_size))
             
             
         goods=[]   
