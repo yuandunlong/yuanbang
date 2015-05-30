@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint,request,Response,json,current_app
-from database.models import Constent,db,ShopInfo,BuyerAddress,Activity
-from utils import row_map_converter,result_set_converter
+from flask import Blueprint,request,Response,json
+from database.models import Constent,db,ShopInfo,BuyerAddress
+from utils import row_map_converter
 public_controller=Blueprint("public_controller",__name__)
 
 @public_controller.route('/m1/public/get_shop_by_id',methods=['POST'])
@@ -36,11 +36,8 @@ def get_shop_by_id():
             row=db.engine.execute(sql,(data['shop_id'])).fetchone()
         if row:
             result['shop_info']=row_map_converter(row)
-            activities=Activity.query.filter_by(shop_id=data['shop_id'])
-            result['shop_info']['activities']=result_set_converter(activities)
         
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -57,7 +54,6 @@ def get_goods_by_id():
             result['goods']=row_map_converter(row)
         
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -75,7 +71,6 @@ def get_shop_types():
             shop_types.append({"item_id":constent.item_id,"item_name":constent.item_name})
         result['shop_types']=shop_types
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -108,7 +103,6 @@ def get_shop_lists_by_page_bak():
         result['page']=page
         result['count']=page_size
     except Exception ,e:
-        current_app.logger.exception(e)
         result['msg']=e.message
         result['code']=0
     return Response(json.dumps(result),content_type="application/json")
@@ -192,7 +186,6 @@ def get_shop_lists_by_page():
         result['count']=page_size
         result['order_by']=order_by
     except Exception ,e:
-        current_app.logger.exception(e)
         result['msg']=e.message
         result['code']=0
     return  Response(json.dumps(result),content_type="application/json")
@@ -224,7 +217,6 @@ def search_shops_by_page():
         result['page']=page
         result['count']=page_size   
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
@@ -265,7 +257,6 @@ def get_most_sale_goods():
             arr.append(temp)
         result['goods_infos']=arr
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -277,7 +268,6 @@ def get_home_page_shop_goods():
         buyer_id=data.get('buyer_id')
         page_size=int(data.get('page_size',10))
         page=int(data.get('page',1))
-        shop_goods_num=int(data.get('shop_goods_num',10))
         xzb=None
         yzb=None
         if data.get('xzb') and data.get('yzb'):
@@ -329,10 +319,10 @@ def get_home_page_shop_goods():
         AND p.IsChecked = '1'
         
         where ShopID=%s
-        order by Discount  asc limit %s
+        order by Discount  asc limit 2
             
             '''
-            goods=db.engine.execute(temp_sql,(shop_temp['shop_id'],shop_goods_num))
+            goods=db.engine.execute(temp_sql,(shop_temp['shop_id']))
             goods_arr=[]
             for good in goods:
                 good_temp=row_map_converter(good)
@@ -345,7 +335,6 @@ def get_home_page_shop_goods():
         result['page_size']=page_size
         result['page']=page
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -387,7 +376,6 @@ def get_most_discount_goods():
             arr.append(temp)
         result['goods_infos']=arr        
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -462,7 +450,6 @@ def search_goods_by_page():
         if row:
             result['total_count']=row['total_count']
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -501,7 +488,6 @@ def search_goods_by_bar_code():
         if row:
             result['goods']=row_map_converter(row)
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -601,7 +587,6 @@ def search_goods_in_shop_by_page():
         result['page']=page
         result['page_size']=page_size
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')    
@@ -702,23 +687,18 @@ def search_goods_by_page_ex():
         result['page']=page
         result['page_size']=page_size
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
         
         
-@public_controller.route('/m1/public/get_activities_by_shop_id',methods=['POST'])        
+@public_controller.route('/m1/public/get_activities_by_shop_id',methods=['GET'])        
 def get_activities_by_shop_id():
     result={'code':1,'msg':'ok'}
     try:
-        data=request.get_json()
-        activities=Activity.query.filter_by(shop_id=data['shop_id'])
-        result['activities']=result_set_converter(activities)
+        
     except Exception,e:
-        current_app.logger.exception(e)
         result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result
         
         
