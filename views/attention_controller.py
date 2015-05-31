@@ -105,7 +105,7 @@ def add_attention_goods(token_type,user_info):
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
 
-@attention_controller.route('/m1/private/cancle_attention_goods')   
+@attention_controller.route('/m1/private/cancle_attention_goods',methods=['POST'])   
 @check_token
 def cancle_attention_goods(token_type,user_info):
     result={'code':1,'msg':'ok'}
