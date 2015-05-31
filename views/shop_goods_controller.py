@@ -210,8 +210,39 @@ def get_shop_goods_by_type():
         
         '''
         shop_id=str(data['shop_id'])
-        goods_type_id=str(data['goods_type_id'])
-        result_set=db.engine.execute(sql,(shop_id,goods_type_id+'%','%'+goods_type_id+'%'))
+        if data.get('goods_type_id'):
+            goods_type_id=str(data['goods_type_id'])
+            result_set=db.engine.execute(sql,(shop_id,goods_type_id+'%','%'+goods_type_id+'%'))
+        else:
+            another_sql='''
+            
+            SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+        round(g.SalePrice * g.Discount, 2) AS DisPrice,
+        IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+        IFNULL(o.SaleQuantity,0) AS TotalSale
+        FROM
+            tb_goodsinfo_s g
+        LEFT JOIN (
+            SELECT
+            sum(t.Quantity) AS SaleQuantity,
+            t.GoodsID
+            FROM
+            tb_order_s d,
+            tb_orderdetail_s t
+            WHERE
+            d.OrderNo = t.OrderNo
+            AND d.`Status` <> '3'
+            GROUP BY
+            t.GoodsID
+            ) o ON g.GoodsID = o.GoodsID
+            INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+            AND p.IsVisable = '1'
+            AND p.IsChecked = '1'
+            WHERE
+                g.ShopID = %s
+            and g.Status = 0
+            '''
+            result_set=db.engine.execute(another_sql,(shop_id))
         arr=[]
         for row in result_set:
             temp=row_map_converter(row)
