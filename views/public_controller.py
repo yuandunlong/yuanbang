@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint,request,Response,json,current_app
 from database.models import Constent,db,ShopInfo,BuyerAddress,Activity
-from utils import row_map_converter,result_set_converter
+from utils import row_map_converter,result_set_converter,jw_2_mkt
 public_controller=Blueprint("public_controller",__name__)
 
 @public_controller.route('/m1/public/get_shop_by_id',methods=['POST'])
@@ -9,13 +9,13 @@ def get_shop_by_id():
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        xzb=data.get('xzb',None)
-        yzb=data.get('yzb',None)
+        mktxzb=data.get('mktxzb',None)
+        mktyzb=data.get('mktyzb',None)
         sql='''
          SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
-                s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,
+                s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
             '''
-        if xzb and yzb:
+        if mktxzb and mktyzb:
             sql=sql+'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
         else:
             sql=sql+" '' AS Distance,"
@@ -30,8 +30,8 @@ def get_shop_by_id():
                                     s.IsChecked = '2' and s.ShopID=%s                     
         ''' 
         
-        if xzb and yzb:
-            row=db.engine.execute(sql,(xzb,yzb,data['shop_id'])).fetchone()
+        if mktxzb and mktyzb:
+            row=db.engine.execute(sql,(mktxzb,mktyzb,data['shop_id'])).fetchone()
         else:   
             row=db.engine.execute(sql,(data['shop_id'])).fetchone()
         if row:
@@ -123,14 +123,14 @@ def get_shop_lists_by_page():
         page_size=query.get('count',20)
         shop_type=query.get('shop_type')
         order_by=query.get('order_by')
-        xzb=query.get('xzb')
-        yzb=query.get('yzb')
+        mktxzb=query.get('mktxzb')
+        mktyzb=query.get('mktyzb')
         
         sql='''
         SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
-        s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,
+        s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
         '''
-        if xzb and yzb:
+        if mktxzb and mktxzb:
             sql=sql+'ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance,'
         else:
             sql=sql+"'' AS Distance,"
@@ -165,8 +165,8 @@ def get_shop_lists_by_page():
             sql=sql+'order by SaleCount desc'
         
         sql=sql+' limit %s,%s'
-        if xzb and yzb:
-            result_set=db.engine.execute(sql,(xzb,yzb,'%'+shop_type+'%',page-1,page_size))
+        if mktxzb and mktyzb:
+            result_set=db.engine.execute(sql,(mktxzb,mktyzb,'%'+shop_type+'%',page-1,page_size))
         else:
             result_set=db.engine.execute(sql,('%'+shop_type+'%',page-1,page_size))
         arr=[]
@@ -278,22 +278,22 @@ def get_home_page_shop_goods():
         page_size=int(data.get('page_size',10))
         page=int(data.get('page',1))
         shop_goods_num=int(data.get('shop_goods_num',10))
-        xzb=None
-        yzb=None
-        if data.get('xzb') and data.get('yzb'):
-            xzb=data['xzb']
-            yzb=data['yzb']
+        mktxzb=None
+        mktyzb=None
+        if data.get('mktxzb') and data.get('mktyzb'):
+            mktxzb=data['mktxzb']
+            mktyzb=data['mktyzb']
         elif buyer_id:
             buyer_address=BuyerAddress.query.filter_by(buyer_id=buyer_id,is_default='1').first()
             if buyer_address:
-                xzb=buyer_address.xzb
-                yzb=buyer_address.yzb
-        if xzb and yzb:
+                mktxzb=buyer_address.mktxzb
+                mktyzb=buyer_address.mktyzb
+        if mktxzb and mktyzb:
             sql='''
             
               select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop where ShopID <>1 order by Distance limit %s,%s
             '''
-            shops=db.engine.execute(sql,(xzb,yzb,(page-1)*page_size,page_size))
+            shops=db.engine.execute(sql,(mktxzb,mktyzb,(page-1)*page_size,page_size))
         else:
             sql='''
             select shop.* from tb_shopinfo_s shop where ShopID<>1 order by ShopID asc limit %s,%s
@@ -499,7 +499,44 @@ def search_goods_by_bar_code():
         '''
         row=db.engine.execute(sql,(data['bar_code'])).fetchone()
         if row:
-            result['goods']=row_map_converter(row)
+            another_sql='''
+            
+             SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
+            round(g.SalePrice * g.Discount, 2) AS DisPrice,
+            IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+            IFNULL(o.SaleQuantity,0) AS TotalSale
+            FROM
+            tb_goodsinfo_s g
+            LEFT JOIN (
+                SELECT
+                sum(t.Quantity) AS SaleQuantity,
+                t.GoodsID
+                FROM
+                tb_order_s d,
+                tb_orderdetail_s t
+                WHERE
+                d.OrderNo = t.OrderNo
+                AND d.`Status` <> '3'
+                GROUP BY
+                t.GoodsID
+                ) o ON g.GoodsID = o.GoodsID
+            INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+            AND p.IsVisable = '1'
+            AND p.IsChecked = '1'
+            and (g.GoodsName LIKE %s
+                OR  g.GoodsLocality LIKE %s
+                OR  g.GoodsBrand LIKE %s
+                OR  g.GoodsSpec LIKE %s
+                OR  g.Remark LIKE %s)
+            '''
+            keywords='%'+row['GoodsName']+'%'
+            result_set=db.engine.execute(another_sql,(keywords,keywords,keywords,keywords,keywords))
+            arr=[]
+            for items in result_set:
+                arr.append(row_map_converter(items))
+            
+            result['goods']=arr
+            result['keyword']=row['GoodsName']
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
@@ -511,8 +548,8 @@ def search_goods_in_shop_by_page():
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        xzb=data.get('xzb',None)
-        yzb=data.get('yzb',None)
+        mktxzb=data.get('mktxzb',None)
+        mktyzb=data.get('mktyzb',None)
         page=data.get('page',1)
         page_size=data.get('page_size',10)
         order_by=data.get('order_by','')
@@ -520,9 +557,9 @@ def search_goods_in_shop_by_page():
         SELECT g.ShopID,g.GoodsID,g.GoodsName,g.SalePrice,round(g.SalePrice * g.Discount, 2) AS DisPrice,
         p.ThumbnailPath,
         IFNULL(o.Quantity, 0) AS Quantity,
-        s.ShopName,
+        s.ShopName,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
         '''
-        if  xzb and  yzb:
+        if  mktxzb and  mktyzb:
             sql+='ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance '
 
         else:
@@ -586,8 +623,8 @@ def search_goods_in_shop_by_page():
 
         search_words='%'+data['key_words']+'%'
 
-        if  xzb and yzb:
-            result_set=db.engine.execute(sql,(xzb,yzb,search_words,search_words,search_words,search_words,search_words,search_words,data['shop_id'],(page-1)*page_size,page_size))
+        if  mktxzb and mktyzb:
+            result_set=db.engine.execute(sql,( mktxzb,mktyzb,search_words,search_words,search_words,search_words,search_words,search_words,data['shop_id'],(page-1)*page_size,page_size))
 
         else:
             result_set=db.engine.execute(sql,(search_words,search_words,search_words,search_words,search_words,search_words,data['shop_id'],(page-1)*page_size,page_size))
@@ -612,8 +649,8 @@ def search_goods_by_page_ex():
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        xzb=data.get('xzb',None)
-        yzb=data.get('yzb',None)
+        mktxzb=data.get('mktxzb',None)
+        mktyzb=data.get('mktyzb',None)
         page=data.get('page',1)
         page_size=data.get('page_size',10)
         order_by=data.get('order_by','')
@@ -621,9 +658,9 @@ def search_goods_by_page_ex():
         SELECT g.ShopID,g.GoodsID,g.GoodsName,g.SalePrice,round(g.SalePrice * g.Discount, 2) AS DisPrice,
         p.ThumbnailPath,
         IFNULL(o.Quantity, 0) AS Quantity,
-        s.ShopName,
+        s.ShopName,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
         '''
-        if  xzb and  yzb:
+        if  mktxzb and  mktyzb:
             sql+='ROUND(SQRT(POW(%s - s.mktxzb, 2) + POW(%s- s.mktyzb, 2))/1000,2) AS Distance '
             
         else:
@@ -687,8 +724,8 @@ def search_goods_by_page_ex():
         
         search_words='%'+data['key_words']+'%'
         
-        if  xzb and yzb:
-            result_set=db.engine.execute(sql,(xzb,yzb,search_words,search_words,search_words,search_words,search_words,search_words,(page-1)*page_size,page_size))
+        if  mktxzb and mktyzb:
+            result_set=db.engine.execute(sql,(mktxzb,mktyzb,search_words,search_words,search_words,search_words,search_words,search_words,(page-1)*page_size,page_size))
             
         else:
             result_set=db.engine.execute(sql,(search_words,search_words,search_words,search_words,search_words,search_words,(page-1)*page_size,page_size))

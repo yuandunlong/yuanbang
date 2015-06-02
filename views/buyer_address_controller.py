@@ -3,7 +3,7 @@ from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
 from database.models import BuyerAddress,db
-from utils import check_token
+from utils import check_token,jw_2_mkt
 from decimal import Decimal
 buyer_address_controller=Blueprint('buyer_address_controller',__name__)
 @buyer_address_controller.route('/m1/private/add_address',methods=['POST'])
@@ -25,6 +25,9 @@ def add_address(token_type,user_info):
             yzb=0
         buyer_address.xzb=Decimal(xzb)
         buyer_address.yzb=Decimal(yzb)
+        
+        buyer_address.mktxzb=Decimal(data['mktxzb'])
+        buyer_address.mktyzb=Decimal(data['mktyzb'])
         buyer_address.is_default=data.get('is_default')
         #如果是默认地址
         if buyer_address.is_default=="1" or buyer_address.is_default==1:
@@ -65,6 +68,11 @@ def update_address(token_type,user_info):
                 buyer_address.is_default=str(data.get('is_default'))
                 if buyer_address.is_default=='1' or buyer_address.is_default==1:
                     db.engine.execute('update tb_buyeraddress set IsDefault=0 where BuyerID=%s',(user_info.buyer_id))
+            mktxzb=data.get('mktxzb',None)
+            mktyzb=data.get('mktyzb',None)
+            if mktxzb and mktyzb:
+                buyer_address.mktxzb=Decimal(mktxzb)
+                buyer_address.mktyzb=Decimal(mktyzb)
             db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)

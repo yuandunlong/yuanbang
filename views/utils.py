@@ -5,6 +5,7 @@ from datetime import datetime
 import time
 import math
 from decimal import Decimal
+import urllib2
 def check_token(func):
     def wrapper():
         response={'code':0,'msg':''}
@@ -125,3 +126,12 @@ class DecimalEncoder(json.JSONEncoder):
             # which wouldn't work (see my comment below), so...
             return (str(o) for o in [o])
         return super(DecimalEncoder, self)._iterencode(o, markers)
+    
+
+def jw_2_mkt(jd,wd):
+    response=urllib2.urlopen('http://api.map.baidu.com/geoconv/v1/?coords='+str(jd)+','+str(wd)+'&from=5&to=6&ak=XiCHxodqN1PXicr42Pw3WKVM').read()
+    
+    x=float(jd)*20037508.342789/180
+    y=math.log(math.tan((90+float(wd))*math.pi/360))/(math.pi/180)
+    y = y *20037508.34789/180
+    return x,y

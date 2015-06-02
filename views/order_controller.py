@@ -205,6 +205,8 @@ def get_preview_orders_by_shopcart(token_type,user_info):
             raise Exception('user dont have default address')
         xzb=buyer_address.xzb
         yzb=buyer_address.yzb
+        mktxzb=buyer_address.mktxzb
+        mktyzb=buyer_address.mktyzb
         is_selected=data.get('is_selected',None)
         
         sql='''
@@ -227,7 +229,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         d.PhotoName,
         '''
         
-        if xzb and yzb:
+        if mktxzb and mktyzb:
             sql+='''ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2))/1000,2) AS Distance,'''
             sql+='''
             
@@ -275,8 +277,8 @@ def get_preview_orders_by_shopcart(token_type,user_info):
                     ORDER BY
                         c.ShopID
             '''
-        if xzb and yzb:
-            result_set=db.engine.execute(sql,(xzb,yzb,xzb,yzb,xzb,yzb,user_info.buyer_id))
+        if mktxzb and mktyzb:
+            result_set=db.engine.execute(sql,(mktxzb,mktyzb,mktxzb,mktyzb,mktxzb,mktyzb,user_info.buyer_id))
         else:
             result_set=db.engine.execute(sql,(user_info.buyer_id))
         arr=[]
