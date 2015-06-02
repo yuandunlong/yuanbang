@@ -722,3 +722,26 @@ def get_activities_by_shop_id():
     return Response(json.dumps(result),content_type='application/json')
         
         
+@public_controller.route('/m1/public/get_recommend_shop_for_home_page')      
+def get_recommend_shop_for_home_page():
+    
+    result={'code':1,'msg':'ok'}
+    
+    try:
+        sql='''
+        select * from tb_shopinfo_s where shopname like %s 
+        '''
+        result_set=db.engine.execute(sql,('%远邦%'))
+        arr=[]
+        for row in result_set:
+            temp=row_map_converter(row)
+            arr.append(temp)
+        result['recommend_shops']=arr
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message        
+    return Response(json.dumps(result),content_type='application/json')
+        
+        
+    
