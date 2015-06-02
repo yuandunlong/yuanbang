@@ -124,13 +124,13 @@ class BuyerAddress(db.Model):
 	detail_address=db.Column('DetailAddress',db.String(200))
 	xzb=db.Column('xzb',db.DECIMAL)
 	yzb=db.Column('yzb',db.DECIMAL)
-	mktxzb=db.Column('mtkxzb',db.DECIMAL)
+	mktxzb=db.Column('mktxzb',db.DECIMAL)
 	mktyzb=db.Column('mktyzb',db.DECIMAL)
 	is_default=db.Column('IsDefault',db.String(1))
 	def get_map(self):
 		result={'address_id':self.address_id,'buyer_id':int(self.buyer_id),'address':self.address,'consignee':self.consignee,
 		     'phone':self.phone,'province':self.province,'detail_address':self.detail_address,'xzb':str(self.xzb),
-		     'yzb':str(self.yzb),'mktxzb':str(self.mktxzb),'mktyzb':self.mktyzb,'is_default':self.is_default}
+		     'yzb':str(self.yzb),'mktxzb':str(self.mktxzb),'mktyzb':str(self.mktyzb),'is_default':self.is_default}
 		return result
 	
 	
