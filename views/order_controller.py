@@ -98,13 +98,33 @@ def get_order_detail_by_order_no(token_type,user_info):
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 
+@order_controller.route('/m1/private/delete_order',methods=['POST'])
+@check_token
+def delete_order(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''delete from tb_order_s where OrderNo=%s'''
+        detail_sql='''delete from tb_orderdetail_s where OrderNo=%s'''
+        db.engine.execute(sql,(data['order_no']))
+        db.engine.execute(detail_sql,(data['order_no']))
+        db.session.commit()
+        
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+        
+
 @order_controller.route('/m1/private/cancle_order',methods=['POST'])
 @check_token
 def cancle_order(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-        order=Order.query.filter_by(order_no,data['order_no']).first()
+        order=Order.query.filter_by(order_no=data['order_no']).first()
         
         if order:
             #当订单状态!=3（交易取消）时
@@ -156,7 +176,7 @@ def submit_order_by_shopcart(token_type,user_info):
                 purchase=Purchase.query.filter_by(goods_id=goods_info['goods_id']).order_by(Purchase.batch_no).first()
                 quantity=goods_info['quantity']
                 if purchase:
-                    purchase_info.quantity-=quantity
+                    purchase.quantity-=quantity
                     db.session.commit()
                 order_detail=OrderDetail()
                 order_detail.order_no=order.order_no
@@ -201,114 +221,22 @@ def get_preview_orders_by_shopcart(token_type,user_info):
     try:
         data=request.get_json()
         buyer_address=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
-        if not buyer_address:
-            raise Exception('user dont have default address')
-        xzb=buyer_address.xzb
-        yzb=buyer_address.yzb
-        mktxzb=buyer_address.mktxzb
-        mktyzb=buyer_address.mktyzb
+        xzb=None
+        yzb=None
+        mktxzb=None
+        mktyzb=None        
+        if  buyer_address:
+            xzb=buyer_address.xzb
+            yzb=buyer_address.yzb
+            mktxzb=buyer_address.mktxzb
+            mktyzb=buyer_address.mktyzb
         is_selected=data.get('is_selected',None)
         
-        sql='''
-        SELECT
-        a.* ,
-        c.ShopID,
-        c.ShopName,
-        b.GoodsName,
-        b.SalePrice,
-        b.Discount,
-        b.SetNum,
-        b.SetPrice,
-        c.FarthestDistance/1000 as FarthestDistance,
-        c.FreeDistance,
-        c.Freight as FreightPerKilometre,
-        
-        d.PhotoPath,
-        d.ThumbnailPath,
-        d.PhotoID,
-        d.PhotoName,
-        '''
-        
-        if mktxzb and mktyzb:
-            sql+='''ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2))/1000,2) AS Distance,'''
-            sql+='''
-            
-                IF (
-                    ROUND(
-                        SQRT(
-                            POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
-                            ),
-                        2
-                        ) > c.FreeDistance,
-                    CEIL(
-                        ROUND(
-                            SQRT(
-                                POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
-                                ),
-                            2
-                            ) - FreeDistance
-                        ) /1000* Freight,
-                    0
-                    ) AS TotalFreight,sum(
-                
-                    IF (
-                        a.Quantity >= b.SetNum,
-                        round(b.SetPrice * a.Quantity, 2),
-                        round(
-                            round(b.SalePrice * b.Discount, 2) * a.Quantity,
-                            2
-                        )
-                    )
-                    )AS Money
-                    FROM
-                        tb_shoppingcart a
-                    LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
-                    LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
-                    LEFT JOIN tb_photo d ON b.GoodsID = d.LinkID
-                    WHERE
-                        a.BuyerID = %s
-            '''
-        if is_selected=='1' or is_selected==1:
-            sql+='and a.IsSelected=1'
-        sql+='''
-                    GROUP BY
-                    c.ShopID,
-                    c.ShopName
-                    ORDER BY
-                        c.ShopID
-            '''
-        if mktxzb and mktyzb:
-            result_set=db.engine.execute(sql,(mktxzb,mktyzb,mktxzb,mktyzb,mktxzb,mktyzb,user_info.buyer_id))
-        else:
-            result_set=db.engine.execute(sql,(user_info.buyer_id))
-        arr=[]
-        for row in result_set:
-            temp=row_map_converter(row)
-            arr.append(temp)
-        orders=[]
-        for item in arr:
-            if item['shop_id']==None or item['shop_id']=='None':
-                continue  
-            temp_shop={
-                'shop_id':item['shop_id'],
-                'shop_name':item['shop_name'],
-                'free_distance':item['free_distance'],
-                'freight':item['freight_per_kilometre']
-        
-            }
-        
-            count=0            
-            for order in orders:
-                count=count+1
-                if order['shop_id']==item['shop_id']:
-                    order['goods'].append(item)
-                    break
-            if count==len(orders):
-                temp_arr=[]
-                temp_arr.append(item)
-                temp_shop['goods']=temp_arr
-                orders.append(temp_shop)            
-        result['orders']=orders
+        shop_list=GetShopListFromCart(mktxzb, mktyzb, user_info, is_selected)
+        for shop in shop_list:
+            goods=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, is_selected)
+            shop['goods']=goods
+        result['orders']=shop_list
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
@@ -316,7 +244,39 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         
     return Response(json.dumps(result),content_type='application/json')
         
+@order_controller.route('/m1/private/buy_again_by_order_no',methods=['POST'])
+@check_token
+def buy_again_by_order_no(token_type,user_info):
+    
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        order_no=data['order_no']
         
+        order_details=OrderDetail.query.filter_by(order_no=order_no).all()
+        if order_details:
+            db.engine.execute('update tb_shoppingcart set IsSelected=0 where BuyerID=%s',(user_info.buyer_id))
+        for  order_detail in order_details:
+            shop_cart=ShopCart.query.filter_by(buyer_id=user_info.buyer_id,goods_id=order_detail.goods_id).first()
+            if shop_cart:
+                shop_cart.is_selected='1'
+                shop_cart.create_time=datetime.now()
+            else:
+                shop_cart=ShopCart()
+                shop_cart.buyer_id=user_info.buyer_id
+                shop_cart.quantity=order_detail.quantity
+                shop_cart.goods_id=order_detail.goods_id
+                shop_cart.is_selected='1'
+                shop_cart.create_time=datetime.now()
+                db.session.add(shop_cart)
+        db.session.commit()
+        result=get_preview_orders_by_shopcart_for_buyer_again(token_type, user_info)
+        
+    except Exception,e:
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+      
 def getOrderCartList(user_id,address_id):
     sql='''
     
@@ -371,6 +331,144 @@ def getOrderCartList(user_id,address_id):
         row_map=row_map_converter(row)
         arr.append(row_map)
     return arr
+
+def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
+    arr=[]
+    try:
+        sql='''
+                SELECT
+               a.GoodsID,
+	       c.ShopID,
+               c.ShopName,
+               c.OrderAmount,
+               c.FarthestDistance/1000 as FarthestDistance,
+               c.Freight as FreightPerKilometre
+              
+                '''
+        
+        if mktxzb and mktyzb:
+            sql+=''', ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2))/1000,2) AS Distance,'''
+	    sql+='''
+    
+		    IF (
+		        ROUND(
+		            SQRT(
+		                POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
+		                ),
+		            2
+		            ) > c.FreeDistance,
+		        CEIL(
+		            ROUND(
+		                SQRT(
+		                    POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
+		                    ),
+		                2
+		                ) - FreeDistance
+		            ) /1000* Freight,
+		        0
+		        ) AS TotalFreight '''
+	sql+=''',sum(
+
+                    IF (
+                        a.Quantity >= b.SetNum,
+                        round(b.SetPrice * a.Quantity, 2),
+                        round(
+                            round(b.SalePrice * b.Discount, 2) * a.Quantity,
+                            2
+                        )
+                    )
+                    )AS Money
+                    FROM
+                    tb_shoppingcart a
+                            LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+                            LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
+                    WHERE
+                        a.BuyerID = %s
+            '''
+        if is_selected=='1' or is_selected==1:
+            sql+='and a.IsSelected=1 '
+        sql+=''' GROUP BY
+                        c.ShopID,
+                        c.ShopName
+                        ORDER BY
+                            c.ShopID
+                '''
+        if mktxzb and mktyzb:
+            result_set=db.engine.execute(sql,(mktxzb,mktyzb,mktxzb,mktyzb,mktxzb,mktyzb,user_info.buyer_id))
+        else:
+            result_set=db.engine.execute(sql,(user_info.buyer_id))
+        for row in result_set:
+            arr.append(row_map_converter(row))
+                
+    except Exception,e:
+        current_app.logger.exception(e)
+        
+    return arr
+   
+   
+def GetGoodsListFromCart(shop_id,buyer_id,is_selected):
+    arr=[]
+    try:
+        sql='''
+        SELECT
+                	a.GoodsID,
+                	c.PhotoPath,
+                        c.ThumbnailPath,
+                	b.GoodsName,
+                	b.SalePrice,
+                	b.Discount,
+                	a.Quantity,
+        			b.SetNum,
+        			b.SetPrice,
+        		
+                IF (
+					a.Quantity >= b.SetNum,
+					b.SetPrice,
+					round(b.SalePrice * b.Discount, 2)
+				) AS DisPrice,
+				
+				IF (
+					a.Quantity >= b.SetNum,
+					round(b.SetPrice * a.Quantity, 2),
+					round(
+						round(b.SalePrice * b.Discount, 2) * a.Quantity,
+						2
+					)
+				) AS Money,
+                	IFNULL(d.Quantity, 0) AS SumQuantity
+                FROM
+                	tb_shoppingcart a
+                INNER JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+                AND b.ShopID = %s
+                INNER JOIN tb_photo c ON b.GoodsID = c.LinkID
+                AND c.IsChecked = '1'
+                AND c.IsVisable = '1'
+                LEFT JOIN (
+                	SELECT
+                		GoodsID,
+                		SUM(Quantity) AS Quantity
+                	FROM
+                		tb_purchase_s
+                	GROUP BY
+                		GoodsID
+                ) d ON a.GoodsID = d.GoodsID
+                WHERE
+                	a.BuyerID = %s
+        
+        '''
+        
+        if is_selected==1 or is_selected=='1':
+            sql+='and a.IsSelected=1'
+        sql+=' ORDER BY a.GoodsID'
+        
+        result_set=db.engine.execute(sql,(shop_id,buyer_id))
+        for row in result_set:
+            arr.append(row_map_converter(row))
+    except Exception,e:
+        current_app.logger.exception(e)
+    return arr
+        
+     
     
 def getGoodsList(shop_id,user_id):
     sql='''SELECT
@@ -401,3 +499,32 @@ def getGoodsList(shop_id,user_id):
         row_map=row_map_converter(row)
         arr.append(row_map)
     return arr
+
+
+
+def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        
+        buyer_address=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
+        xzb=None
+        yzb=None
+        mktxzb=None
+        mktyzb=None        
+        if  buyer_address:
+            xzb=buyer_address.xzb
+            yzb=buyer_address.yzb
+            mktxzb=buyer_address.mktxzb
+            mktyzb=buyer_address.mktyzb
+        is_selected='1'
+        
+        shop_list=GetShopListFromCart(mktxzb, mktyzb, user_info, is_selected)
+        for shop in shop_list:
+            goods=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, is_selected)
+            shop['goods']=goods
+        result['orders']=shop_list
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return result

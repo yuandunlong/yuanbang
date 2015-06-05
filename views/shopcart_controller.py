@@ -3,6 +3,7 @@ from flask import json,Response,Blueprint,request,current_app
 from utils import check_token,row_map_converter
 from datetime import datetime
 from database.models import db,ShopCart
+from views.order_controller import GetGoodsListFromCart,GetShopListFromCart
 shopcart_controller=Blueprint('shopcart_controller',__name__)
 
 @shopcart_controller.route('/m1/private/get_shopcart_list',methods=['GET'])
@@ -10,92 +11,12 @@ shopcart_controller=Blueprint('shopcart_controller',__name__)
 def get_shopcart_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
-        data=request.get_json()
-        sql='''
-        SELECT
-        x.ShopID,
-        x.ShopName,
-        a.GoodsID,
-        a.CreateTime,
-        c.PhotoPath,
-        c.ThumbnailPath,
-        c.PhotoID,
-        c.PhotoName,
-        x.OrderAmount,
-        x.FarthestDistance,
-        x.Freight,
-        x.FreeDistance,
-        b.GoodsName,
-        b.SalePrice,
-        b.Discount,
-        a.Quantity,
-        a.IsSelected,
-        b.SetNum,
-        b.SetPrice,
-        IF (
-            a.Quantity >= b.SetNum,
-            b.SetPrice,
-            round(b.SalePrice * b.Discount, 2)
-            ) AS DisPrice,
-            IF (
-                a.Quantity >= b.SetNum,
-                round(b.SetPrice * a.Quantity, 2),
-                round(
-                    round(b.SalePrice * b.Discount, 2) * a.Quantity,
-                    2
-                )
-                ) AS Money,
-            IFNULL(d.Quantity,0) AS SumQuantity
-        FROM  tb_shoppingcart a
-        LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
-        LEFT JOIN tb_photo c ON b.GoodsID = c.LinkID
-        LEFT JOIN tb_shopinfo_s x ON b.ShopID = x.ShopID 
-        AND c.IsChecked = '1'
-        AND c.IsVisable = '1'
-        LEFT JOIN (
-            SELECT
-            GoodsID,
-            SUM(Quantity) AS Quantity
-            FROM
-            tb_purchase_s
-            GROUP BY
-            GoodsID
-            ) d ON a.GoodsID = d.GoodsID
-        WHERE
-            a.BuyerID = %s
-        ORDER BY
-            b.ShopID,a.GoodsID ;
-        '''
-        result_set=db.engine.execute(sql,[user_info.buyer_id])
-        arr=[]
-        for row in result_set:
-            temp=row_map_converter(row)
-            arr.append(temp)
-        
-        shopcarts=[]
-        for item in arr:
-            if item['shop_id']==None or item['shop_id']=='None':
-                continue            
-            temp_shop={
-                'shop_id':item['shop_id'],
-                'shop_name':item['shop_name'],
-                'free_distance':item['free_distance'],
-                'freight':item['freight']
-            
-            }
-            
-            count=0
-            for shopcart in shopcarts:
-                count=count+1
-                if shopcart['shop_id']==item['shop_id']:
-                    shopcart['goods'].append(item)
-                    break
-            if count==len(shopcarts):
-                temp_arr=[]
-                temp_arr.append(item)
-                temp_shop['goods']=temp_arr
-                shopcarts.append(temp_shop)
-        result['shopcarts']=shopcarts
+        shop_list=GetShopListFromCart(None, None, user_info, 0)
+        for shop in shop_list:
+            arr=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, 0)
+            shop['goods']=arr
+
+        result['shopcarts']=shop_list
     except Exception ,e:
         current_app.logger.exception(e)
         result['msg']=e.message

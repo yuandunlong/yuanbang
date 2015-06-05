@@ -2,9 +2,9 @@
 from flask import Blueprint,current_app
 from flask import request
 from flask import json, jsonify, Response
-from database.models import Comment, db
-from views.utils import row_map_converter
-
+from database.models import Comment, db,OrderDetail
+from views.utils import row_map_converter,check_token
+from datetime import datetime
 comment_controller = Blueprint('comment_controller', __name__)
 
 @comment_controller.route('/m1/public/get_shop_goods_comment', methods=['POST'])
@@ -67,5 +67,32 @@ def get_shop_avg_level_comment():
         result['code'] = 0
         result['msg'] = 'ok'
     return Response(json.dumps(result), content_type='application/json')
+
+@comment_controller.route('/m1/private/submit_comment',methods=['POST'])      
+@check_token
+def submit_comment(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        order_no=data['order_no']
+        order_details=OrderDetail.query.filter_by(order_no=order_no)
         
-    
+        for order_detail in order_details:
+            comment=Comment()
+            comment.goods_id=order_detail.goods_id
+            comment.shop_id=data['shop_id']
+            comment.buyer_id=user_info.buyer_id
+            comment.level=data['level']
+            comment.content=data['content']
+            comment.del_flag='0'
+            comment.comment_type='1'
+            comment.commit_time=datetime.now()
+            comment.is_read='0'
+            db.session.add(comment)
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']='ok'
+    return Response(json.dumps(result),content_type="application/json")
+        
