@@ -418,6 +418,7 @@ def GetGoodsListFromCart(shop_id,buyer_id,is_selected):
                 	b.SalePrice,
                 	b.Discount,
                 	a.Quantity,
+	                a.IsSelected,
         			b.SetNum,
         			b.SetPrice,
         		
