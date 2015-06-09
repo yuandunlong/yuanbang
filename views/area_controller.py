@@ -21,7 +21,7 @@ def get_area_list():
         result['areas']=areas_arr
         result['code']=1
     except Exception,e:
-        current_app.logger.exception(e)
+        #current_app.logger.exception(e)
         areas=Area.query.filter().order_by('sort',Area.area_id).all()
         areas_arr=[]
         for area in areas :
