@@ -766,7 +766,7 @@ def get_recommend_shop_for_home_page():
     
     try:
         sql='''
-        select * from tb_shopinfo_s where shopname like %s 
+        select * from tb_shopinfo_s where ShopName like %s and  ShopID <>1
         '''
         result_set=db.engine.execute(sql,('%远邦%'))
         arr=[]
