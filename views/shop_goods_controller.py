@@ -55,7 +55,16 @@ def get_shop_goods_detail():
             temp['add_attr_name']=row['AddAttrName']
             temp['add_attr_content']=row['AddAttrContent']
             arr.append(temp)
-        result['goods_detail']=arr
+        sql3='''
+        select GoodsSpec,GoodsLocality,GoodsBrand from tb_goodsinfo_s where GoodsID=%s
+        '''
+        temp_row=db.engine.execute(sql3,data['goods_id']).fetchone()
+        if temp_row:
+            
+            arr.insert(0,{'add_attr_name':'商品规格','add_attr_content':temp_row['GoodsSpec']})
+            arr.insert(1,{'add_attr_name':'商品产地','add_attr_content':temp_row['GoodsLocality']})
+            arr.insert(2,{'add_attr_name':'商品品牌','add_attr_content':temp_row['GoodsBrand']})
+        result['"goods_detail']=arr
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
