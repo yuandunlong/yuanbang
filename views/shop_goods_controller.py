@@ -65,7 +65,7 @@ def get_shop_goods_detail():
             arr.insert(0,{'goods_id':data['goods_id'],'add_attr_name':'商品规格','add_attr_content':temp_row['GoodsSpec'],'goods_type_id':'0','add_attr_id':'0'})
             arr.insert(1,{'goods_id':data['goods_id'],'add_attr_name':'商品产地','add_attr_content':temp_row['GoodsLocality'],'goods_type_id':'0','add_attr_id':'0'})
             arr.insert(2,{'goods_id':data['goods_id'],'add_attr_name':'商品品牌','add_attr_content':temp_row['GoodsBrand'],'goods_type_id':'0','add_attr_id':'0'})
-        result['"goods_detail']=arr
+        result['goods_detail']=arr
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
