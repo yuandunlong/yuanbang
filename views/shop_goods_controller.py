@@ -103,7 +103,7 @@ def get_shop_goods_count():
 
 @shop_goods_controller.route('/m1/public/get_shop_goods_for_discount',methods=['POST'])
 def get_shop_goods_for_discount():
-    result={'code':1,'msh':'ok'}
+    result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
         sql='''SELECT
@@ -111,11 +111,27 @@ def get_shop_goods_for_discount():
             tgs.ShopID,
             tgs.GoodsName,
             IFNULL(tp.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+            IFNULL(o.SaleQuantity,0) AS TotalSale,
             tgs.SalePrice,
             round(tgs.SalePrice * tgs.Discount, 2) AS DisPrice
             FROM
                 tb_goodsinfo_s tgs
-                LEFT JOIN tb_photo tp ON 
+                
+            LEFT JOIN (
+                   SELECT
+                   sum(t.Quantity) AS SaleQuantity,
+                   t.GoodsID
+                   FROM
+                   tb_order_s d,
+                   tb_orderdetail_s t
+                   WHERE
+                   d.OrderNo = t.OrderNo
+                   AND d.`Status` <> '3'
+                   GROUP BY
+                   t.GoodsID
+                   ) o ON tgs.GoodsID = o.GoodsID                
+                
+            LEFT JOIN tb_photo tp ON 
                     tgs.GoodsID = tp.LinkID
                     AND tp.IsVisable = '1'
                     AND tp.IsChecked = '1'
@@ -123,10 +139,24 @@ def get_shop_goods_for_discount():
                 tgs.ShopID = %s
                 AND tgs.`Status` = %s
                 AND tgs.Discount != %s
-            ORDER BY tgs.Discount ASC
-            LIMIT 16
+          
+            
         
         '''
+        
+        order_by=data.get('order_by',None)
+        
+        if order_by=='saleasc':
+            sql+='  order by TotalSale asc'
+        elif order_by=='saledesc':
+            sql+=' order by TotalSale desc'
+        elif order_by=='priceasc':
+            sql+=' order by SalePrice asc'
+        elif order_by=='pricedesc':
+            sql+=' order by SalePrice desc'   
+        else:
+            sql+=' order by SalePrice,TotalSale desc'        
+        sql+= ' LIMIT 16'
         result_set=db.engine.execute(sql,(data['shop_id'],'0','1'))
         arr=[]
         for row in result_set:
@@ -219,6 +249,19 @@ def get_shop_goods_by_type():
         and (g.GoodsTypeIDs like %s or g.GoodsTypeIDs like %s)
         
         '''
+        
+        order_by=data.get('order_by',None)
+        
+        if order_by=='saleasc':
+            sql+='  order by TotalSale asc'
+        elif order_by=='saledesc':
+            sql+=' order by TotalSale desc'
+        elif order_by=='priceasc':
+            sql+=' order by SalePrice asc'
+        elif order_by=='pricedesc':
+            sql+=' order by SalePrice desc'
+        else:
+            sql+=' order by SalePrice,TotalSale desc'        
         shop_id=str(data['shop_id'])
         if data.get('goods_type_id'):
             goods_type_id=str(data['goods_type_id'])
@@ -252,6 +295,17 @@ def get_shop_goods_by_type():
                 g.ShopID = %s
             and g.Status = 0
             '''
+            order_by=data.get('order_by','saledesc')
+            
+            if order_by=='saleasc':
+                sql+='  order by TotalSale asc'
+            elif order_by=='saledesc':
+                sql+=' order by TotalSale desc'
+            elif order_by=='priceasc':
+                sql+=' order by SalePrice asc'
+            elif order_by=='pricedesc':
+                sql+=' order by SalePrice desc'   
+                
             result_set=db.engine.execute(another_sql,(shop_id))
         arr=[]
         for row in result_set:
@@ -294,8 +348,20 @@ def get_latest_shop_goods():
         AND p.IsChecked = '1'
         WHERE
             g.ShopID = %s
-        and g.Status = 0 order by g.CreateTime desc limit %s
+        and g.Status = 0  
         '''
+        order_by=data.get('order_by',None)
+        if order_by=='saleasc':
+            sql+='  order by TotalSale asc'
+        elif order_by=='saledesc':
+            sql+=' order by TotalSale desc'
+        elif order_by=='priceasc':
+            sql+=' order by SalePrice asc'
+        elif order_by=='pricedesc':
+            sql+=' order by SalePrice desc' 
+        else:
+            sql+=' order by SalePrice,TotalSale desc'
+        sql+=' limit %s'
         shop_id=str(data['shop_id'])
         count=data.get('count',4)
         result_set=db.engine.execute(sql,(shop_id,count))

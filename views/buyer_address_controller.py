@@ -28,7 +28,7 @@ def add_address(token_type,user_info):
         
         buyer_address.mktxzb=Decimal(data['mktxzb'])
         buyer_address.mktyzb=Decimal(data['mktyzb'])
-        buyer_address.is_default=data.get('is_default')
+        buyer_address.is_default=str(data.get('is_default'))
         #如果是默认地址
         if buyer_address.is_default=="1" or buyer_address.is_default==1:
             db.engine.execute('update tb_buyeraddress set IsDefault=0 where BuyerID=%s',(user_info.buyer_id))
