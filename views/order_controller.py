@@ -261,6 +261,7 @@ def buy_again_by_order_no(token_type,user_info):
             if shop_cart:
                 shop_cart.is_selected='1'
                 shop_cart.create_time=datetime.now()
+		db.session.commit()
             else:
                 shop_cart=ShopCart()
                 shop_cart.buyer_id=user_info.buyer_id

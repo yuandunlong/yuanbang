@@ -215,7 +215,7 @@ class ShopCart(db.Model):
 	
 	def get_map(self):
 		s=self
-		result={"buyer_id":s.buyer_id,"goods_id":s.goods_id,"quntity":s.quntity,'create_time':s.create_time}
+		result={"buyer_id":s.buyer_id,"goods_id":s.goods_id,"quntity":s.quntity,'create_time':s.create_time,'is_selected':s.is_selected}
 		return result
 	
 class Order(db.Model):
