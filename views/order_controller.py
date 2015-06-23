@@ -259,17 +259,18 @@ def buy_again_by_order_no(token_type,user_info):
         for  order_detail in order_details:
             shop_cart=ShopCart.query.filter_by(buyer_id=user_info.buyer_id,goods_id=order_detail.goods_id).first()
             if shop_cart:
-                shop_cart.is_selected='1'
-                shop_cart.create_time=datetime.now()
+		shop_cart.is_selected='1'
+		shop_cart.create_time=datetime.now()
 		db.session.commit()
             else:
-                shop_cart=ShopCart()
-                shop_cart.buyer_id=user_info.buyer_id
-                shop_cart.quantity=order_detail.quantity
-                shop_cart.goods_id=order_detail.goods_id
-                shop_cart.is_selected='1'
-                shop_cart.create_time=datetime.now()
-                db.session.add(shop_cart)
+		shop_cart=ShopCart()
+		shop_cart.buyer_id=user_info.buyer_id
+		shop_cart.quantity=order_detail.quantity
+		shop_cart.goods_id=order_detail.goods_id
+		shop_cart.is_selected='1'
+		shop_cart.create_time=datetime.now()
+		db.session.add(shop_cart)
+		db.session.commit()
         db.session.commit()
         result=get_preview_orders_by_shopcart_for_buyer_again(token_type, user_info)
         
