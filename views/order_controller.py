@@ -531,3 +531,7 @@ def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
         result['code']=0
         result['msg']=e.message
     return result
+
+
+def send_email_2_shop():
+    pass
