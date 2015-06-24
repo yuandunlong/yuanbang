@@ -166,9 +166,9 @@ def get_shop_lists_by_page():
         
         sql=sql+' limit %s,%s'
         if mktxzb and mktyzb:
-            result_set=db.engine.execute(sql,(mktxzb,mktyzb,'%'+shop_type+'%',page-1,page_size))
+            result_set=db.engine.execute(sql,(mktxzb,mktyzb,'%'+shop_type+'%',(page-1)*page_size,page_size))
         else:
-            result_set=db.engine.execute(sql,('%'+shop_type+'%',page-1,page_size))
+            result_set=db.engine.execute(sql,('%'+shop_type+'%',(page-1)*page_size,page_size))
         arr=[]
         for row in result_set:
             temp=row_map_converter(row)
@@ -214,9 +214,9 @@ def search_shops_by_page():
             page_size=20
         shops=[]    
         if shop_type:
-            shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset(page-1).limit(page_size).all()
+            shop_infos=ShopInfo.query.filter_by(shop_type=shop_type,is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset((page-1)*page_size).limit(page_size).all()
         else:
-            shop_infos=ShopInfo.query.filter_by(is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset(page-1).limit(page_size).all()
+            shop_infos=ShopInfo.query.filter_by(is_checked='2',status='0').filter(ShopInfo.shop_name.like('%'+key_words+'%')).offset((page-1)*page_size).limit(page_size).all()
         for shop in shop_infos:
             shops.append(shop.get_map())
     
@@ -328,7 +328,7 @@ def get_home_page_shop_goods():
         AND p.IsVisable = '1'
         AND p.IsChecked = '1'
         
-        where ShopID=%s
+        where ShopID=%s and g.Status=0
         order by Discount  asc limit %s
             
             '''

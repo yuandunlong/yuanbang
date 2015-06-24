@@ -2,7 +2,7 @@
 from flask import Blueprint,current_app
 from flask import request
 from flask import Response,json
-from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart
+from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter
 from datetime import datetime
 order_controller=Blueprint('order_controller',__name__)
@@ -533,5 +533,12 @@ def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
     return result
 
 
-def send_email_2_shop():
-    pass
+def send_email_2_shop(shop_id,order_no):
+    
+    try:
+	
+    
+    except Exception,e:
+	
+    
+    
