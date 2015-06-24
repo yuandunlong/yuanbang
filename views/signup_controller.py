@@ -4,7 +4,7 @@ from flask import request
 from flask import json,Response
 import urllib2
 import random
-from database.models import Buyer
+from database.models import Buyer,db
 from werkzeug.contrib.cache import SimpleCache
 from datetime import datetime
 signup_controller=Blueprint('signup_controller',__name__)
@@ -48,7 +48,7 @@ def check_mobile_exist():
 
 @signup_controller.route('/m1/public/buyer_sign_up',methods=['POST'])
 def buyer_sign_up():
-    result={'code':1,'msg':e.message}
+    result={'code':1,'msg':"ok"}
     try:
         data=request.get_json()
         
@@ -76,4 +76,5 @@ def buyer_sign_up():
         result['code']=1
         result['msg']=e.message
         
+    return Response(json.dumps(result),content_type='application/json')
     
