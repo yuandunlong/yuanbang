@@ -135,3 +135,25 @@ def jw_2_mkt(jd,wd):
     y=math.log(math.tan((90+float(wd))*math.pi/360))/(math.pi/180)
     y = y *20037508.34789/180
     return x,y
+
+
+def send_mail(to_list,subject,content):  
+    mail_user="yuanbangshop"
+    mail_postfix="163.com"
+
+    me="远邦邻里网"+"<"+mail_user+"@"+mail_postfix+">"  
+    msg = MIMEText(content,_subtype='html',_charset='utf-8')  
+    msg['Subject'] = subject  
+    msg['From'] = me  
+    msg['To'] = ";".join(to_list)  
+    try:  
+        server = smtplib.SMTP()  
+        server.connect('smtp.163.com')  
+        server.login('yuandunlong@163.com',"yuandunlong#")  
+        server.sendmail(me, to_list, msg.as_string())  
+        server.close()  
+        return True  
+    except Exception, e:  
+        server.close() 
+        print str(e)  
+        return False  

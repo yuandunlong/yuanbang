@@ -49,7 +49,7 @@ def get_order_list(token_type,user_info):
         c.ShopName
         from tb_order_s a 
         left join tb_shopinfo_s c on a.ShopID=c.ShopID 
-        where BuyerID=%s
+        where BuyerID=%s order by a.SubmitTime desc
         '''
         sql_detail='''
 
@@ -393,7 +393,7 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
                         c.ShopID,
                         c.ShopName
                         ORDER BY
-                            c.ShopID
+                            a.CreateTime desc
                 '''
         if mktxzb and mktyzb:
             result_set=db.engine.execute(sql,(mktxzb,mktyzb,mktxzb,mktyzb,mktxzb,mktyzb,user_info.buyer_id))
@@ -462,7 +462,7 @@ def GetGoodsListFromCart(shop_id,buyer_id,is_selected):
         
         if is_selected==1 or is_selected=='1':
             sql+='and a.IsSelected=1'
-        sql+=' ORDER BY a.GoodsID'
+        sql+=' ORDER BY a.CreateTime desc'
         
         result_set=db.engine.execute(sql,(shop_id,buyer_id))
         for row in result_set:
@@ -536,9 +536,74 @@ def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
 def send_email_2_shop(shop_id,order_no):
     
     try:
+	order_sql='''
 	
+	
+	SELECT
+	        o.OrderNo,
+	        o.SubmitTime,
+	        o.SendTime,
+	        o.ConfirmTime,
+	        o.Freight,
+	        o.Receiver,
+	        o.SendAddress,
+	        o.Phone,
+	        o.Remark,
+	        (o.SaleMoney + o.Freight) AS SaleMoney,
+	        o.ShopID,
+	        b.Account,
+	        b.NickName,
+	        s.ShopName,
+	        s.ShopPhone,
+	        s.LinkMan,
+	        s.Mobile,
+	        s.ShopAddress,
+	        s.Email,
+	        c.ItemName AS Status
+	FROM
+	        tb_order_s o
+	LEFT JOIN tb_shopinfo_s s on o.ShopID = s.ShopID
+	LEFT JOIN TB_BUYER b on b.BuyerID = o.BuyerID
+	LEFT JOIN TB_CONSTENT_M c on c.TypeID = '009' and o.Status = c.ItemID
+	WHERE
+	        o.OrderNo = %s	
+	'''
+	order_row=db.engine.execute(order_sql,order_no).fetchone()
+	order=row_map_converter(order_row)
+	
+	    
+	detail_sql='''
+	SELECT
+	            o.OrderNo,
+	            o.SalePrice,
+	            o.DiscountPrice,
+	            SUM(o.Quantity) AS Quantity,
+	            o.GoodsID,
+	            g.GoodsName,
+	            g.ShopID,
+	            p.ThumbnailPath AS PhotoPath
+	    FROM
+	            TB_GOODSINFO_S g,
+	            TB_ORDERDETAIL_S o
     
-    except Exception,e:
+	    INNER JOIN TB_PHOTO p ON p.LinkID = o.GoodsID
+	    AND p.IsVisable = 1 AND p.IsChecked = 1
+	    WHERE
+	            o.OrderNo = %s
+	    AND o.GoodsID = g.GoodsID
+	    GROUP BY
+	            o.OrderNo,
+	            o.SalePrice,
+	            o.DiscountPrice,
+	            o.GoodsID,
+	            g.GoodsName,
+	            PhotoPath '''
+	order_details= db.engine.execute(detail_sql,order_no)
 	
+	order['order_detail']=result_set_converter(order_details)
+	
+	
+    except Exception,e:
+       
     
     
