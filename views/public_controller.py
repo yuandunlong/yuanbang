@@ -305,7 +305,7 @@ def get_home_page_shop_goods():
             shop_temp=row_map_converter(shop)
             
             temp_sql='''
-        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.Discount,g.SetPrice,g.SetNum,
         round(g.SalePrice * g.Discount, 2) AS DisPrice,
         IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
         IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -519,7 +519,7 @@ def search_goods_in_shop_by_page():
         page_size=data.get('page_size',10)
         order_by=data.get('order_by','')
         sql='''
-        SELECT g.ShopID,g.GoodsID,g.GoodsName,g.SalePrice,round(g.SalePrice * g.Discount, 2) AS DisPrice,
+        SELECT g.ShopID,g.GoodsID,g.GoodsName,g.SalePrice,round(g.SalePrice * g.Discount, 2) AS DisPrice,g.SetPrice,g.SetNum,
         p.ThumbnailPath,
         IFNULL(o.Quantity, 0) AS Quantity,
         s.ShopName,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
@@ -620,7 +620,7 @@ def search_goods_by_page_ex():
         page_size=data.get('page_size',10)
         order_by=data.get('order_by','')
         sql='''
-        SELECT g.ShopID,g.GoodsID,g.GoodsName,g.SalePrice,round(g.SalePrice * g.Discount, 2) AS DisPrice,
+        SELECT g.ShopID,g.GoodsID,g.GoodsName,g.SetPrice,g.SetNum, g.SalePrice,round(g.SalePrice * g.Discount, 2) AS DisPrice,
         p.ThumbnailPath,
         IFNULL(o.Quantity, 0) AS Quantity,
         s.ShopName,s.ShopPhoto,s.mktxzb,s.mktyzb,s.xzb,s.yzb,

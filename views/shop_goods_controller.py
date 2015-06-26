@@ -110,6 +110,8 @@ def get_shop_goods_for_discount():
             tgs.GoodsID,
             tgs.ShopID,
             tgs.GoodsName,
+            tgs.SetPrice,
+            tgs.SetNum,
             IFNULL(tp.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
             IFNULL(o.SaleQuantity,0) AS TotalSale,
             tgs.SalePrice,
@@ -221,7 +223,7 @@ def get_shop_goods_by_type():
     try:
         data=request.get_json()
         sql='''
-        SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.SetPrice,g.SetNum,
     round(g.SalePrice * g.Discount, 2) AS DisPrice,
     IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
     IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -324,7 +326,7 @@ def get_latest_shop_goods():
     try:
         data=request.get_json()
         sql='''
-        SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.SetPrice,g.SetNum,
     round(g.SalePrice * g.Discount, 2) AS DisPrice,
     IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
     IFNULL(o.SaleQuantity,0) AS TotalSale
