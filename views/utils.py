@@ -149,7 +149,7 @@ def send_mail(to_list,subject,content):
     try:  
         server = smtplib.SMTP()  
         server.connect('smtp.163.com')  
-        server.login('yuandunlong@163.com',"yuandunlong#")  
+        server.login('yuanbangshop@163.com',"123456yb")  
         server.sendmail(me, to_list, msg.as_string())  
         server.close()  
         return True  

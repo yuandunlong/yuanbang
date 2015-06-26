@@ -5,6 +5,7 @@ from flask import Response,json
 from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter
 from datetime import datetime
+from string import Template
 order_controller=Blueprint('order_controller',__name__)
 
 def get_order_listss(token_type,user_info):
@@ -601,6 +602,44 @@ def send_email_2_shop(shop_id,order_no):
 	order_details= db.engine.execute(detail_sql,order_no)
 	
 	order['order_detail']=result_set_converter(order_details)
+	
+	temp_template=''' 尊敬的${shop_name}店主：<br />&nbsp;&nbsp;&nbsp;&nbsp;您的店铺有新的订单，订单编号为:${order_no}
+	
+	<table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'>
+                                    <tbody>
+                                       <tr>
+                                         	<td width='80' class='biaoti' >收货人：
+                                         		${reciever}
+                                         	</td>
+                                         	<td width='80' class='biaoti' >联系电话：
+                                         		${phone}
+                                         	</td>
+                                         	<td width='80' class='biaoti' >配送地址：
+                                         		${send_address}
+                                         	</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                    			<table width='100%' border='1' cellspacing='0' cellpadding='5' class='ordergl ordersearch'>
+                                    <tbody>
+                                    	 <tr>
+                                            <td width='280' class='biaoti' align='center' colspan='2'>商品</td>
+                                            <td width='70' class='biaoti'>单价(元)</td>
+                                            <td width='50' height='26' class='biaoti'>数量</td>
+                                            <td width='120' class='biaoti'>合计(元)</td>
+                                        </tr>
+	'''
+	
+	mail_body=temp_template.substitute(shop_name=order['shop_name'],order_no=order['order_no'],reciever=order['receiver'],phone=order['phone'],send_address=order['send_address'])
+	
+	temp_template=''
+	
+	for order_detail in order['order_detail']:
+	    
+	    
+	
+	
+	
 	
 	
     except Exception,e:

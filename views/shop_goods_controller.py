@@ -182,7 +182,7 @@ def get_goods_by_id():
     try:
         data=request.get_json()
         sql='''
-            SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+            SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.SetPrice,g.SetNum,
             round(g.SalePrice * g.Discount, 2) AS DisPrice,
             IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
             IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -211,6 +211,14 @@ def get_goods_by_id():
         row=db.engine.execute(sql,(data['goods_id'])).fetchone()
         if row:
             result['goods_info']=row_map_converter(row)
+            p_sql='''select quantity as remains from tb_purchase_s where GoodsID=%s order by BatchNo Desc'''
+            _row=db.engine.execute(p_sql,(data['goods_id'])).fetchone()
+            
+            if _row:
+                result['goods_info']['remains']=int(_row['remains'])
+            else :
+                result['goods_info']['remains']=0
+            
     except Exception, e:
         current_app.logger.exception(e)
         result['code']=0
