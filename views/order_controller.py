@@ -6,6 +6,7 @@ from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,S
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter
 from datetime import datetime
 from string import Template
+import base64
 order_controller=Blueprint('order_controller',__name__)
 
 def get_order_listss(token_type,user_info):
@@ -633,11 +634,36 @@ def send_email_2_shop(shop_id,order_no):
 	mail_body=temp_template.substitute(shop_name=order['shop_name'],order_no=order['order_no'],reciever=order['receiver'],phone=order['phone'],send_address=order['send_address'])
 	
 	temp_template=''
-	
+	i=0
 	for order_detail in order['order_detail']:
 	    
+	    temp_template='''<tr>
+				<td width='80' class='orderpic hang'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'><img src='${base_url}/${photo_path}' width='80px' height='80px' /></a></td>
+                                    <td width='200' class='hang' style='text-align: left'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'>${goods_name}</a></td>
+                                    <td width='70' class='hang'><s>${sale_price}</s><br/>${discount_price}</td>
+                                    <td width='50' class='hang'>${quantity}</td>" '''
+	    mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',shop_id=order['shop_id'],goods_id=order_detail['goods_id'],photo_path=order_detail['photo_path'],goods_name=order_detail['order_detail'],sale_price=order_detail['sale_price'],discount_price=order_detail['discount_price'],quantity=order_detail['quantity'])
 	    
+	    if i==0:
+		temp_template=''' <td width='120' class='rowspan' rowspan='${count}'>${sale_money}<br/>(含运费：${freight})</td>'''
+		mail_body+=temp_template.substitute(count=len(order['order_detail']),sale_money=order['sale_money'],freight=order['freight'])
+	    
+		
+	    i=i+1
+	    mail_body+='</tr>'
 	
+	mail_body+='''</tbody>
+                            </table><table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'><tbody>
+                                       <tr><td width='80' class='biaoti' >备注:'''
+	if order['remark']:
+	    
+	    mail_body+=order['remark']
+	else:
+	    mail_body+="无"
+	param=
+	mail_body+='''</td></tr></tbody></table>
+				请点击下列链接进行操作。<a href='${base_url}/ShopCenterManage/OrderListPage?p=".$string."'>".$base_url."ShopCenterManage/OrderListPage?p=".$string."</a>
+				<br>(如果上面不是链接形式，请将地址手工粘贴到浏览器地址栏再访问)<br><br>此邮件为系统邮件，请勿直接回复'''
 	
 	
 	
