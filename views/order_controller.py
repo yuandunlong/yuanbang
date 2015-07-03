@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint,current_app
-from flask import request
+from flask import request,copy_current_request_context
 from flask import Response,json
 from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo
-from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter
+from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter,send_mail
 from datetime import datetime
-from string import Template
+import string
+from threading import Thread
 import base64
+
 order_controller=Blueprint('order_controller',__name__)
 
 def get_order_listss(token_type,user_info):
@@ -201,19 +203,23 @@ def submit_order_by_shopcart(token_type,user_info):
                 
             db.session.add(message)
             db.session.commit()
-            
+            send_email_2_shop(order.shop_id, order.order_no)
         #删除购物车
         delete_cart_sql='''
         delete from tb_shoppingcart where BuyerID=%s and IsSelected=1
         '''
         db.engine.execute(delete_cart_sql,(user_info.buyer_id))
         db.session.commit()
+	
+	
         
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+
+
     
 #下单前的界面get_preview_orders_by_shopcart
 @order_controller.route('/m1/private/get_preview_orders_by_shopcart',methods=['POST'])
@@ -534,102 +540,110 @@ def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
         result['msg']=e.message
     return result
 
+@order_controller.route('/m1/email',methods=['GET'])
+def test_email():
+    #thr = Thread(target=send_email_2_shop, args=[current_app, 21,'2015052097995551'])
+   # thr.start()    
+    send_email_2_shop(21, '2015052097995551')
+    return Response('ok')
 
 def send_email_2_shop(shop_id,order_no):
-    
     try:
 	order_sql='''
-	
-	
-	SELECT
-	        o.OrderNo,
-	        o.SubmitTime,
-	        o.SendTime,
-	        o.ConfirmTime,
-	        o.Freight,
-	        o.Receiver,
-	        o.SendAddress,
-	        o.Phone,
-	        o.Remark,
-	        (o.SaleMoney + o.Freight) AS SaleMoney,
-	        o.ShopID,
-	        b.Account,
-	        b.NickName,
-	        s.ShopName,
-	        s.ShopPhone,
-	        s.LinkMan,
-	        s.Mobile,
-	        s.ShopAddress,
-	        s.Email,
-	        c.ItemName AS Status
-	FROM
-	        tb_order_s o
-	LEFT JOIN tb_shopinfo_s s on o.ShopID = s.ShopID
-	LEFT JOIN TB_BUYER b on b.BuyerID = o.BuyerID
-	LEFT JOIN TB_CONSTENT_M c on c.TypeID = '009' and o.Status = c.ItemID
-	WHERE
-	        o.OrderNo = %s	
-	'''
+        
+        
+        SELECT
+                o.OrderNo,
+                o.SubmitTime,
+                o.SendTime,
+                o.ConfirmTime,
+                o.Freight,
+                o.Receiver,
+                o.SendAddress,
+                o.Phone,
+                o.Remark,
+                (o.SaleMoney + o.Freight) AS SaleMoney,
+                o.ShopID,
+                b.Account,
+                b.NickName,
+                s.ShopName,
+                s.ShopPhone,
+                s.LinkMan,
+                s.Mobile,
+                s.ShopAddress,
+                s.Email,
+                c.ItemName AS Status
+        FROM
+                tb_order_s o
+        LEFT JOIN tb_shopinfo_s s on o.ShopID = s.ShopID
+        LEFT JOIN TB_BUYER b on b.BuyerID = o.BuyerID
+        LEFT JOIN TB_CONSTENT_M c on c.TypeID = '009' and o.Status = c.ItemID
+        WHERE
+                o.OrderNo = %s	
+        '''
 	order_row=db.engine.execute(order_sql,order_no).fetchone()
 	order=row_map_converter(order_row)
 	
 	    
 	detail_sql='''
-	SELECT
-	            o.OrderNo,
-	            o.SalePrice,
-	            o.DiscountPrice,
-	            SUM(o.Quantity) AS Quantity,
-	            o.GoodsID,
-	            g.GoodsName,
-	            g.ShopID,
-	            p.ThumbnailPath AS PhotoPath
-	    FROM
-	            TB_GOODSINFO_S g,
-	            TB_ORDERDETAIL_S o
+        SELECT
+                    o.OrderNo,
+                    o.SalePrice,
+                    o.DiscountPrice,
+                    SUM(o.Quantity) AS Quantity,
+                    o.GoodsID,
+                    g.GoodsName,
+                    g.ShopID,
+                    p.ThumbnailPath AS PhotoPath
+            FROM
+                    TB_GOODSINFO_S g,
+                    TB_ORDERDETAIL_S o
     
-	    INNER JOIN TB_PHOTO p ON p.LinkID = o.GoodsID
-	    AND p.IsVisable = 1 AND p.IsChecked = 1
-	    WHERE
-	            o.OrderNo = %s
-	    AND o.GoodsID = g.GoodsID
-	    GROUP BY
-	            o.OrderNo,
-	            o.SalePrice,
-	            o.DiscountPrice,
-	            o.GoodsID,
-	            g.GoodsName,
-	            PhotoPath '''
+            INNER JOIN TB_PHOTO p ON p.LinkID = o.GoodsID
+            AND p.IsVisable = 1 AND p.IsChecked = 1
+            WHERE
+                    o.OrderNo = %s
+            AND o.GoodsID = g.GoodsID
+            GROUP BY
+                    o.OrderNo,
+                    o.SalePrice,
+                    o.DiscountPrice,
+                    o.GoodsID,
+                    g.GoodsName,
+                    PhotoPath '''
 	order_details= db.engine.execute(detail_sql,order_no)
+	arr=[]
+	for row in order_details:
+	    arr.append(row_map_converter(row))
 	
-	order['order_detail']=result_set_converter(order_details)
+	order['order_detail']=arr
 	
-	temp_template=''' 尊敬的${shop_name}店主：<br />&nbsp;&nbsp;&nbsp;&nbsp;您的店铺有新的订单，订单编号为:${order_no}
-	
-	<table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'>
+	temp_template=string.Template(''' 尊敬的${shop_name}店主：<br />&nbsp;&nbsp;&nbsp;&nbsp;您的店铺有新的订单，订单编号为:${order_no}
+        
+        <table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'>
                                     <tbody>
                                        <tr>
-                                         	<td width='80' class='biaoti' >收货人：
-                                         		${reciever}
-                                         	</td>
-                                         	<td width='80' class='biaoti' >联系电话：
-                                         		${phone}
-                                         	</td>
-                                         	<td width='80' class='biaoti' >配送地址：
-                                         		${send_address}
-                                         	</td>
+                                                <td width='80' class='biaoti' >收货人：
+                                                        ${reciever}
+                                                </td>
+                                                <td width='80' class='biaoti' >联系电话：
+                                                        ${phone}
+                                                </td>
+                                                <td width='80' class='biaoti' >配送地址：
+                                                        ${send_address}
+                                                </td>
                                         </tr>
                                     </tbody>
                                 </table>
-                    			<table width='100%' border='1' cellspacing='0' cellpadding='5' class='ordergl ordersearch'>
+                                        <table width='100%' border='1' cellspacing='0' cellpadding='5' class='ordergl ordersearch'>
                                     <tbody>
-                                    	 <tr>
+                                         <tr>
                                             <td width='280' class='biaoti' align='center' colspan='2'>商品</td>
                                             <td width='70' class='biaoti'>单价(元)</td>
                                             <td width='50' height='26' class='biaoti'>数量</td>
                                             <td width='120' class='biaoti'>合计(元)</td>
                                         </tr>
-	'''
+        ''')
 	
 	mail_body=temp_template.substitute(shop_name=order['shop_name'],order_no=order['order_no'],reciever=order['receiver'],phone=order['phone'],send_address=order['send_address'])
 	
@@ -637,15 +651,15 @@ def send_email_2_shop(shop_id,order_no):
 	i=0
 	for order_detail in order['order_detail']:
 	    
-	    temp_template='''<tr>
-				<td width='80' class='orderpic hang'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'><img src='${base_url}/${photo_path}' width='80px' height='80px' /></a></td>
-                                    <td width='200' class='hang' style='text-align: left'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'>${goods_name}</a></td>
-                                    <td width='70' class='hang'><s>${sale_price}</s><br/>${discount_price}</td>
-                                    <td width='50' class='hang'>${quantity}</td>" '''
-	    mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',shop_id=order['shop_id'],goods_id=order_detail['goods_id'],photo_path=order_detail['photo_path'],goods_name=order_detail['order_detail'],sale_price=order_detail['sale_price'],discount_price=order_detail['discount_price'],quantity=order_detail['quantity'])
+	    temp_template=string.Template('''<tr>
+	                        <td width='80' class='orderpic hang'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'><img src='${base_url}/${photo_path}' width='80px' height='80px' /></a></td>
+	                            <td width='200' class='hang' style='text-align: left'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'>${goods_name}</a></td>
+	                            <td width='70' class='hang'><s>${sale_price}</s><br/>${discount_price}</td>
+	                            <td width='50' class='hang'>${quantity}</td>" ''')
+	    mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',shop_id=order['shop_id'],goods_id=order_detail['goods_id'],photo_path=order_detail['photo_path'],goods_name=order_detail['goods_name'],sale_price=order_detail['sale_price'],discount_price=order_detail['discount_price'],quantity=order_detail['quantity'])
 	    
 	    if i==0:
-		temp_template=''' <td width='120' class='rowspan' rowspan='${count}'>${sale_money}<br/>(含运费：${freight})</td>'''
+		temp_template=string.Template(''' <td width='120' class='rowspan' rowspan='${count}'>${sale_money}<br/>(含运费：${freight})</td>''')
 		mail_body+=temp_template.substitute(count=len(order['order_detail']),sale_money=order['sale_money'],freight=order['freight'])
 	    
 		
@@ -660,15 +674,17 @@ def send_email_2_shop(shop_id,order_no):
 	    mail_body+=order['remark']
 	else:
 	    mail_body+="无"
-	param=
-	mail_body+='''</td></tr></tbody></table>
-				请点击下列链接进行操作。<a href='${base_url}/ShopCenterManage/OrderListPage?p=".$string."'>".$base_url."ShopCenterManage/OrderListPage?p=".$string."</a>
-				<br>(如果上面不是链接形式，请将地址手工粘贴到浏览器地址栏再访问)<br><br>此邮件为系统邮件，请勿直接回复'''
+	param=base64.encodestring(order['email']+order['shop_name'])
+	temp_template=string.Template('''</td></tr></tbody></table>
+                                请点击下列链接进行操作。<a href='${base_url}/ShopCenterManage/OrderListPage?p=${param}'>${base_url}/ShopCenterManage/OrderListPage?p=${param}</a>
+                                <br>(如果上面不是链接形式，请将地址手工粘贴到浏览器地址栏再访问)<br><br>此邮件为系统邮件，请勿直接回复''')
+	mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',param=param)
 	
-	
+	send_mail([order['email']], '[远邦邻里网] 订单提醒邮件', mail_body)
 	
 	
     except Exception,e:
-       
+	current_app.logger.exception(e)
+   
     
     
