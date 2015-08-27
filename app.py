@@ -16,6 +16,7 @@ from views.shopcenter_controller import shopcenter_controller
 from views.signup_controller import signup_controller
 from database.models import db
 from views.rong_token_controller import rong_token_controller
+from views.pingpay_controller import pingpay_controller
 from logging.handlers import RotatingFileHandler
 from logging import Formatter
 import logging
@@ -46,6 +47,7 @@ app.register_blueprint(attention_controller)
 app.register_blueprint(shopcenter_controller)
 app.register_blueprint(rong_token_controller)
 app.register_blueprint(signup_controller)
+app.register_blueprint(pingpay_controller)
 def has_no_empty_params(rule):
 	defaults = rule.defaults if rule.defaults is not None else ()
 	arguments = rule.arguments if rule.arguments is not None else ()

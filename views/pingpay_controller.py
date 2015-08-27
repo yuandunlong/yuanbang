@@ -3,14 +3,14 @@ from flask import Blueprint,current_app
 from flask import request
 from flask import json,jsonify,Response
 from utils import check_token
-from database.models import Order
+from database.models import Order,ShopInfo
 import pingpp
 
 pingpp.api_key = 'sk_test_y9azT8SKKWv9WDW9G4unTW9G'
 
 pingpay_controller=Blueprint('pingpay_controller',__name__)
 
-@pingpay_controller.route('/m1/private/order/begin_payfor_order',methods=['POST'])
+@pingpay_controller.route('/m1/private/order/get_order_charge',methods=['POST'])
 @check_token
 def get_order_charge(token_type,user_info):
     
@@ -18,13 +18,16 @@ def get_order_charge(token_type,user_info):
     try:
         data=request.get_json()
         order_no=data['order_no']
-        amount=data['amount']
         channel=data['channel']
         buyer_id=user_info.buyer_id
         
         order=Order.query.filter_by(order_no=order_no).first()
         if order:
             
+            shop_info=ShopInfo.query.filter_by(shop_id=order.shop_id).first()
+            subject=''
+            if shop_info:
+                subject=shop_info.shop_name+"订单"
         #多个订单一起支付问题---》=速度有点慢目前不支持
             ch = pingpp.Charge.create(
             order_no=order_no,
@@ -33,8 +36,8 @@ def get_order_charge(token_type,user_info):
             channel=channel,
             currency='cny',
             client_ip=request.remote_addr,
-            subject='Your Subject',
-            body='Your Body',
+            subject=subject,
+            body='',
         )
         
         result['charge']=ch
@@ -49,7 +52,12 @@ def get_order_charge(token_type,user_info):
 def pay_notify_hooks():
     try:
         data=request.get_json()
-        
+        if data['type']=='charge.succeeded':
+            result=data['data']['object']
+            order_no=result['order_no']
+            order=Order.query.filter_by(order_no=order_no).first()
+            order.pay_status='1' #已支付
+            db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
     return Response("ok")
