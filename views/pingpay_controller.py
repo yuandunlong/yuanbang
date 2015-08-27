@@ -32,7 +32,7 @@ def get_order_charge(token_type,user_info):
             ch = pingpp.Charge.create(
             order_no=order_no,
             amount=int(order.sale_money*100), #订单总金额
-            app=dict(id='app_1Gqj58ynP0mHeX1q'),
+            app=dict(id='app_HCur9S9iLGG0a58i'),
             channel=channel,
             currency='cny',
             client_ip=request.remote_addr,
