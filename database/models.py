@@ -244,6 +244,7 @@ class Order(db.Model):
 		        'receiver':s.receiver,'phone':s.phone,'remark':s.remark,'status':s.status,'pay_status':s.pay_status,'update_time':s.update_time
 		        }
 		return result
+	
 class OrderDetail(db.Model):
 	__tablename__='tb_orderdetail_s'
 	order_no=db.Column('OrderNo',db.String(20),primary_key=True)
