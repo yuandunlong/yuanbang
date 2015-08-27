@@ -25,7 +25,7 @@ def get_order_charge(token_type,user_info):
         if order:
             
             shop_info=ShopInfo.query.filter_by(shop_id=order.shop_id).first()
-            subject=''
+            subject='mysbject'
             if shop_info:
                 subject=shop_info.shop_name+"订单"
         #多个订单一起支付问题---》=速度有点慢目前不支持
@@ -37,7 +37,7 @@ def get_order_charge(token_type,user_info):
             currency='cny',
             client_ip=request.remote_addr,
             subject=subject,
-            body='',
+            body='no body',
         )
         
         result['charge']=ch
