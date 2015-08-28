@@ -27,7 +27,7 @@ def get_order_charge(token_type,user_info):
             shop_info=ShopInfo.query.filter_by(shop_id=order.shop_id).first()
             subject='mysbject'
             if shop_info:
-                subject=shop_info.shop_name+"订单"
+                subject=shop_info.shop_name+" 订单"
         #多个订单一起支付问题---》=速度有点慢目前不支持
             ch = pingpp.Charge.create(
             order_no=order_no,
