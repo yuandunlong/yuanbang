@@ -65,7 +65,7 @@ def access_token():
 			else:
 				md5.update(shop_info.password+auth_code)
 				check_code=md5.hexdigest()
-				
+				print check_code
 				if pass_code==check_code:
 					access_token=map(lambda i: chr(random.randint(65,90)),range(32))
 					access_token=string.join(access_token,'')

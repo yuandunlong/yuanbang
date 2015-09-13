@@ -25,6 +25,10 @@ def get_goods_by_page(token_type,shop):
         page=int(data.get('page',1))
         page_size=int(data.get('page_size',20))
         
+        order_by=data.get('order_by','summarydesc')
+        
+        
+        
         sql='''
             SELECT
             g.GoodsID,
@@ -58,8 +62,22 @@ def get_goods_by_page(token_type,shop):
     ) a ON g.GoodsID = a.GoodsID
     LEFT JOIN tb_constent_m t ON t.TypeID=14 AND g.Status=t.ItemID
     WHERE
-            g.ShopID =%s ORDER BY g.SortNo DESC limit %s,%s
+            g.ShopID =%s 
         '''
+        
+        if order_by=='saleasc':
+            sql+='order by Quantity asc'
+        if order_by=='saledesc':
+            sql+='order by Quantity desc'
+        if order_by=='priceasc':
+            sql+='order by SalePrice asc'
+        if order_by=='pricedesc':
+            sql+='order by SalePrice desc'
+        if order_by=='summarydesc':
+            sql+='order by Saleprice,Quantity desc'
+        if order_by=='summaryasc':
+            sql+='order by Saleprice,Quantity asc'
+        sql+=' limit %s,%s'
         result_set=db.engine.execute(sql,(shop.shop_id,page-1,page_size))
         arr=[]
         for row in result_set:
@@ -256,8 +274,6 @@ def update_msg_2_is_read(token_type,shop):
 def get_goods_type_root(token_type,shop):
     result={'code':1,'msg':'ok'}
     try:
-        data=request.get_json()
-        shop_id=data['shop_id']
         sql='''
         SELECT
             tgs.ShopID,
@@ -274,7 +290,7 @@ def get_goods_type_root(token_type,shop):
             AND tgs.ParentID IS NULL
             ORDER BY tgs.SortNo desc
         '''   
-        result_set=db.engine.execute(sql,(shop_id))
+        result_set=db.engine.execute(sql,(shop.shop_id))
         arr=[]
         for row in result_set:
             temp={}
