@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import json,Response,Blueprint,request,json,current_app
-from database.models import db
+from database.models import db,GoodsInfo,Photo
+from datetime import datetime
 from views.utils import check_token,row_map_converter
 shopcenter_controller=Blueprint('shopcenter_controller',__name__)
 @shopcenter_controller.route('/m1/private/shopcenter/get_shop_info',methods=['GET'])
@@ -17,17 +18,12 @@ def get_shop_info(token_type,shop):
 @shopcenter_controller.route('/m1/private/shopcenter/get_goods_by_page',methods=['POST'])
 @check_token
 def get_goods_by_page(token_type,shop):
-    
     result={'code':1,'msg':'ok'}
-    
     try:
         data=request.get_json()
         page=int(data.get('page',1))
         page_size=int(data.get('page_size',20))
-        
         order_by=data.get('order_by','summarydesc')
-        
-        
         
         sql='''
             SELECT
@@ -151,10 +147,24 @@ def get_orders_by_page(token_type,shop):
         WHERE
                 TOS.ShopID = %s  ORDER BY SubmitTime desc limit %s,%s
         '''
-        result_set=db.engine.execute(sql,(shop.shop_id,page-1,page_size))
+        result_set=db.engine.execute(sql,(shop.shop_id,(page-1)*page_size,page_size))
         arr=[]
+        sql_detail='''
+        
+                select a.* ,b.GoodsName,
+                c.PhotoID ,c.PhotoName,c.PhotoPath,c.ThumbnailPath,c.SortNo
+                from tb_orderdetail_s a
+                left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
+                left join tb_photo c on c.LinkID=a.GoodsID and c.IsChecked=1 and c.IsVisable=1
+                where OrderNo=%s
+                '''        
         for row in result_set:
             temp=row_map_converter(row)
+            order_detail_result_set=db.engine.execute(sql_detail,(temp['order_no']))
+            order_detail_arr=[]
+            for item in order_detail_result_set:
+                order_detail_arr.append(row_map_converter(item))
+                temp['goods']=order_detail_arr            
             arr.append(temp)
         result['orders']=arr
         count_Sql='''
@@ -348,13 +358,117 @@ def get_shop_goods_type_child(token_type,shop):
     return Response(json.dumps(result),content_type='application/json')
     
     
-def add_goods_type(token_type,shop):
+@shopcenter_controller.route("/m1/private/shopcenter/upload_goods_photo",methods=['POST'])
+def upload_goods_photo(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        if request.method == 'POST':
+            file = request.files['file']
+            extension = os.path.splitext(file.filename)[1]
+            f_name = str(uuid.uuid4()) + extension
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], f_name))
+            
+        
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+    
+        
+@shopcenter_controller.route("/m1/private/shopcenter/add_goods_info",methods=['POST'])
+@check_token
+def add_goods_info(token_type,shop):
     result={'code':1,'msg':'ok'}
     
     try:
-        pass
+        data=request.get_json()
+        bar_code=data['bar_code']
+        goods_type_id=data['goods_type_id']
+        goods_type_ids=data['goods_type_ids']
+        goods_name=data['goods_name']
+        sale_price=data['sale_price']
+        photo_path=data['photo_path']
+        thumbnail_path=data['thumbnail_path']
+        goods_info=GoodsInfo()
+        goods_info.bar_code=bar_code
+        goods_info.goods_type_id=goods_type_id
+        goods_info.goods_type_ids=goods_type_ids
+        goods_info.goods_name=goods_name
+        goods_info.sale_price=sale_price
+        
+        goods_info.goods_brand=data.get('goods_brand')
+        goods_info.goods_locality=data.get('goods_locality')
+        goods_info.goods_spec=data.get('goods_spec')
+        goods_info.remark=data.get('remark')
+        goods_info.set_num=data.get('set_num')
+        goods_info.set_price=data.get('set_price')
+        goods_info.can_edit='1'
+        goods_info.discount=data.get('discount')
+        goods_info.shop_id=shop.shop_id
+        db.session.add(goods_info)
+        db.session.commit()
+        
+        #新增销售价格履历
+        insert_saleprice_sql='''Insert Into TB_SALEPRICE_S (
+        GoodsID,SalePrice,StartTime)
+        values (%s,%s,%s) '''
+        db.engine.execute(insert_saleprice_sql,(goods_info.goods_id,goods_info.sale_price,datetime.now()))
+        db.session.commit()
+        # 添加图片
+        photo=Photo()
+        photo.link_id=goods_info.goods_id
+        photo.is_checked='1'
+        photo.is_visable='1'
+        photo.photo_path=photo_path
+        photo.thumbnail_path=thumbnail_path
+        db.session.add(photo)
+        db.session.commit()
+        #添加商铺类别，只存前两级类别表
+        goods_type_id_arr=goods_info.goods_type_ids.split(',')
+        goods_type_id_arr.reverse()
+        level=0
+        for type_id in goods_type_ids:
+            temp_sql='''
+            INSERT INTO tb_goodstype_s (
+    ShopID,
+    GoodsTypeID,
+    ParentID
+    ) SELECT
+    %s,
+    GoodsTypeID,
+    ParentID
+    FROM
+        tb_goodstype_m
+    WHERE
+    GoodsTypeID =%s AND NOT EXISTS (select * from tb_goodstype_s where ShopID = %s AND GoodsTypeID = %s
+            '''
+            if level<2:
+                
+                db.engine.execute(temp_sql,(goods_info.shop_id,type_id,goods_info.shop_id,type_id))
+                db.session.commit()
+            level+=1
     except Exception,e:
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
         
+#@shopcenter_controller.route('')       
+def update_goods_by_id():
+    pass
+@shopcenter_controller.route('/m1/private/shopcenter/delete_goods_by_id',methods=['POST'])
+@check_token
+def delete_goods_by_id(token_type,shop):
+    
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        goods_id=data['goods_id']
+        sql='delete from tb_goodsinfo_s where GoodsID=%s and ShopID=%s'
+        db.engine.execute(sql,(goods_id,shop.shop_id))
+        db.session.commit()
+    except Exception,e:
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')

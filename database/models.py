@@ -4,6 +4,17 @@ from flask import json
 import datetime,time
 db=SQLAlchemy()
 
+class BaseModel(db.Model):
+	__abstract__ = True
+	def as_map(self):
+		fields = {}
+		for field in [x for x in dir(self) if not x.startswith('_') and x != 'metadata' and x != 'query' and x != 'query_class']:
+			data = self.__getattribute__(field)
+			if inspect.ismethod(data):
+				continue
+			fields[field] = data
+		return fields
+
 class User(db.Model):
 	__tablename__='user'
 	id=db.Column('id',db.Integer,primary_key=True)
@@ -380,3 +391,33 @@ class Activity(db.Model):
 		s=self
 		result={'id':s.id,'type':s.type,'shop_id':s.shop_id,'title':s.title,'content':s.content,'count':s.count,'sort_no':s.sort_no,'is_top':s.is_top,'is_hot':s.is_hot,'publisher':s.publisher,'publish_time':s.publish_time,'updater':s.updater,'update_time':s.update_time,'seo_title':s.seo_title,'seo_content':s.seo_content,'del_flag':s.del_flag,'call_index':s.call_index }
 		return result
+	
+class GoodsInfo(BaseModel):
+	__tablename__='tb_goodsinfo_s'
+	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
+	shop_id=db.Column('ShopID',db.String(20))
+	bar_code=db.Column('BarCode',db.String(20))
+	goods_type_id=db.Column('GoodsTypeID',db.String(20))
+	goods_type_ids=db.Column('GoodsTypeIDs',db.String(200))
+	goods_name=db.Column('GoodsName',db.String(100))
+	goods_spec=db.Column('GoodsSpec',db.String(100))
+	goods_locality=db.Column('GoodsLocality',db.String(100))
+	goods_brand=db.Column('GoodsBrand',db.String(100))
+	remark=db.Column('Remark',db.Text)
+	sale_price=db.Column('SalePrice',db.DECIMAL)
+	warning_num=db.Column('WarningNum',db.Integer)
+	discount=db.Column('Discount',db.DECIMAL)
+	set_num=db.Column('SetNum',db.Integer)
+	set_price=db.Column('SetPrice',db.DECIMAL)
+	seo_title=db.Column('SEOTitle',db.String(100))
+	seo_key_word=db.Column('SEOKeyWord',db.String(100))
+	seo_content=db.Column('SEOContent',db.String(2000))
+	sort_no=db.Column('SortNo',db.Integer)
+	status=db.Column('Status',db.String(1))
+	create_time=db.Column('CreateTime',db.DateTime)
+	can_edit=db.Column('CanEdit',db.String(1))
+	
+	
+	
+	
+	
