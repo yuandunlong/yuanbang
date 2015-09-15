@@ -389,8 +389,7 @@ def add_goods_info(token_type,shop):
         goods_type_ids=data['goods_type_ids']
         goods_name=data['goods_name']
         sale_price=data['sale_price']
-        photo_path=data['photo_path']
-        thumbnail_path=data['thumbnail_path']
+        photos=data['photos']
         goods_info=GoodsInfo()
         goods_info.bar_code=bar_code
         goods_info.goods_type_id=goods_type_id
@@ -417,14 +416,16 @@ def add_goods_info(token_type,shop):
         db.engine.execute(insert_saleprice_sql,(goods_info.goods_id,goods_info.sale_price,datetime.now()))
         db.session.commit()
         # 添加图片
-        photo=Photo()
-        photo.link_id=goods_info.goods_id
-        photo.is_checked='1'
-        photo.is_visable='1'
-        photo.photo_path=photo_path
-        photo.thumbnail_path=thumbnail_path
-        db.session.add(photo)
-        db.session.commit()
+        for p_item in photos:
+            
+            photo=Photo()
+            photo.link_id=goods_info.goods_id
+            photo.is_checked='1'
+            photo.is_visable='1'
+            photo.photo_path=p_item['photo_path']
+            photo.thumbnail_path=p_item['thumbnail_path']
+            db.session.add(photo)
+            db.session.commit()
         #添加商铺类别，只存前两级类别表
         goods_type_id_arr=goods_info.goods_type_ids.split(',')
         goods_type_id_arr.reverse()
@@ -442,7 +443,7 @@ def add_goods_info(token_type,shop):
     FROM
         tb_goodstype_m
     WHERE
-    GoodsTypeID =%s AND NOT EXISTS (select * from tb_goodstype_s where ShopID = %s AND GoodsTypeID = %s
+    GoodsTypeID =%s AND NOT EXISTS (select * from tb_goodstype_s where ShopID = %s AND GoodsTypeID = %s)
             '''
             if level<2:
                 
@@ -450,6 +451,7 @@ def add_goods_info(token_type,shop):
                 db.session.commit()
             level+=1
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
