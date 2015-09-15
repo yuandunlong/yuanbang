@@ -471,6 +471,50 @@ def delete_goods_by_id(token_type,shop):
         db.engine.execute(sql,(goods_id,shop.shop_id))
         db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_goods_info_by_bar_code',methods=['POST'])
+@check_token
+def get_goods_info_by_bar_code(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        bar_code=data['bar_code']
+        sql='''
+                SELECT g.*,
+            IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+            IFNULL(o.SaleQuantity,0) AS TotalSale
+            FROM
+            tb_goodsinfo_s g
+            LEFT JOIN (
+                SELECT
+                sum(t.Quantity) AS SaleQuantity,
+                t.GoodsID
+                FROM
+                tb_order_s d,
+                tb_orderdetail_s t
+                WHERE
+                d.OrderNo = t.OrderNo
+                AND d.`Status` <> '3'
+                GROUP BY
+                t.GoodsID
+                ) o ON g.GoodsID = o.GoodsID
+            INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+            AND p.IsVisable = '1'
+            AND p.IsChecked = '1'
+        
+            and BarCode = %s 
+                '''
+        row=db.engine.execute(sql,(data['bar_code'])).fetchone()   
+        
+        result['goods']=row_map_converter(row)
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+    
