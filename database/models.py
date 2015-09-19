@@ -418,6 +418,39 @@ class GoodsInfo(BaseModel):
 	can_edit=db.Column('CanEdit',db.String(1))
 	
 	
+class DeliveryMan(BaseModel):
+	__tablename__='tb_deliveryman'
+	id=db.Column('id',db.Integer,primary_key=True)
+	shop_id=db.Column('ShopID',db.Integer)
+	buyer_id=db.Column('BuyerID',db.Integer)
+	is_active=db.Column('IsActive',db.String(1))
+	is_validate=db.Column('IsValidate',db.String(1))
+	create_time=db.Column('CreateTime',db.DateTime)
+	remark=db.Column('remark',db.String(1000))
+	
+class DeliveryList(BaseModel):
+	__tablename__='tb_deliverylist'
+	id=db.Column('id',db.Integer,primary_key=True)
+	order_no=db.Column('OrderNo',db.String(20))
+	shop_id=db.Column('ShopID',db.String(20))
+	buyer_id=db.Column('BuyerID',db.String(20))
+	delivery_money=db.Column('DeliveryMoney',db.DECIMAL)
+	delivery_status=db.Column('DeliveryStatus',db.String(1))
+	submit_time=db.Column('SubmitTime',db.DateTime)
+	receive_time=db.Column('ReceiveTime',db.DateTime)
+	
+class Coupon(BaseModel):
+	__tablename__='tb_coupon'
+	coupon_id=db.Column('CouponID',db.Integer,primary_key=True)
+	coupon_type=db.Column('CouponType',db.String(1))
+	shop_id=db.Column('ShopID',db.Integer)
+	buyer_id=db.Column('BuyerID',db.Integer)
+	order_no=db.Column('OrderNo',db.String(20))
+	coupon_money=db.Column('CouponMoney',db.Integer)
+	remark=db.Column('Remark',db.String(200))
+	operate_time=db.Column('OperateTime',db.DateTime)
+	
+	
 	
 	
 	
