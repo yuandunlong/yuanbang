@@ -6,7 +6,7 @@ db=SQLAlchemy()
 
 class BaseModel(db.Model):
 	__abstract__ = True
-	def as_map(self):
+	def get_map(self):
 		fields = {}
 		for field in [x for x in dir(self) if not x.startswith('_') and x != 'metadata' and x != 'query' and x != 'query_class']:
 			data = self.__getattribute__(field)
@@ -449,6 +449,16 @@ class Coupon(BaseModel):
 	coupon_money=db.Column('CouponMoney',db.Integer)
 	remark=db.Column('Remark',db.String(200))
 	operate_time=db.Column('OperateTime',db.DateTime)
+	
+	
+
+class Member(BaseModel):
+	__tablename__='tb_member'
+	shop_id=db.Column('ShopID',db.String(20),primary_key=True)
+	buyer_id=db.Column('BuyerID',db.String(20),primary_key=True)
+	create_time=db.Column('CreateTime',db.DateTime)
+	level=db.Column('level',db.String(3))
+	remark=db.Column('remark',db.String(1000))
 	
 	
 	

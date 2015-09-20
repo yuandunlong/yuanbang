@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask import json,Response,Blueprint,request,json,current_app
-from database.models import db,GoodsInfo,Photo
+from database.models import db,GoodsInfo,Photo,DeliveryMan
 from datetime import datetime
-from views.utils import check_token,row_map_converter
+from views.utils import check_token,row_map_converter,rows_array_converter
 shopcenter_controller=Blueprint('shopcenter_controller',__name__)
 @shopcenter_controller.route('/m1/private/shopcenter/get_shop_info',methods=['GET'])
 @check_token
@@ -518,3 +518,246 @@ def get_goods_info_by_bar_code(token_type,shop):
     return Response(json.dumps(result),content_type='application/json')
         
     
+@shopcenter_controller.route('/m1/private/shopcenter/get_delivery_member',methods=['POST'])
+@check_token    
+def get_delivery_member(token_type,shop):
+    
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        is_validate=data['is_validate']
+        if is_validate==-1:
+        
+            sql='''
+        
+    SELECT
+        m.id,
+        IFNULL(
+
+            IF (
+                b.NickName = '',
+                NULL,
+                b.NickName
+                ),
+            b.Account
+            ) AS BuyerName,
+        b.Phone,
+        IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
+        m.Remark
+        FROM
+            tb_deliveryman m
+        INNER JOIN tb_buyer b ON m.BuyerID = b.BuyerID
+        LEFT JOIN tb_deliverylist d ON m.BuyerID = d.BuyerID
+        AND d.ShopID = m.ShopID
+        WHERE
+            m.ShopID = %s
+        GROUP BY
+            m.BuyerID
+        '''
+            
+            rows=db.engine.execute(sql,(shop.shop_id))
+            
+        else:
+            sql='''
+            
+                SELECT
+                    m.id,
+                    IFNULL(
+            
+                        IF (
+                            b.NickName = '',
+                            NULL,
+                            b.NickName
+                            ),
+                        b.Account
+                        ) AS BuyerName,
+                    b.Phone,
+                    IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
+                    m.Remark
+                    FROM
+                        tb_deliveryman m
+                    INNER JOIN tb_buyer b ON m.BuyerID = b.BuyerID
+                    LEFT JOIN tb_deliverylist d ON m.BuyerID = d.BuyerID
+                    AND d.ShopID = m.ShopID
+                    WHERE
+                        m.ShopID = %s
+                    AND m.IsValidate = %s
+                    GROUP BY
+                        m.BuyerID
+                    '''
+            
+            rows=db.engine.execute(sql,(shop.shop_id,is_validate))            
+                
+        result['delivery_members']=rows_array_converter(rows)
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+        
+    return Response(json.dumps(result),content_type='application/json')
+@shopcenter_controller.route('/m1/private/shopcenter/get_all_shop_member',methods=['GET'])
+@check_token 
+def get_all_shop_member(token_type,shop):
+    
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''SELECT
+    IFNULL(IF(b.NickName = '',NULL,b.NickName),b.Account) AS BuyerName,
+    a.CreateTime,
+    a.`Level`,
+    a.Remark,
+    a.ShopID,
+    a.BuyerID,
+    IFNULL(c.SaleMoney,0) as SaleMoney
+    FROM
+        tb_member a
+    LEFT JOIN tb_buyer b ON a.BuyerID = b.BuyerID
+    LEFT JOIN (select ShopID,BuyerID,SUM(SaleMoney) AS SaleMoney 
+        from tb_order_s 
+        where `Status`<>'3' 
+        GROUP BY ShopID,BuyerID) c
+    ON c.ShopID = a.ShopID and c.BuyerID = a.BuyerID
+    WHERE a.ShopID = %s'''
+        rows=db.engine.execute(sql,(shop.shop_id))
+        result['members']=rows_array_converter(rows)
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+        
+    
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_shop_member_and_is_not_delivery_man',methods=['GET'])
+@check_token 
+def get_shop_member_and_is_not_delivery_man(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''
+        SELECT
+    IFNULL(
+
+        IF (
+            b.NickName = '',
+            NULL,
+            b.NickName
+            ),
+        b.Account
+        ) AS BuyerName,
+    a.CreateTime,
+    m.ItemName as Level,
+    a.Remark,
+    a.ShopID,
+    a.BuyerID,
+    IFNULL(c.SaleMoney, 0) AS SaleMoney
+    FROM
+        tb_member a
+    LEFT JOIN tb_buyer b ON a.BuyerID = b.BuyerID
+    LEFT JOIN (
+        SELECT
+        ShopID,
+        BuyerID,
+        SUM(SaleMoney) AS SaleMoney
+        FROM
+        tb_order_s
+        WHERE
+        STATUS <> '3'
+        GROUP BY
+        ShopID,
+        BuyerID
+        ) c ON c.ShopID = a.ShopID
+    AND c.BuyerID = a.BuyerID
+    LEFT JOIN tb_constent_m m ON m.ItemID = a.`Level` AND m.TypeID='011'
+    WHERE
+        a.ShopID = %s
+    AND NOT EXISTS (
+        SELECT
+        BuyerID
+        FROM
+        tb_deliveryman
+        WHERE
+        ShopID = %s
+        AND BuyerID = a.BuyerID
+    )
+        '''
+        rows=db.engine.execute(sql,(shop.shop_id,shop.shop_id))
+        result['members']=rows_array_converter(rows)
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+        
+    return Response(json.dumps(result),content_type='application/json')
+        
+    
+@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_member',methods=['POST'])
+@check_token     
+def add_delivery_member(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        delivery_man=DeliveryMan()
+        delivery_man.shop_id=shop.shop_id
+        delivery_man.buyer_id=data['buyer_id']
+        delivery_man.is_validate='1'
+        db.session.add(delivery_man)
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
+@shopcenter_controller.route('/m1/private/shopcenter/validate_delivery_member',methods=['POST'])
+@check_token     
+def validate_delivery_member(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        dm=DeliveryMan.query.filter_by(shop_id=shop.shop_id,buyer_id=data['buyer_id']).first()
+        if dm:
+            dm.is_validate='1'
+            db.session.commit()
+        
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')        
+        
+        
+
+@shopcenter_controller.route('/m1/private/shopcenter/del_delivery_member',methods=['POST'])
+@check_token     
+def del_delivery_member(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''delete from tb_deliveryman where ShopID=%s and BuyerID=%s'''
+        db.engine.execute(sql,(shop.shop_id,data['buyer_id']))
+        db.session.commit()
+        
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')        
+        
+@shopcenter_controller.route('/m1/private/shopcenter/del_shop_member',methods=['POST'])
+@check_token      
+def del_shop_member(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        sql='''delete from tb_member where ShopID=%s and BuyerID=%s'''
+        db.engine.execute(sql,(shop.shop_id,data['buyer_id']))
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+    
+    
+

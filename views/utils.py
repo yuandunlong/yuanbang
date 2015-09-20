@@ -49,6 +49,11 @@ def result_set_converter(result_set):
         for result in result_set:
             arr.append(result.get_map())
     return arr
+def rows_array_converter(rows):
+    arr=[]
+    for row in rows:
+        arr.append(row_map_converter(row))
+    return arr
 
 def row_map_converter(row):
     temp={}
