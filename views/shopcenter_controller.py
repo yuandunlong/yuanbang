@@ -408,7 +408,7 @@ def add_goods_info(token_type,shop):
         goods_info.shop_id=shop.shop_id
         goods_info.warning_num=0
         goods_info.sort_no=0
-        
+        goods_info.status=0
         goods_info.create_time=datetime.now()
         db.session.add(goods_info)
         db.session.commit()
