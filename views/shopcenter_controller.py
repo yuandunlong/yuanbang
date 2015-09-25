@@ -404,8 +404,12 @@ def add_goods_info(token_type,shop):
         goods_info.set_num=data.get('set_num')
         goods_info.set_price=data.get('set_price')
         goods_info.can_edit='1'
-        goods_info.discount=data.get('discount')
+        goods_info.discount=data.get('discount',1)
         goods_info.shop_id=shop.shop_id
+        goods_info.warning_num=0
+        goods_info.sort_no=0
+        
+        goods_info.create_time=datetime.now()
         db.session.add(goods_info)
         db.session.commit()
         
