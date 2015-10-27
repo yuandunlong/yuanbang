@@ -154,6 +154,8 @@ def submit_order_by_shopcart(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
+	pay_type=data.get('pay_type',0)#0货到付款 1在线支付
+	use_coupons=data.get('use_coupons') 
         buyerAddress=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
         if not buyerAddress:
             raise Exception('user dont have default address')
@@ -173,6 +175,8 @@ def submit_order_by_shopcart(token_type,user_info):
             order.phone=buyerAddress.phone
             order.remark=data.get('remark','')
             order.status='0' #已提交
+	    order.pay_type=pay_type
+	    order.use_coupon=use_coupons.get('shop_id',0)
             db.session.add(order)
             goods_list=getGoodsList(order.shop_id,order.buyer_id)
             
@@ -218,6 +222,10 @@ def submit_order_by_shopcart(token_type,user_info):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+
+
+
+#支付订单
 
 
     
@@ -290,49 +298,79 @@ def buy_again_by_order_no(token_type,user_info):
 def getOrderCartList(user_id,address_id):
     sql='''
     
+       SELECT
+    tmp.BuyerID,
+    tmp.ShopID,
+    tmp.ShopName,
+    tmp.HasAlipay,
+    tmp.HasOnlineBank,
+    tmp.sumTheShop,
+
+    IF (
+        tmp.Distance > tmp.FreeDistance,
+        CEIL(
+            tmp.Distance - tmp.FreeDistance
+            ) * tmp.Freight +
+        IF (
+            tmp.sumTheShop < tmp.ExtraOrderAmount,
+            tmp.ExtraFreight,
+            0
+            ),
+        0 + IF ( tmp.sumTheShop < tmp.ExtraOrderAmount, tmp.ExtraFreight, 0 )
+        ) AS Freight
+    FROM (
         SELECT
-            a.BuyerID,
-            b.ShopID,
-            d.ShopName,
-            d.HasAlipay,
-            d.HasOnlineBank,
-                SUM(
-        
-                    IF (
-                        a.Quantity >= b.SetNum,
-                        round(b.SetPrice * a.Quantity, 2),
-                        round(
-                            round(b.SalePrice * b.Discount, 2) * a.Quantity,
-                            2
-                        )
-                    )
-                    ) AS sumTheShop,
-        
+        a.BuyerID,
+        c.ShopID,
+        c.ShopName,
+        c.HasAlipay,
+        c.HasOnlineBank,
+        c.OrderAmount,
+        c.FreeDistance / 1000 AS FreeDistance,
+        c.Freight,
+        c.FarthestDistance / 1000 AS FarthestDistance,
+        ROUND(
+            SQRT(
+                POW(s.mktxzb - c.mktxzb, 2) + POW(s.mktyzb - c.mktyzb, 2)
+                ) / 1000,
+            2
+            ) AS Distance,
+        c.ExtraOrderAmount,
+        c.ExtraFreight,
+        SUM(
+
             IF (
-                ROUND(
-                    SQRT(
-                        POW(s.mktxzb - d.mktxzb, 2) + POW(s.mktyzb - d.mktyzb, 2)
-                    )
-                    ) > FreeDistance,
-                ROUND(
-                    SQRT(
-                        POW(s.mktxzb - d.mktxzb, 2) + POW(s.mktyzb - d.mktyzb, 2)
-                    ) 
-                    ) - d.FreeDistance,
-                0
-                ) /1000* d.Freight AS Freight
-            FROM
-                tb_shoppingcart a
-            LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
-            LEFT JOIN tb_shopinfo_s d ON d.ShopID = b.ShopID
-            LEFT JOIN tb_buyeraddress s ON s.BuyerID = a.BuyerID
-            AND s.AddressID = %s
-            WHERE
-                a.BuyerID = %s
-            AND a.IsSelected = 1
-            GROUP BY
-                b.ShopID,
-                a.BuyerID    
+                a.Quantity >= b.SetNum,
+                round(b.SetPrice * a.Quantity, 2),
+                round(
+                    round(b.SalePrice * b.Discount, 2) * a.Quantity,
+                    2
+                )
+            )
+            ) AS sumTheShop
+
+        FROM
+        tb_shoppingcart a
+        LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+        LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
+        LEFT JOIN tb_buyeraddress s ON s.BuyerID = a.BuyerID
+        AND s.AddressID = %s
+        WHERE
+        a.BuyerID = %s
+        AND a.IsSelected = 1
+        GROUP BY
+        a.BuyerID,
+        c.ShopID,
+        c.ShopName,
+        c.HasAlipay,
+        c.HasOnlineBank,
+        c.OrderAmount,
+        FreeDistance,
+        c.Freight,
+        FarthestDistance,
+        Distance,
+        c.ExtraOrderAmount,
+        c.ExtraFreight ) tmp
     '''
     result_set=db.engine.execute(sql,(address_id,user_id))
     

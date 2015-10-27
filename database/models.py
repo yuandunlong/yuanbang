@@ -181,6 +181,8 @@ class ShopInfo(db.Model):
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_validate=db.Column('IsValidate',db.String(1)) #0否 1是
 	
+	
+	
 	def get_json(self):
 		return json.dumps(get_map())
 	def get_map(self):
@@ -246,13 +248,16 @@ class Order(db.Model):
 	remark=db.Column('Remark',db.String(200))
 	status=db.Column('Status',db.String(1)) # 0：已提交；1：已发货；2：交易成功；3：交易取消
 	pay_status=db.Column('PayStatus',db.String(1)) # 0:未支付,1:已支付
+	pay_type=db.Column('PayType',db.String(1))# 0货到付款，1在线支付
 	update_time=db.Column('UpdateTime',db.DateTime)
-	
+	cancel_reason=db.Column("CancelReason",db.String(600))
+	get_coupon=db.Column('GetCoupon',db.DECIMAL)
+	use_coupon=db.Column('use_coupon',db.DECIMAL)
 	def get_map(self):
 		s=self
 		result={"order_no":s.order_no,'shop_id':s.shop_id,'sale_money':str(s.sale_money),'submit_time':s.submit_time,'send_time':s.send_time,
 		        'confirm_time':s.confirm_time,'freight':str(s.freight),'address_id':s.address_id,'send_address':s.send_address,
-		        'receiver':s.receiver,'phone':s.phone,'remark':s.remark,'status':s.status,'pay_status':s.pay_status,'update_time':s.update_time
+		        'receiver':s.receiver,'phone':s.phone,'remark':s.remark,'status':s.status,'pay_status':s.pay_status,'update_time':s.update_time,'get_coupon':s.get_coupon,'use_coupon':s.use_coupon
 		        }
 		return result
 	

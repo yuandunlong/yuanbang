@@ -764,4 +764,112 @@ def del_shop_member(token_type,shop):
     return Response(json.dumps(result),content_type='application/json')
     
     
+#店铺指定
+@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_ps',methods=['POSt'])
+@check_token
+def add_delivery_list_info_by_ps(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        order_no=data['order_no']
+        delivery_money=data['delivery_money']
+        buyer_id=data['buyer_id']
+        sql='''insert into tb_deliverylist (OrderNo,ShopID,BuyerID,DeliveryMoney,DeliveryStatus,ReceiveTime)
+    values (%s,%s,%s,%s )'''
+        db.session.execute(sql,(order_no,shop.shop_id,buyer_id,delivery_money,1,datetime.now()))
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
 
+
+    
+#抢单配送
+@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_qd',methods=['POST'])
+@check_token
+def add_delivery_list_info_by_qd(token_type,shop):
+    
+    result={'code':1,'msg':'ok'}
+    data=request.get_json()
+    try:
+        order_no=data['order_no']
+        delivery_money=data['delivery_money']        
+        sql='''insert into tb_deliverylist (OrderNo,ShopID,DeliveryMoney,DeliveryStatus)
+    values (%s,%s,%s,%s)'''
+        db.session.execute(sql,(order_no,shop.shop_id,delivery_money,0))
+        
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+        
+    return Response(json.dumps(result),content_type='application/json')
+        
+    
+@shopcenter_controller.route('/m1/private/shopcenter/get_delivery_list_by_page',methods=['POST'])   
+@check_token
+def get_delivery_list_by_page(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    
+    data=request.get_json()
+    
+    try:
+        page=data.get('page',1)
+        page_size=data.get('page_size',20)
+        buyer_id=data.get('buyer_id',None)
+        order_no=data.get('order_no',None)
+        sql='''
+        SELECT
+    d.id,
+        d.SubmitTime,
+        d.OrderNo,
+        IFNULL(
+
+            IF (
+                b.NickName = '',
+                NULL,
+                b.NickName
+                ),
+            b.Account
+            ) AS BuyerName,
+        b.Phone,
+    (o.SaleMoney + o.Freight) AS orderMoney,
+        o.Freight,
+    o.PayStatus,
+        d.DeliveryMoney,
+        c.ItemName,
+    d.DeliveryStatus,
+    CONCAT('+',(o.SaleMoney + o.Freight)-d.DeliveryMoney) as giveMoney
+    FROM
+        tb_deliverylist d
+    LEFT JOIN tb_buyer b ON b.BuyerID = d.BuyerID
+    LEFT JOIN tb_constent_m c ON c.ItemID = d.DeliveryStatus
+    INNER JOIN tb_order_s o ON o.OrderNo = d.OrderNo
+        AND c.TypeID = 021
+        WHERE
+            d.ShopID = %s'''
+        values=[]
+        values.append(shop.shop_id)
+        
+        if buyer_id:
+            sql+='and d.BuyerID=%s'
+            values.append(buyer_id)
+        if order_no:
+            sql+='and d.OrderNo=%s'
+            values.append(order_no)
+            
+        sql+='ORDER BY d.ReceiveTime DESC limit %s offset %s'
+        values.append(page_size,(page-1)*page_size)
+        
+        rows=db.session.execute(sql,tuple(values))
+        result['delivery_list']=rows_array_converter(rows)
+        
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    
+    return Response(json.dumps(result),content_type='application/json')
+        
+    
