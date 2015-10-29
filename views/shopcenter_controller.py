@@ -860,7 +860,8 @@ def get_delivery_list_by_page(token_type,shop):
             values.append(order_no)
             
         sql+='ORDER BY d.ReceiveTime DESC limit %s offset %s'
-        values.append(page_size,(page-1)*page_size)
+        values.append(page_size)
+        values.append((page-1)*page_size)
         
         rows=db.session.execute(sql,tuple(values))
         result['delivery_list']=rows_array_converter(rows)
