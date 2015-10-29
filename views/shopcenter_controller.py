@@ -775,7 +775,7 @@ def add_delivery_list_info_by_ps(token_type,shop):
         buyer_id=data['buyer_id']
         sql='''insert into tb_deliverylist (OrderNo,ShopID,BuyerID,DeliveryMoney,DeliveryStatus,ReceiveTime)
     values (%s,%s,%s,%s )'''
-        db.session.execute(sql,(order_no,shop.shop_id,buyer_id,delivery_money,1,datetime.now()))
+        db.engine.execute(sql,(order_no,shop.shop_id,buyer_id,delivery_money,1,datetime.now()))
         db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
@@ -797,7 +797,7 @@ def add_delivery_list_info_by_qd(token_type,shop):
         delivery_money=data['delivery_money']        
         sql='''insert into tb_deliverylist (OrderNo,ShopID,DeliveryMoney,DeliveryStatus)
     values (%s,%s,%s,%s)'''
-        db.session.execute(sql,(order_no,shop.shop_id,delivery_money,0))
+        db.engine.execute(sql,(order_no,shop.shop_id,delivery_money,0))
         
     except Exception,e:
         current_app.logger.exception(e)
@@ -846,24 +846,24 @@ def get_delivery_list_by_page(token_type,shop):
     LEFT JOIN tb_buyer b ON b.BuyerID = d.BuyerID
     LEFT JOIN tb_constent_m c ON c.ItemID = d.DeliveryStatus
     INNER JOIN tb_order_s o ON o.OrderNo = d.OrderNo
-        AND c.TypeID = 021
+        AND c.TypeID = '021'
         WHERE
             d.ShopID = %s'''
         values=[]
         values.append(shop.shop_id)
         
         if buyer_id:
-            sql+='and d.BuyerID=%s'
+            sql+=' and d.BuyerID=%s'
             values.append(buyer_id)
         if order_no:
-            sql+='and d.OrderNo=%s'
+            sql+=' and d.OrderNo=%s'
             values.append(order_no)
             
-        sql+='ORDER BY d.ReceiveTime DESC limit %s offset %s'
+        sql+=' ORDER BY d.ReceiveTime DESC limit %s , %s'
         values.append(page_size)
         values.append((page-1)*page_size)
         
-        rows=db.session.execute(sql,tuple(values))
+        rows=db.engine.execute(sql,tuple(values))
         result['delivery_list']=rows_array_converter(rows)
         
     except Exception,e:
