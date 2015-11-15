@@ -253,7 +253,7 @@ class Order(db.Model):
 	update_time=db.Column('UpdateTime',db.DateTime)
 	cancel_reason=db.Column("CancelReason",db.String(600))
 	get_coupon=db.Column('GetCoupon',db.DECIMAL)
-	use_coupon=db.Column('use_coupon',db.DECIMAL)
+	use_coupon=db.Column('UseCoupon',db.DECIMAL)
 	def get_map(self):
 		s=self
 		result={"order_no":s.order_no,'shop_id':s.shop_id,'sale_money':str(s.sale_money),'submit_time':s.submit_time,'send_time':s.send_time,
