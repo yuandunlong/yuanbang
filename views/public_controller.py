@@ -13,6 +13,7 @@ def get_shop_by_id():
         mktyzb=data.get('mktyzb',None)
         sql='''
          SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
+         s.ShopProperty,s.OperatingStatus,s.IsSupportOnLinePay,
                 s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
             '''
         if mktxzb and mktyzb:
@@ -128,6 +129,8 @@ def get_shop_lists_by_page():
         
         sql='''
         SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
+            s.ShopProperty,s.OperatingStatus,s.IsSupportOnLinePay,
+
         s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
         '''
         if mktxzb and mktxzb:

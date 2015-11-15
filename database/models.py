@@ -181,6 +181,9 @@ class ShopInfo(db.Model):
 	last_login_time=db.Column('LastLoginTime',db.DateTime)
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_validate=db.Column('IsValidate',db.String(1)) #0否 1是
+	shop_property=db.Column('ShopProperty',db.String(1))
+	is_support_on_line_pay=db.Column('IsSupportOnLinePay',db.String(1))
+	operating_status=db.Column('OperatingStatus',db.String(1))
 	
 	
 	
@@ -195,7 +198,7 @@ class ShopInfo(db.Model):
 			'is_checked':s.is_checked,'sort_no':s.sort_no,'is_recommend':s.is_recommend,'is_top':s.is_top,'default_freight':str(s.default_freight),
 			'seo_title':s.seo_title,'seo_key_word':s.seo_key_word,'seo_content':s.seo_content,'status':s.status,
 			'regist_date':s.regist_date,'regist_ip':s.regist_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
-			'is_validate':s.is_validate
+			'is_validate':s.is_validate,'shop_property':s.shop_property,'is_support_on_line_pay':s.is_support_on_line_pay,'operating_status':s.operating_status
 		
 			}		
 		return result
