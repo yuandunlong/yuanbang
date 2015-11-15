@@ -200,6 +200,35 @@ def query_coupons_by_shop_id(token_type,buyer):
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
         
+@buyer_controller.route('/m1/private/update_buyer_info', methods=['POST'])       
+@check_token      
+def update_buyer_info(token_type,buyer):
+    result={"code":1,'msg':'ok'}
     
+    try:
+        data=request.get_json()
+        buyer_id=int(data.get(buyer_id,0))
+        buyer=Buyer.query.get(buyer_id)
+        avatar=data.get('avatar',None)
+        real_name=data.get('real_name',None)
+        nick_name=data.get('nick_name',None)
+        sex=data.get('sex',None)
+        
+        if avatar:
+            buyer.avatar=avatar
+        if real_name:
+            buyer.real_name=real_name
+        if nick_name:
+            buer.nick_name=nick_name
+        if sex:
+            buyer.sex=sex
+        db.session.commit()
+            
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type="application/json")
         
     
+     
