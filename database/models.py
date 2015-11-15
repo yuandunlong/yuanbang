@@ -105,13 +105,14 @@ class Buyer(db.Model):
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_visable=db.Column('IsVisable',db.String(1)) # 0 否 1是
 	is_validate=db.Column('IsValidate',db.String(1)) # 0否 1是
+	avatar=db.Column('Avatar',db.String(128))
 	
 	def get_map(self):
 		s=self
 		result={'buyer_id':s.buyer_id,'qquid':s.qquid,'account':s.account,'nick_name':s.nick_name,'real_name':s.real_name,
 	                'sex':s.sex,'email':s.email,'status':s.status,'create_time':s.create_time,'create_ip':s.create_ip,
 	                'last_login_ip':s.last_login_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
-	                'is_visable':s.is_visable,'is_validate':s.is_validate
+	                'is_visable':s.is_visable,'is_validate':s.is_validate,'avatar':s.avatar
 	                }
 		return result
 		

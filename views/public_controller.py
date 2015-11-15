@@ -142,7 +142,7 @@ def get_shop_lists_by_page():
                                     LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM  tb_visitcount_s GROUP BY ShopID) v ON s.ShopID = v.ShopID
                                     LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
                             WHERE
-                                    s.IsChecked = '2'
+                                    s.IsChecked = '2' and s.Status='0'
                             AND	(s.xzb is not null or s.xzb <> '')
                             AND (s.yzb is not null or s.yzb <> '')
                             AND s.ShopType LIKE %s 
@@ -635,7 +635,7 @@ def search_goods_by_page_ex():
         sql+='''
         FROM TB_GOODSINFO_S g
         INNER JOIN tb_shopinfo_s s ON s.ShopID = g.ShopID
-        AND s.IsChecked = '2'
+        AND s.IsChecked = '2' and s.Status='0'
         AND (
             s.ShopType IS NOT NULL
             OR s.ShopType <> ''
@@ -735,7 +735,7 @@ def search_goods_by_page_ex_(data):
         sql+='''
         FROM TB_GOODSINFO_S g
         INNER JOIN tb_shopinfo_s s ON s.ShopID = g.ShopID
-        AND s.IsChecked = '2'
+        AND s.IsChecked = '2' and s.Status='0'
         AND (
             s.ShopType IS NOT NULL
             OR s.ShopType <> ''
