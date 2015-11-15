@@ -219,7 +219,7 @@ def update_buyer_info(token_type,buyer):
         if real_name:
             buyer.real_name=real_name
         if nick_name:
-            buer.nick_name=nick_name
+            buyer.nick_name=nick_name
         if sex:
             buyer.sex=sex
         db.session.commit()
