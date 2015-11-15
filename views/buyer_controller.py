@@ -207,7 +207,7 @@ def update_buyer_info(token_type,buyer):
     
     try:
         data=request.get_json()
-        buyer_id=int(data.get(buyer_id,0))
+        buyer_id=int(data.get('buyer_id',0))
         buyer=Buyer.query.get(buyer_id)
         avatar=data.get('avatar',None)
         real_name=data.get('real_name',None)
