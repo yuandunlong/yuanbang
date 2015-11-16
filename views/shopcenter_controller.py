@@ -512,9 +512,9 @@ def get_goods_info_by_bar_code(token_type,shop):
         
             and BarCode = %s 
                 '''
-        row=db.engine.execute(sql,(data['bar_code'])).fetchone()   
-        
-        result['goods']=row_map_converter(row)
+        row=db.engine.execute(sql,(data['bar_code'])).fetchone()  
+        if row:
+            result['goods']=row_map_converter(row)
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
