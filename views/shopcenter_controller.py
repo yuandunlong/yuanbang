@@ -516,7 +516,7 @@ def get_goods_info_by_bar_code(token_type,shop):
         if row:
             result['goods']=row_map_converter(row)
         else:
-            result['goods']=[]
+            result['goods']=None
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
