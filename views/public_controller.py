@@ -294,12 +294,12 @@ def get_home_page_shop_goods():
         if mktxzb and mktyzb:
             sql='''
             
-              select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop where ShopID <>1 order by Distance limit %s,%s
+              select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop where ShopID <>1 and IsChecked = '2' and Status='0' order by Distance limit %s,%s
             '''
             shops=db.engine.execute(sql,(mktxzb,mktyzb,(page-1)*page_size,page_size))
         else:
             sql='''
-            select shop.* from tb_shopinfo_s shop where ShopID<>1 order by ShopID asc limit %s,%s
+            select shop.* from tb_shopinfo_s shop where ShopID<>1 and IsChecked = '2' and Status='0' order by ShopID asc limit %s,%s
     
             '''
             shops=db.engine.execute(sql,((page-1)*page_size,page_size))
