@@ -105,13 +105,14 @@ class Buyer(db.Model):
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_visable=db.Column('IsVisable',db.String(1)) # 0 否 1是
 	is_validate=db.Column('IsValidate',db.String(1)) # 0否 1是
+	avatar=db.Column('Avatar',db.String(128))
 	
 	def get_map(self):
 		s=self
 		result={'buyer_id':s.buyer_id,'qquid':s.qquid,'account':s.account,'nick_name':s.nick_name,'real_name':s.real_name,
 	                'sex':s.sex,'email':s.email,'status':s.status,'create_time':s.create_time,'create_ip':s.create_ip,
 	                'last_login_ip':s.last_login_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
-	                'is_visable':s.is_visable,'is_validate':s.is_validate
+	                'is_visable':s.is_visable,'is_validate':s.is_validate,'avatar':s.avatar
 	                }
 		return result
 		
@@ -180,6 +181,9 @@ class ShopInfo(db.Model):
 	last_login_time=db.Column('LastLoginTime',db.DateTime)
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_validate=db.Column('IsValidate',db.String(1)) #0否 1是
+	shop_property=db.Column('ShopProperty',db.String(1))
+	is_support_on_line_pay=db.Column('IsSupportOnLinePay',db.String(1))
+	operating_status=db.Column('OperatingStatus',db.String(1))
 	
 	
 	
@@ -194,7 +198,7 @@ class ShopInfo(db.Model):
 			'is_checked':s.is_checked,'sort_no':s.sort_no,'is_recommend':s.is_recommend,'is_top':s.is_top,'default_freight':str(s.default_freight),
 			'seo_title':s.seo_title,'seo_key_word':s.seo_key_word,'seo_content':s.seo_content,'status':s.status,
 			'regist_date':s.regist_date,'regist_ip':s.regist_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
-			'is_validate':s.is_validate
+			'is_validate':s.is_validate,'shop_property':s.shop_property,'is_support_on_line_pay':s.is_support_on_line_pay,'operating_status':s.operating_status
 		
 			}		
 		return result
@@ -252,7 +256,7 @@ class Order(db.Model):
 	update_time=db.Column('UpdateTime',db.DateTime)
 	cancel_reason=db.Column("CancelReason",db.String(600))
 	get_coupon=db.Column('GetCoupon',db.DECIMAL)
-	use_coupon=db.Column('use_coupon',db.DECIMAL)
+	use_coupon=db.Column('UseCoupon',db.DECIMAL)
 	def get_map(self):
 		s=self
 		result={"order_no":s.order_no,'shop_id':s.shop_id,'sale_money':str(s.sale_money),'submit_time':s.submit_time,'send_time':s.send_time,

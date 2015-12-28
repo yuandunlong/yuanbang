@@ -13,6 +13,7 @@ def get_shop_by_id():
         mktyzb=data.get('mktyzb',None)
         sql='''
          SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
+         s.ShopProperty,s.OperatingStatus,s.IsSupportOnLinePay,
                 s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
             '''
         if mktxzb and mktyzb:
@@ -128,6 +129,8 @@ def get_shop_lists_by_page():
         
         sql='''
         SELECT s.ShopName,s.ShopPhoto,s.ShopID,s.Email,s.ShopPhone,s.LinkMan,s.Mobile,
+            s.ShopProperty,s.OperatingStatus,s.IsSupportOnLinePay,
+
         s.ShopAddress,s.SEOTitle,s.SEOKeyWord,s.SEOContent,s.mktxzb,s.mktyzb,s.xzb,s.yzb,
         '''
         if mktxzb and mktxzb:
@@ -142,7 +145,7 @@ def get_shop_lists_by_page():
                                     LEFT JOIN (SELECT ShopID,sum(VisitCount) AS VisitCount FROM  tb_visitcount_s GROUP BY ShopID) v ON s.ShopID = v.ShopID
                                     LEFT JOIN (SELECT ShopID,COUNT(OrderNo) AS Quantity FROM tb_order_s GROUP BY ShopID) o ON s.ShopID = o.ShopID
                             WHERE
-                                    s.IsChecked = '2'
+                                    s.IsChecked = '2' and s.Status='0'
                             AND	(s.xzb is not null or s.xzb <> '')
                             AND (s.yzb is not null or s.yzb <> '')
                             AND s.ShopType LIKE %s 
@@ -291,12 +294,12 @@ def get_home_page_shop_goods():
         if mktxzb and mktyzb:
             sql='''
             
-              select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop where ShopID <>1 order by Distance limit %s,%s
+              select shop.*,ROUND(SQRT(POW(%s - shop.mktxzb, 2) + POW(%s- shop.mktyzb, 2))/1000,2) AS Distance from tb_shopinfo_s shop where ShopID <>1 and IsChecked = '2' and Status='0' order by Distance limit %s,%s
             '''
             shops=db.engine.execute(sql,(mktxzb,mktyzb,(page-1)*page_size,page_size))
         else:
             sql='''
-            select shop.* from tb_shopinfo_s shop where ShopID<>1 order by ShopID asc limit %s,%s
+            select shop.* from tb_shopinfo_s shop where ShopID<>1 and IsChecked = '2' and Status='0' order by ShopID asc limit %s,%s
     
             '''
             shops=db.engine.execute(sql,((page-1)*page_size,page_size))
@@ -635,7 +638,7 @@ def search_goods_by_page_ex():
         sql+='''
         FROM TB_GOODSINFO_S g
         INNER JOIN tb_shopinfo_s s ON s.ShopID = g.ShopID
-        AND s.IsChecked = '2'
+        AND s.IsChecked = '2' and s.Status='0'
         AND (
             s.ShopType IS NOT NULL
             OR s.ShopType <> ''
@@ -735,7 +738,7 @@ def search_goods_by_page_ex_(data):
         sql+='''
         FROM TB_GOODSINFO_S g
         INNER JOIN tb_shopinfo_s s ON s.ShopID = g.ShopID
-        AND s.IsChecked = '2'
+        AND s.IsChecked = '2' and s.Status='0'
         AND (
             s.ShopType IS NOT NULL
             OR s.ShopType <> ''
