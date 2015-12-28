@@ -1,0 +1,11 @@
+Downloading/unpacking list
+  Downloading List-1.3.0.tar.gz
+  Running setup.py egg_info for package list
+    
+Installing collected packages: list
+  Running setup.py install for list
+    SyntaxError: ('invalid syntax', ('/home/dog/.virtualenvs/yuanbang/lib/python2.7/site-packages/list.py', 16, 21, '\t\t\t\t\tprint("\\t", end="")\n'))
+    
+    
+Successfully installed list
+Cleaning up...
