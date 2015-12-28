@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import json,Response,Blueprint,request
+from flask import json,Response,Blueprint,request,current_app
 from sqlalchemy import desc
 from database.models import db,Photo
 from utils import row_map_converter
@@ -17,12 +17,13 @@ def get_shop_goods_photos():
             arr.append(photo.get_map())
         result['photos']=arr
     except Exception ,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
         
 
-@shop_goods_controller.route('/m1/public/get_shop_goods_detail')
+@shop_goods_controller.route('/m1/public/get_shop_goods_detail',methods=['POST'])
 #取得店铺的商品详情信息（商品ID）
 def get_shop_goods_detail():
     result={'code':1,'msg':'ok'}
@@ -46,6 +47,7 @@ def get_shop_goods_detail():
         '''
         result_set=db.engine.execute(sql,data['goods_id'])
         arr=[]
+        
         for row in result_set:
             temp={}
             temp['goods_id']=row['GoodsID']
@@ -54,8 +56,18 @@ def get_shop_goods_detail():
             temp['add_attr_name']=row['AddAttrName']
             temp['add_attr_content']=row['AddAttrContent']
             arr.append(temp)
+        sql3='''
+        select GoodsSpec,GoodsLocality,GoodsBrand from tb_goodsinfo_s where GoodsID=%s
+        '''
+        temp_row=db.engine.execute(sql3,data['goods_id']).fetchone()
+        if temp_row:
+            
+            arr.insert(0,{'goods_id':data['goods_id'],'add_attr_name':'商品规格','add_attr_content':temp_row['GoodsSpec'],'goods_type_id':'0','add_attr_id':'0'})
+            arr.insert(1,{'goods_id':data['goods_id'],'add_attr_name':'商品产地','add_attr_content':temp_row['GoodsLocality'],'goods_type_id':'0','add_attr_id':'0'})
+            arr.insert(2,{'goods_id':data['goods_id'],'add_attr_name':'商品品牌','add_attr_content':temp_row['GoodsBrand'],'goods_type_id':'0','add_attr_id':'0'})
         result['goods_detail']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
         
@@ -84,25 +96,44 @@ def get_shop_goods_count():
         result['shop_id']=data['shop_id']
         result['goods_id']=data['goods_id']
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
 
 @shop_goods_controller.route('/m1/public/get_shop_goods_for_discount',methods=['POST'])
 def get_shop_goods_for_discount():
-    result={'code':1,'msh':'ok'}
+    result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
         sql='''SELECT
             tgs.GoodsID,
             tgs.ShopID,
             tgs.GoodsName,
+            tgs.SetPrice,
+            tgs.SetNum,
             IFNULL(tp.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+            IFNULL(o.SaleQuantity,0) AS TotalSale,
             tgs.SalePrice,
             round(tgs.SalePrice * tgs.Discount, 2) AS DisPrice
             FROM
                 tb_goodsinfo_s tgs
-                LEFT JOIN tb_photo tp ON 
+                
+            LEFT JOIN (
+                   SELECT
+                   sum(t.Quantity) AS SaleQuantity,
+                   t.GoodsID
+                   FROM
+                   tb_order_s d,
+                   tb_orderdetail_s t
+                   WHERE
+                   d.OrderNo = t.OrderNo
+                   AND d.`Status` <> '3'
+                   GROUP BY
+                   t.GoodsID
+                   ) o ON tgs.GoodsID = o.GoodsID                
+                
+            LEFT JOIN tb_photo tp ON 
                     tgs.GoodsID = tp.LinkID
                     AND tp.IsVisable = '1'
                     AND tp.IsChecked = '1'
@@ -110,10 +141,24 @@ def get_shop_goods_for_discount():
                 tgs.ShopID = %s
                 AND tgs.`Status` = %s
                 AND tgs.Discount != %s
-            ORDER BY tgs.Discount ASC
-            LIMIT 16
+          
+            
         
         '''
+        
+        order_by=data.get('order_by',None)
+        
+        if order_by=='saleasc':
+            sql+='  order by TotalSale asc'
+        elif order_by=='saledesc':
+            sql+=' order by TotalSale desc'
+        elif order_by=='priceasc':
+            sql+=' order by SalePrice asc'
+        elif order_by=='pricedesc':
+            sql+=' order by SalePrice desc'   
+        else:
+            sql+=' order by SalePrice,TotalSale desc'        
+        sql+= ' LIMIT 16'
         result_set=db.engine.execute(sql,(data['shop_id'],'0','1'))
         arr=[]
         for row in result_set:
@@ -127,6 +172,7 @@ def get_shop_goods_for_discount():
             arr.append(temp)
         result['discount_goods']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -136,7 +182,7 @@ def get_goods_by_id():
     try:
         data=request.get_json()
         sql='''
-            SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+            SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.SetPrice,g.SetNum,
             round(g.SalePrice * g.Discount, 2) AS DisPrice,
             IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
             IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -165,7 +211,16 @@ def get_goods_by_id():
         row=db.engine.execute(sql,(data['goods_id'])).fetchone()
         if row:
             result['goods_info']=row_map_converter(row)
+            p_sql='''select quantity as remains from tb_purchase_s where GoodsID=%s order by BatchNo Desc'''
+            _row=db.engine.execute(p_sql,(data['goods_id'])).fetchone()
+            
+            if _row:
+                result['goods_info']['remains']=int(_row['remains'])
+            else :
+                result['goods_info']['remains']=0
+            
     except Exception, e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -176,7 +231,7 @@ def get_shop_goods_by_type():
     try:
         data=request.get_json()
         sql='''
-        SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.SetPrice,g.SetNum,
     round(g.SalePrice * g.Discount, 2) AS DisPrice,
     IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
     IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -204,15 +259,71 @@ def get_shop_goods_by_type():
         and (g.GoodsTypeIDs like %s or g.GoodsTypeIDs like %s)
         
         '''
+        
+        order_by=data.get('order_by',None)
+        
+        if order_by=='saleasc':
+            sql+='  order by TotalSale asc'
+        elif order_by=='saledesc':
+            sql+=' order by TotalSale desc'
+        elif order_by=='priceasc':
+            sql+=' order by SalePrice asc'
+        elif order_by=='pricedesc':
+            sql+=' order by SalePrice desc'
+        else:
+            sql+=' order by SalePrice,TotalSale desc'        
         shop_id=str(data['shop_id'])
-        goods_type_id=str(data['goods_type_id'])
-        result_set=db.engine.execute(sql,(shop_id,goods_type_id+'%','%'+goods_type_id+'%'))
+        if data.get('goods_type_id'):
+            goods_type_id=str(data['goods_type_id'])
+            result_set=db.engine.execute(sql,(shop_id,goods_type_id+'%','%'+goods_type_id+'%'))
+        else:
+            another_sql='''
+            
+            SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+        round(g.SalePrice * g.Discount, 2) AS DisPrice,
+        IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
+        IFNULL(o.SaleQuantity,0) AS TotalSale
+        FROM
+            tb_goodsinfo_s g
+        LEFT JOIN (
+            SELECT
+            sum(t.Quantity) AS SaleQuantity,
+            t.GoodsID
+            FROM
+            tb_order_s d,
+            tb_orderdetail_s t
+            WHERE
+            d.OrderNo = t.OrderNo
+            AND d.`Status` <> '3'
+            GROUP BY
+            t.GoodsID
+            ) o ON g.GoodsID = o.GoodsID
+            INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
+            AND p.IsVisable = '1'
+            AND p.IsChecked = '1'
+            WHERE
+                g.ShopID = %s
+            and g.Status = 0
+            '''
+            order_by=data.get('order_by','saledesc')
+            
+            if order_by=='saleasc':
+                sql+='  order by TotalSale asc'
+            elif order_by=='saledesc':
+                sql+=' order by TotalSale desc'
+            elif order_by=='priceasc':
+                sql+=' order by SalePrice asc'
+            elif order_by=='pricedesc':
+                sql+=' order by SalePrice desc'   
+                
+            result_set=db.engine.execute(another_sql,(shop_id))
         arr=[]
         for row in result_set:
             temp=row_map_converter(row)
             arr.append(temp)
         result['goods']=arr
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -223,7 +334,7 @@ def get_latest_shop_goods():
     try:
         data=request.get_json()
         sql='''
-        SELECT g.GoodsID,g.GoodsName,g.SalePrice,
+        SELECT g.GoodsID,g.GoodsName,g.SalePrice,g.SetPrice,g.SetNum,
     round(g.SalePrice * g.Discount, 2) AS DisPrice,
     IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
     IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -247,8 +358,20 @@ def get_latest_shop_goods():
         AND p.IsChecked = '1'
         WHERE
             g.ShopID = %s
-        and g.Status = 0 order by g.CreateTime desc limit %s
+        and g.Status = 0  
         '''
+        order_by=data.get('order_by',None)
+        if order_by=='saleasc':
+            sql+='  order by TotalSale asc'
+        elif order_by=='saledesc':
+            sql+=' order by TotalSale desc'
+        elif order_by=='priceasc':
+            sql+=' order by SalePrice asc'
+        elif order_by=='pricedesc':
+            sql+=' order by SalePrice desc' 
+        else:
+            sql+=' order by SalePrice,TotalSale desc'
+        sql+=' limit %s'
         shop_id=str(data['shop_id'])
         count=data.get('count',4)
         result_set=db.engine.execute(sql,(shop_id,count))
@@ -259,6 +382,7 @@ def get_latest_shop_goods():
         result['goods']=arr        
     
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

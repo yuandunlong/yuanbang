@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import json,jsonify,Response
 from database.models import Area,db
@@ -21,6 +21,7 @@ def get_area_list():
         result['areas']=areas_arr
         result['code']=1
     except Exception,e:
+        #current_app.logger.exception(e)
         areas=Area.query.filter().order_by('sort',Area.area_id).all()
         areas_arr=[]
         for area in areas :
@@ -49,6 +50,7 @@ def get_area_list_group_by_alfa():
                 result['areas'][area_map['sort']]=[]
                 result['areas'][area_map['sort']].append(area_map)
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

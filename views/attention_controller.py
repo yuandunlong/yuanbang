@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
 from database.models import Attention,db
@@ -20,6 +20,7 @@ def get_attention_shops(token_type,user_info):
             shops.append(row_map_converter(row))
         result['shops']=shops
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -43,6 +44,7 @@ def get_attention_goods(token_type,user_info):
             goods.append(row_map_converter(row))
         result['goods']=goods
     except Exception ,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -64,6 +66,7 @@ def add_attention_shop(token_type,user_info):
             db.session.commit()
         
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -76,6 +79,7 @@ def cancle_attention_shop(token_type,user_info):
         Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['shop_id'],attention_type='0').delete()
         db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
@@ -96,11 +100,12 @@ def add_attention_goods(token_type,user_info):
             db.session.add(attention)
             db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
 
-@attention_controller.route('/m1/private/cancle_attention_goods')   
+@attention_controller.route('/m1/private/cancle_attention_goods',methods=['POST'])   
 @check_token
 def cancle_attention_goods(token_type,user_info):
     result={'code':1,'msg':'ok'}
@@ -109,6 +114,7 @@ def cancle_attention_goods(token_type,user_info):
         Attention.query.filter_by(buyer_id=user_info.buyer_id,attention_id=data['goods_id'],attention_type='3').delete()
         db.session.commit()
     except Exception,e:
+        current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')

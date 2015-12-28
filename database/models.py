@@ -4,6 +4,17 @@ from flask import json
 import datetime,time
 db=SQLAlchemy()
 
+class BaseModel(db.Model):
+	__abstract__ = True
+	def get_map(self):
+		fields = {}
+		for field in [x for x in dir(self) if not x.startswith('_') and x != 'metadata' and x != 'query' and x != 'query_class']:
+			data = self.__getattribute__(field)
+			if inspect.ismethod(data):
+				continue
+			fields[field] = data
+		return fields
+
 class User(db.Model):
 	__tablename__='user'
 	id=db.Column('id',db.Integer,primary_key=True)
@@ -94,13 +105,14 @@ class Buyer(db.Model):
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_visable=db.Column('IsVisable',db.String(1)) # 0 否 1是
 	is_validate=db.Column('IsValidate',db.String(1)) # 0否 1是
+	avatar=db.Column('Avatar',db.String(128))
 	
 	def get_map(self):
 		s=self
 		result={'buyer_id':s.buyer_id,'qquid':s.qquid,'account':s.account,'nick_name':s.nick_name,'real_name':s.real_name,
 	                'sex':s.sex,'email':s.email,'status':s.status,'create_time':s.create_time,'create_ip':s.create_ip,
 	                'last_login_ip':s.last_login_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
-	                'is_visable':s.is_visable,'is_validate':s.is_validate
+	                'is_visable':s.is_visable,'is_validate':s.is_validate,'avatar':s.avatar
 	                }
 		return result
 		
@@ -124,11 +136,13 @@ class BuyerAddress(db.Model):
 	detail_address=db.Column('DetailAddress',db.String(200))
 	xzb=db.Column('xzb',db.DECIMAL)
 	yzb=db.Column('yzb',db.DECIMAL)
+	mktxzb=db.Column('mktxzb',db.DECIMAL)
+	mktyzb=db.Column('mktyzb',db.DECIMAL)
 	is_default=db.Column('IsDefault',db.String(1))
 	def get_map(self):
 		result={'address_id':self.address_id,'buyer_id':int(self.buyer_id),'address':self.address,'consignee':self.consignee,
 		     'phone':self.phone,'province':self.province,'detail_address':self.detail_address,'xzb':str(self.xzb),
-		     'yzb':str(self.yzb),'is_default':self.is_default}
+		     'yzb':str(self.yzb),'mktxzb':str(self.mktxzb),'mktyzb':str(self.mktyzb),'is_default':self.is_default}
 		return result
 	
 	
@@ -167,6 +181,11 @@ class ShopInfo(db.Model):
 	last_login_time=db.Column('LastLoginTime',db.DateTime)
 	login_times=db.Column('LoginTimes',db.Integer)
 	is_validate=db.Column('IsValidate',db.String(1)) #0否 1是
+	shop_property=db.Column('ShopProperty',db.String(1))
+	is_support_on_line_pay=db.Column('IsSupportOnLinePay',db.String(1))
+	operating_status=db.Column('OperatingStatus',db.String(1))
+	
+	
 	
 	def get_json(self):
 		return json.dumps(get_map())
@@ -179,7 +198,7 @@ class ShopInfo(db.Model):
 			'is_checked':s.is_checked,'sort_no':s.sort_no,'is_recommend':s.is_recommend,'is_top':s.is_top,'default_freight':str(s.default_freight),
 			'seo_title':s.seo_title,'seo_key_word':s.seo_key_word,'seo_content':s.seo_content,'status':s.status,
 			'regist_date':s.regist_date,'regist_ip':s.regist_ip,'last_login_time':s.last_login_time,'login_times':s.login_times,
-			'is_validate':s.is_validate
+			'is_validate':s.is_validate,'shop_property':s.shop_property,'is_support_on_line_pay':s.is_support_on_line_pay,'operating_status':s.operating_status
 		
 			}		
 		return result
@@ -213,7 +232,7 @@ class ShopCart(db.Model):
 	
 	def get_map(self):
 		s=self
-		result={"buyer_id":s.buyer_id,"goods_id":s.goods_id,"quntity":s.quntity,'create_time':s.create_time}
+		result={"buyer_id":s.buyer_id,"goods_id":s.goods_id,"quntity":s.quntity,'create_time':s.create_time,'is_selected':s.is_selected}
 		return result
 	
 class Order(db.Model):
@@ -233,15 +252,19 @@ class Order(db.Model):
 	remark=db.Column('Remark',db.String(200))
 	status=db.Column('Status',db.String(1)) # 0：已提交；1：已发货；2：交易成功；3：交易取消
 	pay_status=db.Column('PayStatus',db.String(1)) # 0:未支付,1:已支付
+	pay_type=db.Column('PayType',db.String(1))# 0货到付款，1在线支付
 	update_time=db.Column('UpdateTime',db.DateTime)
-	
+	cancel_reason=db.Column("CancelReason",db.String(600))
+	get_coupon=db.Column('GetCoupon',db.DECIMAL)
+	use_coupon=db.Column('UseCoupon',db.DECIMAL)
 	def get_map(self):
 		s=self
 		result={"order_no":s.order_no,'shop_id':s.shop_id,'sale_money':str(s.sale_money),'submit_time':s.submit_time,'send_time':s.send_time,
 		        'confirm_time':s.confirm_time,'freight':str(s.freight),'address_id':s.address_id,'send_address':s.send_address,
-		        'receiver':s.receiver,'phone':s.phone,'remark':s.remark,'status':s.status,'pay_status':s.pay_status,'update_time':s.update_time
+		        'receiver':s.receiver,'phone':s.phone,'remark':s.remark,'status':s.status,'pay_status':s.pay_status,'update_time':s.update_time,'get_coupon':s.get_coupon,'use_coupon':s.use_coupon
 		        }
 		return result
+	
 class OrderDetail(db.Model):
 	__tablename__='tb_orderdetail_s'
 	order_no=db.Column('OrderNo',db.String(20),primary_key=True)
@@ -249,6 +272,7 @@ class OrderDetail(db.Model):
 	batch_no=db.Column('BatchNo',db.Integer,primary_key=True)
 	sale_price=db.Column('SalePrice',db.DECIMAL)
 	quantity=db.Column('Quantity',db.Integer)
+	discount_price=db.Column('DiscountPrice',db.DECIMAL)
 	
 	def get_map(self):
 		s=self
@@ -301,12 +325,13 @@ class Message(db.Model):
 	send_content=db.Column('SendContent',db.String(1000))
 	reply_time=db.Column('ReplyTime',db.DateTime)
 	is_read=db.Column('IsRead',db.String(1))
-	
+	receiver_type=db.Column('ReceiverType',db.String(3))
+	send_time=db.Column('SendTime',db.DateTime)
 	def get_map(self):
 		s=self
 		result={'message_id':s.message_id,'sender_type':s.sender_type,'sender':s.sender,'sender_name':s.sender_name,
 		        'receiver':s.receiver,'receiver_name':s.receiver_name,'send_title':s.send_title,'send_content':s.send_content,
-		        'reply_time':s.reply_time,'is_read':s.is_read
+		        'reply_time':s.reply_time,'is_read':s.is_read,'receiver_type':s.receiver_type,'send_time':s.send_time
 		        }
 		return result
 
@@ -336,6 +361,7 @@ class Photo(db.Model):
 	
 
 class Purchase(db.Model):
+	__tablename__='tb_purchase_s'
 	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
 	batch_no=db.Column('BatchNo',db.Integer,primary_key=True)
 	buy_price=db.Column('BuyPrice',db.DECIMAL)
@@ -347,3 +373,103 @@ class Purchase(db.Model):
 		result={'goods_id':self.goods_id,'batch_no':self.batch_no,'buy_price':str(self.buy_price),'quantity':self.quantity,'start_time':self.start_time,'end_time':self.end_time
 		        }
 		return result
+	
+
+class Activity(db.Model):
+	__tablename__='tb_activities_w'
+	id=db.Column('ID',db.Integer,primary_key=True)
+	type=db.Column('Type',db.String(3))
+	shop_id=db.Column('ShopID',db.Integer)
+	title=db.Column('Title',db.String(100))
+	content=db.Column('Content',db.Text)
+	count=db.Column('Count',db.Integer)
+	sort_no=db.Column('SortNo',db.Integer)
+	is_top=db.Column('IsTop',db.String(1))
+	is_hot=db.Column('IsHot',db.String(1))
+	publisher=db.Column('Publisher',db.String(20))
+	publish_time=db.Column('PublishTime',db.DateTime)
+	updater=db.Column('Updater',db.String(20))
+	update_time=db.Column('UpdateTime',db.DateTime)
+	seo_title=db.Column('SEOTitle',db.String(100))
+	seo_key_word=db.Column('SEOKeyWord',db.String(100))
+	seo_content=db.Column('SEOContent',db.String(100))
+	del_flag=db.Column('DelFlag',db.String(1))
+	call_index=db.Column('CallIndex',db.String(10))
+	
+	def get_map(self):
+		s=self
+		result={'id':s.id,'type':s.type,'shop_id':s.shop_id,'title':s.title,'content':s.content,'count':s.count,'sort_no':s.sort_no,'is_top':s.is_top,'is_hot':s.is_hot,'publisher':s.publisher,'publish_time':s.publish_time,'updater':s.updater,'update_time':s.update_time,'seo_title':s.seo_title,'seo_content':s.seo_content,'del_flag':s.del_flag,'call_index':s.call_index }
+		return result
+	
+class GoodsInfo(BaseModel):
+	__tablename__='tb_goodsinfo_s'
+	goods_id=db.Column('GoodsID',db.Integer,primary_key=True)
+	shop_id=db.Column('ShopID',db.String(20))
+	bar_code=db.Column('BarCode',db.String(20))
+	goods_type_id=db.Column('GoodsTypeID',db.String(20))
+	goods_type_ids=db.Column('GoodsTypeIDs',db.String(200))
+	goods_name=db.Column('GoodsName',db.String(100))
+	goods_spec=db.Column('GoodsSpec',db.String(100))
+	goods_locality=db.Column('GoodsLocality',db.String(100))
+	goods_brand=db.Column('GoodsBrand',db.String(100))
+	remark=db.Column('Remark',db.Text)
+	sale_price=db.Column('SalePrice',db.DECIMAL)
+	warning_num=db.Column('WarningNum',db.Integer)
+	discount=db.Column('Discount',db.DECIMAL)
+	set_num=db.Column('SetNum',db.Integer)
+	set_price=db.Column('SetPrice',db.DECIMAL)
+	seo_title=db.Column('SEOTitle',db.String(100))
+	seo_key_word=db.Column('SEOKeyWord',db.String(100))
+	seo_content=db.Column('SEOContent',db.String(2000))
+	sort_no=db.Column('SortNo',db.Integer)
+	status=db.Column('Status',db.String(1))
+	create_time=db.Column('CreateTime',db.DateTime)
+	can_edit=db.Column('CanEdit',db.String(1))
+	
+	
+class DeliveryMan(BaseModel):
+	__tablename__='tb_deliveryman'
+	id=db.Column('id',db.Integer,primary_key=True)
+	shop_id=db.Column('ShopID',db.Integer)
+	buyer_id=db.Column('BuyerID',db.Integer)
+	is_active=db.Column('IsActive',db.String(1))
+	is_validate=db.Column('IsValidate',db.String(1))
+	create_time=db.Column('CreateTime',db.DateTime)
+	remark=db.Column('remark',db.String(1000))
+	
+class DeliveryList(BaseModel):
+	__tablename__='tb_deliverylist'
+	id=db.Column('id',db.Integer,primary_key=True)
+	order_no=db.Column('OrderNo',db.String(20))
+	shop_id=db.Column('ShopID',db.String(20))
+	buyer_id=db.Column('BuyerID',db.String(20))
+	delivery_money=db.Column('DeliveryMoney',db.DECIMAL)
+	delivery_status=db.Column('DeliveryStatus',db.String(1))
+	submit_time=db.Column('SubmitTime',db.DateTime)
+	receive_time=db.Column('ReceiveTime',db.DateTime)
+	
+class Coupon(BaseModel):
+	__tablename__='tb_coupon'
+	coupon_id=db.Column('CouponID',db.Integer,primary_key=True)
+	coupon_type=db.Column('CouponType',db.String(1))
+	shop_id=db.Column('ShopID',db.Integer)
+	buyer_id=db.Column('BuyerID',db.Integer)
+	order_no=db.Column('OrderNo',db.String(20))
+	coupon_money=db.Column('CouponMoney',db.Integer)
+	remark=db.Column('Remark',db.String(200))
+	operate_time=db.Column('OperateTime',db.DateTime)
+	
+	
+
+class Member(BaseModel):
+	__tablename__='tb_member'
+	shop_id=db.Column('ShopID',db.String(20),primary_key=True)
+	buyer_id=db.Column('BuyerID',db.String(20),primary_key=True)
+	create_time=db.Column('CreateTime',db.DateTime)
+	level=db.Column('level',db.String(3))
+	remark=db.Column('remark',db.String(1000))
+	
+	
+	
+	
+	
