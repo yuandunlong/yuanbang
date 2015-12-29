@@ -900,13 +900,15 @@ def update_shop_info(token_type,shop):
         result['msg']=e.message
 
     return Response(json.dumps(result),content_type='application/json')
-@shopcenter_controller.route('/m1/private/shopcenter/save_shop_address')
+
+@shopcenter_controller.route('/m1/private/shopcenter/save_shop_address',methods=['POST'])
+@check_token
 def save_shop_address(token_type,shop):
     result={'code':1,'msg':'ok'}
-    data=result.get_json()
+    data=request.get_json()
 
     try:
-        shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id)
+        shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
         if shop_info:
             shop_info.shop_address=data['shop_address']
             shop_info.xzb=data['xzb']
