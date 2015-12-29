@@ -778,7 +778,7 @@ def add_delivery_list_info_by_ps(token_type,shop):
         delivery_money=data['delivery_money']
         buyer_id=data['buyer_id']
         sql='''insert into tb_deliverylist (OrderNo,ShopID,BuyerID,DeliveryMoney,DeliveryStatus,ReceiveTime)
-    values (%s,%s,%s,%s )'''
+    values (%s,%s,%s,%s,%s,%s)'''
         db.engine.execute(sql,(order_no,shop.shop_id,buyer_id,delivery_money,1,datetime.now()))
         db.session.commit()
     except Exception,e:
