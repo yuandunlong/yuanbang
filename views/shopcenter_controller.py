@@ -773,6 +773,7 @@ def del_shop_member(token_type,shop):
 def add_delivery_list_info_by_ps(token_type,shop):
     result={'code':1,'msg':'ok'}
     try:
+        data=request.get_json()
         order_no=data['order_no']
         delivery_money=data['delivery_money']
         buyer_id=data['buyer_id']
