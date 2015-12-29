@@ -235,7 +235,7 @@ class ShopInfo(db.Model):
               'shop_photo': s.shop_photo,
               'other_lisence': s.other_lisence, 'shop_phone': s.shop_phone, 'link_man': s.link_man, 'mobile': s.mobile,
               'weixin': s.weixin, 'weixin_photo': s.weixin_photo, 'shop_address': s.shop_address, 'xzb': str(s.xzb),
-              'yzb': str(s.yzb),'mktxzb':self.mktxzb,'mktyzb':self.mktyzb,
+              'yzb': str(s.yzb),'mktxzb':str(self.mktxzb),'mktyzb':str(self.mktyzb),
               'is_checked': s.is_checked, 'sort_no': s.sort_no, 'is_recommend': s.is_recommend, 'is_top': s.is_top,
               'default_freight': str(s.default_freight),
               'seo_title': s.seo_title, 'seo_key_word': s.seo_key_word, 'seo_content': s.seo_content,
