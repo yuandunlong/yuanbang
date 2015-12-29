@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import json,Response,Blueprint,request,json,current_app
-from database.models import db,GoodsInfo,Photo,DeliveryMan
+from database.models import db,GoodsInfo,Photo,DeliveryMan,ShopInfo
 from datetime import datetime
 from views.utils import check_token,row_map_converter,rows_array_converter
 shopcenter_controller=Blueprint('shopcenter_controller',__name__)
@@ -874,5 +874,49 @@ def get_delivery_list_by_page(token_type,shop):
         result['msg']=e.message
     
     return Response(json.dumps(result),content_type='application/json')
-        
-    
+#--------------------------12.28新增------------------------
+
+@shopcenter_controller.route('/m1/private/shopcenter/update_shop_info',methods=['POST'])
+@check_token
+def update_shop_info(token_type,shop):
+    result={'code':1,'msg':'ok'}
+
+    data=request.get_json()
+    try:
+        shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
+        if shop_info:
+            if data.get('shop_phone',None):
+                shop_info.shop_phone=data['shop_phone']
+            if data.get('link_man',None):
+                shop_info.link_man=data['link_man']
+            if data.get('with_draw_account',None):
+                shop_info.with_draw_account=data['with_draw_account']
+            if data.get('weixin',None):
+                shop_info.weixin=data['weixin']
+            db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+
+    return Response(json.dumps(result),content_type='application/json')
+@shopcenter_controller.route('/m1/private/shopcenter/save_shop_address')
+def save_shop_address(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    data=result.get_json()
+
+    try:
+        shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id)
+        if shop_info:
+            shop_info.shop_address=data['shop_address']
+            shop_info.xzb=data['xzb']
+            shop_info.yzb=data['yzb']
+            shop_info.mktxzb=data['mktxzb']
+            shop_info.mktyzb=data['mktyzb']
+            db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+
+    return Response(json.dumps(result),content_type='application/json')

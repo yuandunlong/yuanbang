@@ -46,13 +46,14 @@ def access_token():
 				check_code=md5.hexdigest()
 
 				if pass_code==check_code:
-					access_token=map(lambda i: chr(random.randint(65,90)),range(32))
-					access_token=string.join(access_token,'')
-					token=Token(buyer.buyer_id,account_type,auth_code,client_id,access_token)
-					Token.query.filter_by(user_id=buyer.buyer_id,client_id=client_id,token_type=account_type).delete()
-					db.session.add(token)
-					db.session.commit()
-					result['access_token']=access_token
+					token=Token.query.filter_by(user_id=shop_info.shop_id,token_type=2).first()
+					if not token:
+						access_token=map(lambda i: chr(random.randint(65,90)),range(32))
+						access_token=string.join(access_token,'')
+						token=Token(buyer.buyer_id,account_type,auth_code,client_id,access_token)
+						db.session.add(token)
+						db.session.commit()
+					result['access_token']=token.access_token
 					result['code']=1
 				else:
 					result['msg']='account or password wrong'
@@ -67,12 +68,15 @@ def access_token():
 				check_code=md5.hexdigest()
 				print check_code
 				if pass_code==check_code:
-					access_token=map(lambda i: chr(random.randint(65,90)),range(32))
-					access_token=string.join(access_token,'')
-					token=Token(shop_info.shop_id,account_type,auth_code,client_id,access_token)
-					db.session.add(token)
-					db.session.commit()					
-					result['access_token']=access_token
+					token=Token.query.filter_by(user_id=shop_info.shop_id,token_type=2).first()
+					if not token:
+						access_token=map(lambda i: chr(random.randint(65,90)),range(32))
+						access_token=string.join(access_token,'')
+						token=Token(shop_info.shop_id,account_type,auth_code,client_id,access_token)
+
+						db.session.add(token)
+						db.session.commit()
+					result['access_token']=token.access_token
 					result['code']=1
 				else:
 					result['code']=0
