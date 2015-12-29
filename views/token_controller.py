@@ -46,7 +46,7 @@ def access_token():
 				check_code=md5.hexdigest()
 
 				if pass_code==check_code:
-					token=Token.query.filter_by(user_id=shop_info.shop_id,token_type=2).first()
+					token=Token.query.filter_by(user_id=buyer.buyer_id,token_type=1).first()
 					if not token:
 						access_token=map(lambda i: chr(random.randint(65,90)),range(32))
 						access_token=string.join(access_token,'')
