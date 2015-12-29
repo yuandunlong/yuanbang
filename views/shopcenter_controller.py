@@ -549,7 +549,8 @@ def get_delivery_member(token_type,shop):
             ) AS BuyerName,
         b.Phone,
         IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
-        m.Remark
+        m.Remark,
+        d.DeliveryStatus
         FROM
             tb_deliveryman m
         INNER JOIN tb_buyer b ON m.BuyerID = b.BuyerID
