@@ -225,13 +225,11 @@ class ShopInfo(db.Model):
     is_suply_shop = db.Column('IsSupplyShop', db.Integer)
 
 
-def get_json(self):
-    return json.dumps(self.get_map())
-
-
-def get_map(self):
-    s = self
-    result = {'shop_id': s.shop_id, 'qquid': s.qquid, 'account': s.account, 'shop_type': s.shop_type,
+    def get_json(self):
+        return json.dumps(self.get_map())
+    def get_map(self):
+        s = self
+        result = {'shop_id': s.shop_id, 'qquid': s.qquid, 'account': s.account, 'shop_type': s.shop_type,
               'shop_name': s.shop_name,
               'email': s.email, 'introduce': s.introduce, 'business_lisence': s.business_lisence,
               'shop_photo': s.shop_photo,
@@ -251,7 +249,7 @@ def get_map(self):
               'is_suply_shop': self.is_suply_shop
 
               }
-    return result
+        return result
 
 
 class GoodsType(db.Model):
