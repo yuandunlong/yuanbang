@@ -884,7 +884,7 @@ def update_shop_info(token_type,shop):
     result={'code':1,'msg':'ok'}
 
     data=request.get_json()
-    print data
+    current_app.logger.info(data)
     try:
         shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
         if shop_info:
@@ -897,7 +897,7 @@ def update_shop_info(token_type,shop):
             if data.get('weixin',None):
                 shop_info.weixin=data['weixin']
             if data.get('operating_status',None):
-                shop_info.operating_status=data['operating_status']
+                shop_info.operating_status=str(data['operating_status'])
             db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
