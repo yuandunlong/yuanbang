@@ -884,6 +884,7 @@ def update_shop_info(token_type,shop):
     result={'code':1,'msg':'ok'}
 
     data=request.get_json()
+    print data
     try:
         shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
         if shop_info:
