@@ -895,6 +895,8 @@ def update_shop_info(token_type,shop):
                 shop_info.with_draw_account=data['with_draw_account']
             if data.get('weixin',None):
                 shop_info.weixin=data['weixin']
+            if data.get('operating_status',None):
+                shop_info.operating_status=data['operating_status']
             db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
@@ -924,3 +926,23 @@ def save_shop_address(token_type,shop):
         result['msg']=e.message
 
     return Response(json.dumps(result),content_type='application/json')
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_supply_shop_list',methods=['GET'])
+@check_token
+def get_supply_shop_list(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        sql='''SELECT S.ShopID,S.ShopPhoto,S.Account,S.ShopName,S.ShopType,S.Email,
+						S.ShopPhone,S.LinkMan,S.Mobile,S.ShopAddress,S.RegistDate
+				   FROM TB_SHOPINFO_S S
+				   where S.`status`=0 and IsSupplyShop = 1
+				order by IsTop desc,SortNo desc,Status'''
+        rows=db.engine.execute(sql)
+        result['shop_list']=rows_array_converter(rows)
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+
+    return Response(json.dumps(result),content_type='application/json')
+
