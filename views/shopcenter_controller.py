@@ -768,7 +768,7 @@ def del_shop_member(token_type,shop):
     
     
 #店铺指定
-@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_ps',methods=['POSt'])
+@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_ps',methods=['POST'])
 @check_token
 def add_delivery_list_info_by_ps(token_type,shop):
     result={'code':1,'msg':'ok'}
