@@ -154,8 +154,8 @@ def submit_order_by_shopcart(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
-	pay_type=data.get('pay_type',0)#0货到付款 1在线支付
-	use_coupons=data.get('use_coupons') 
+        pay_type=data.get('pay_type',0)#0货到付款 1在线支付
+        use_coupons=data.get('use_coupons',None)
         buyerAddress=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
         if not buyerAddress:
             raise Exception('user dont have default address')
@@ -175,8 +175,9 @@ def submit_order_by_shopcart(token_type,user_info):
             order.phone=buyerAddress.phone
             order.remark=data.get('remark','')
             order.status='0' #已提交
-	    order.pay_type=pay_type
-	    order.use_coupon=use_coupons.get('shop_id',0)
+            order.pay_type=pay_type
+            if use_coupons:
+                order.use_coupon=use_coupons.get('shop_id',0)
             db.session.add(order)
             goods_list=getGoodsList(order.shop_id,order.buyer_id)
             
