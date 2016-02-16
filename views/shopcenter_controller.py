@@ -724,9 +724,12 @@ def validate_delivery_member(token_type,shop):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
+        remark=data.get('remark','')
+
         dm=DeliveryMan.query.filter_by(shop_id=shop.shop_id,buyer_id=data['buyer_id']).first()
         if dm:
             dm.is_validate='1'
+            db.remark=remark
             db.session.commit()
         
     except Exception,e:
@@ -950,4 +953,6 @@ def get_supply_shop_list(token_type,shop):
         result['msg']=e.message
 
     return Response(json.dumps(result),content_type='application/json')
+
+
 
