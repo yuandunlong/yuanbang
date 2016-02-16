@@ -6,7 +6,6 @@ from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,S
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter,send_mail
 from datetime import datetime
 import string
-from threading import Thread
 import base64
 
 order_controller=Blueprint('order_controller',__name__)
@@ -139,7 +138,6 @@ def cancle_order(token_type,user_info):
             SET s.Quantity = s.Quantity + o.Quantity
             WHERE o.OrderNo=%s'''
         db.engine.execute(sql,(data['order_no']))
-        
         db.session.commit()
                 
     except Exception,e:
@@ -160,7 +158,6 @@ def submit_order_by_shopcart(token_type,user_info):
         if not buyerAddress:
             raise Exception('user dont have default address')
         carGrouptList=getOrderCartList(user_info.buyer_id, buyerAddress.address_id)
-        
         for order_info in carGrouptList:
             order=Order()
             order.order_no=build_order_no()
@@ -215,9 +212,7 @@ def submit_order_by_shopcart(token_type,user_info):
         '''
         db.engine.execute(delete_cart_sql,(user_info.buyer_id))
         db.session.commit()
-	
-	
-        
+
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0

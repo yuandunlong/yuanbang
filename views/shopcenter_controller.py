@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask import json,Response,Blueprint,request,json,current_app
-from database.models import db,GoodsInfo,Photo,DeliveryMan,ShopInfo
+from database.models import db,GoodsInfo,Photo,DeliveryMan,ShopInfo,Order
 from datetime import datetime
+import  os
 from views.utils import check_token,row_map_converter,rows_array_converter
 shopcenter_controller=Blueprint('shopcenter_controller',__name__)
 @shopcenter_controller.route('/m1/private/shopcenter/get_shop_info',methods=['GET'])
@@ -781,6 +782,11 @@ def add_delivery_list_info_by_ps(token_type,shop):
     values (%s,%s,%s,%s,%s,%s)'''
         db.engine.execute(sql,(order_no,shop.shop_id,buyer_id,delivery_money,1,datetime.now()))
         db.session.commit()
+#更新订单状态为已发货
+        order= Order.query.filter_by(order_no=order_no).first()
+        if order:
+            order.status=1 #已发货
+            db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
