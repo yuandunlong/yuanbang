@@ -709,6 +709,7 @@ def add_delivery_member(token_type,shop):
         delivery_man.shop_id=shop.shop_id
         delivery_man.buyer_id=data['buyer_id']
         delivery_man.is_validate='1'
+        delivery_man.remark=data.get('remark','')
         db.session.add(delivery_man)
         db.session.commit()
     except Exception,e:
