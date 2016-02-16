@@ -830,13 +830,10 @@ def get_delivery_list_by_page(token_type,shop):
         page_size=data.get('page_size',20)
         buyer_id=data.get('buyer_id',None)
         order_no=data.get('order_no',None)
-        sql='''
-        SELECT
-    d.id,
+        sql='''SELECT d.id,
         d.SubmitTime,
         d.OrderNo,
         IFNULL(
-
             IF (
                 b.NickName = '',
                 NULL,
@@ -871,9 +868,9 @@ def get_delivery_list_by_page(token_type,shop):
             values.append(order_no)
             
         sql+=' ORDER BY d.ReceiveTime DESC limit %s , %s'
-        values.append(page_size)
         values.append((page-1)*page_size)
-        
+        values.append(page_size)
+
         rows=db.engine.execute(sql,tuple(values))
         result['delivery_list']=rows_array_converter(rows)
         
