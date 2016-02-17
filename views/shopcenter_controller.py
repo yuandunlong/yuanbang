@@ -984,6 +984,8 @@ def update_member(token_type, shop):
         member = Member.query.filter_by(shop_id=shop.shop_id, buyer_id=data['buyer_id']).first()
         if member and data.get('remark', None):
             member.remark = data.get('remark', '')
+            if data.get('level',None):
+                member.level=str(data.get('level'))
             db.session.commit()
     except Exception, e:
         current_app.logger.exception(e)
