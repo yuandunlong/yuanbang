@@ -501,7 +501,7 @@ def get_goods_info_by_bar_code(token_type, shop):
         data = request.get_json()
         bar_code = data['bar_code']
         sql = '''
-                SELECT g.*,
+                SELECT g.*,m.GoodsTypeName,
             IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
             IFNULL(o.SaleQuantity,0) AS TotalSale
             FROM
@@ -522,10 +522,11 @@ def get_goods_info_by_bar_code(token_type, shop):
             INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
             AND p.IsVisable = '1'
             AND p.IsChecked = '1'
-        
+
+             LEFT JOIN tb_goodstype_m m ON g.GoodsTypeID = m.GoodsTypeID
             and BarCode = %s 
                 '''
-        row = db.engine.execute(sql, (data['bar_code'])).fetchone()
+        row = db.engine.execute(sql, (bar_code)).fetchone()
         if row:
             result['goods'] = row_map_converter(row)
         else:
