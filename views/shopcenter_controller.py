@@ -1005,6 +1005,36 @@ def get_goods_types_tree(token_type, shop):
 
     return Response(json.dumps(result), content_type='application/json')
 
+@shopcenter_controller.route('/m1/private/shopcenter/get_goods_type_parent', methods=['GET'])
+@check_token
+def get_goods_type_parent(token_type,shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        sql='''select * from tb_goodstype_m where ParentID is NULL ''';
+        rows=db.engine.execute(sql)
+
+        result['shop_goods_type_parent']=rows_array_converter(rows)
+
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_goods_type_child', methods=['POST'])
+@check_token
+def get_goods_type_child(token_type,shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        sql='''select * from tb_goodstype_m where ParentID = %s ''';
+        rows=db.engine.execute(sql,(request.json['parent_id']))
+        result['shop_goods_type_child']=rows_array_converter(rows)
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
 def get_types(parent, parentId):
     if parentId and parentId > 0:
