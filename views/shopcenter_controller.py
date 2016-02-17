@@ -1111,3 +1111,41 @@ def add_activities_info(token_type,shop):
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
 
+@shopcenter_controller.route('/m1/private/shopcenter/update_activities_info', methods=['POST'])
+@check_token
+def update_activities_info(token_type,shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        data=request.json
+        activity=Activity.query.get(data['activity_id'])
+        if activity:
+            activity.content=data.get('content','')
+            activity.title=data.get('title','')
+            activity.sort_no=data.get('sort_no',1)
+            activity.seo_key_word=data.get('seo_key_word','')
+            activity.seo_title=data.get('seo_title','')
+            activity.seo_content=data.get('seo_content','')
+            activity.is_hot=str(data.get('is_hot','0'))
+            activity.is_top=str(data.get('is_top','0'))
+            activity.publish_time=datetime.now()
+            activity.publisher=shop.shop_name
+            db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
+@shopcenter_controller.route('/m1/private/shopcenter/del_activities', methods=['POST'])
+@check_token
+def del_activities(token_type,shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        data=request.json
+        Activity.query.filter_by(id=data['activity_id']).delete()
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
