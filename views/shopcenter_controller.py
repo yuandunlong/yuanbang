@@ -1158,10 +1158,8 @@ def shop_stock(token_type,shop):
     result={'code':1,'msg':'ok'}
     try:
         data=request.json
-
         sql_e=''' select * from  TB_PURCHASEINTENTION_S where ShopID=%s and GoodsID=%s '''
-
-        row=db.engine.execute(sql_e).fetchone()
+        row=db.engine.execute(sql_e,(shop.shop_id,data["goods_id"])).fetchone()
         if row:
             sql_u='''UPDATE TB_PURCHASEINTENTION_S
 					SET Quantity = %s, CreateTime = %s,Price = %s
