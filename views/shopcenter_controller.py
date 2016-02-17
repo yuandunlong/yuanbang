@@ -1036,6 +1036,39 @@ def get_goods_type_child(token_type,shop):
         result['msg'] = e.message
     return Response(json.dumps(result), content_type='application/json')
 
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_shop_activities_list', methods=['GET','POST'])
+@check_token
+def get_shop_activities_list(token_type,shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        sql='''SELECT
+					ID,
+					Title,
+					Count,
+					IsTop,
+					SortNo,
+					IsHot,
+					Publisher,
+					PublishTime,
+					Updater,
+					UpdateTime
+				FROM
+					tb_activities_w
+				WHERE
+					Type = 1
+				AND ShopID = %s AND DelFlag = 0
+				ORDER BY
+					IsTop DESC,
+					SortNo DESC  ''';
+        rows=db.engine.execute(sql,(shop.shop_id))
+        result['shop_goods_type_child']=rows_array_converter(rows)
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
 def get_types(parent, parentId):
     if parentId and parentId > 0:
         sql = '''select * from tb_goodstype_m where ParentID=%s'''
