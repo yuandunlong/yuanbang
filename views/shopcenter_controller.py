@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import json, Response, Blueprint, request, json, current_app
-from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member
+from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member,Activity
 from datetime import datetime
 import os
 from views.utils import check_token, row_map_converter, rows_array_converter
@@ -1062,7 +1062,7 @@ def get_shop_activities_list(token_type,shop):
 					IsTop DESC,
 					SortNo DESC  ''';
         rows=db.engine.execute(sql,(shop.shop_id))
-        result['shop_goods_type_child']=rows_array_converter(rows)
+        result['activities']=rows_array_converter(rows)
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
@@ -1084,3 +1084,30 @@ def get_types(parent, parentId):
 
     else:
         return
+
+@shopcenter_controller.route('/m1/private/shopcenter/add_activities_info', methods=['GET','POST'])
+@check_token
+def add_activities_info(token_type,shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        data=request.json
+        activity=Activity()
+        activity.shop_id=shop.shop_id
+        activity.content=data.get('content','')
+        activity.title=data.get('title','')
+        activity.sort_no=data.get('sort_no',1)
+        activity.seo_key_word=data.get('seo_key_word','')
+        activity.seo_title=data.get('seo_title','')
+        activity.seo_content=data.get('seo_content','')
+        activity.is_hot=str(data.get('is_hot','0'))
+        activity.is_top=str(data.get('is_top','0'))
+        activity.publish_time=datetime.now()
+        activity.publisher=shop.shop_name
+        db.session.add(activity)
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
