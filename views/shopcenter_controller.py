@@ -1015,7 +1015,7 @@ def get_types(parent, parentId):
         rows = db.engine.execute(sql)
     tmp = rows_array_converter(rows)
     if len(tmp) > 0:
-        parent['childs'] = tmp
+        parent['sons'] = tmp
         for item in tmp:
             get_types(item, item['goodstype_id'])
 
