@@ -1151,3 +1151,38 @@ def del_activities(token_type,shop):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
+
+@shopcenter_controller.route('/m1/private/shopcenter/shop_stock', methods=['POST'])
+@check_token
+def shop_stock(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.json
+
+        sql_e=''' select * from  TB_PURCHASEINTENTION_S where ShopID=%s and GoodsID=%s '''
+
+        row=db.engine.execute(sql_e).fetchone()
+        if row:
+            sql_u='''UPDATE TB_PURCHASEINTENTION_S
+					SET Quantity = %s, CreateTime = %s,Price = %s
+					WHERE
+						ShopID = %s
+					AND GoodsID = %s
+					AND IsHandled = 0'''
+            db.engine.execute(sql_u,(data['quantity'],datetime.now(),data['price'],shop.shop_id,data['goods_id']))
+            db.session.commit()
+        else:
+
+            sql ='''INSERT INTO
+    				TB_PURCHASEINTENTION_S
+    				(`ShopID`, `GoodsID`,Price, `Quantity`, `CreateTime`,IsHandled)
+    			VALUES
+    				(%s, %s, %s, %s, %s, '0')'''
+
+            db.engine.execute(sql,(shop.shop_id,data['goods_id'],data['price'],data['quantity'],datetime.now()))
+            db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application')
