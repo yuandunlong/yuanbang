@@ -1,32 +1,37 @@
 # -*- coding: utf-8 -*-
-from flask import json,Response,Blueprint,request,json,current_app
-from database.models import db,GoodsInfo,Photo,DeliveryMan,ShopInfo,Order
+from flask import json, Response, Blueprint, request, json, current_app
+from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member
 from datetime import datetime
-import  os
-from views.utils import check_token,row_map_converter,rows_array_converter
-shopcenter_controller=Blueprint('shopcenter_controller',__name__)
-@shopcenter_controller.route('/m1/private/shopcenter/get_shop_info',methods=['GET'])
+import os
+from views.utils import check_token, row_map_converter, rows_array_converter
+
+shopcenter_controller = Blueprint('shopcenter_controller', __name__)
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_shop_info', methods=['GET'])
 @check_token
-def get_shop_info(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def get_shop_info(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        result['shop_info']=shop.get_map()
-    except Exception,e:
+        result['shop_info'] = shop.get_map()
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type="application/json")
-@shopcenter_controller.route('/m1/private/shopcenter/get_goods_by_page',methods=['POST'])
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type="application/json")
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_goods_by_page', methods=['POST'])
 @check_token
-def get_goods_by_page(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def get_goods_by_page(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        page=int(data.get('page',1))
-        page_size=int(data.get('page_size',20))
-        order_by=data.get('order_by','summarydesc')
-        
-        sql='''
+        data = request.get_json()
+        page = int(data.get('page', 1))
+        page_size = int(data.get('page_size', 20))
+        order_by = data.get('order_by', 'summarydesc')
+
+        sql = '''
             SELECT
             g.GoodsID,
             g.ShopID,
@@ -61,27 +66,27 @@ def get_goods_by_page(token_type,shop):
     WHERE
             g.ShopID =%s 
         '''
-        
-        if order_by=='saleasc':
-            sql+='order by Quantity asc'
-        if order_by=='saledesc':
-            sql+='order by Quantity desc'
-        if order_by=='priceasc':
-            sql+='order by SalePrice asc'
-        if order_by=='pricedesc':
-            sql+='order by SalePrice desc'
-        if order_by=='summarydesc':
-            sql+='order by Saleprice,Quantity desc'
-        if order_by=='summaryasc':
-            sql+='order by Saleprice,Quantity asc'
-        sql+=' limit %s,%s'
-        result_set=db.engine.execute(sql,(shop.shop_id,page-1,page_size))
-        arr=[]
+
+        if order_by == 'saleasc':
+            sql += 'order by Quantity asc'
+        if order_by == 'saledesc':
+            sql += 'order by Quantity desc'
+        if order_by == 'priceasc':
+            sql += 'order by SalePrice asc'
+        if order_by == 'pricedesc':
+            sql += 'order by SalePrice desc'
+        if order_by == 'summarydesc':
+            sql += 'order by Saleprice,Quantity desc'
+        if order_by == 'summaryasc':
+            sql += 'order by Saleprice,Quantity asc'
+        sql += ' limit %s,%s'
+        result_set = db.engine.execute(sql, (shop.shop_id, page - 1, page_size))
+        arr = []
         for row in result_set:
-            temp=row_map_converter(row)
+            temp = row_map_converter(row)
             arr.append(temp)
-            result['goods']=arr
-        count_sql='''
+            result['goods'] = arr
+        count_sql = '''
         select count(*) as TotalCount from tb_goodsinfo_s g
     LEFT JOIN tb_goodstype_m m ON g.GoodsTypeID = m.GoodsTypeID
     INNER JOIN tb_photo p ON g.GoodsID = p.LinkID
@@ -99,27 +104,28 @@ def get_goods_by_page(token_type,shop):
     WHERE
             g.ShopID =%s ORDER BY g.SortNo DESC 
         '''
-        row=db.engine.execute(count_sql,(shop.shop_id)).fetchone()
-        total_count=0
+        row = db.engine.execute(count_sql, (shop.shop_id)).fetchone()
+        total_count = 0
         if row:
-            result['total_count']=int(row['TotalCount'])
-        result['page']=page
-        result['page_size']=page_size
-    except Exception,e:
+            result['total_count'] = int(row['TotalCount'])
+        result['page'] = page
+        result['page_size'] = page_size
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-@shopcenter_controller.route('/m1/private/shopcenter/get_orders_by_page',methods=['POST'])
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_orders_by_page', methods=['POST'])
 @check_token
-def get_orders_by_page(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def get_orders_by_page(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        page=int(data.get('page',1))
-        page_size=int(data.get('page_size',20))        
-        sql='''
+        data = request.get_json()
+        page = int(data.get('page', 1))
+        page_size = int(data.get('page_size', 20))
+        sql = '''
         SELECT
                 TOS.OrderNo,
                 TOS.ShopID,
@@ -148,9 +154,9 @@ def get_orders_by_page(token_type,shop):
         WHERE
                 TOS.ShopID = %s  ORDER BY SubmitTime desc limit %s,%s
         '''
-        result_set=db.engine.execute(sql,(shop.shop_id,(page-1)*page_size,page_size))
-        arr=[]
-        sql_detail='''
+        result_set = db.engine.execute(sql, (shop.shop_id, (page - 1) * page_size, page_size))
+        arr = []
+        sql_detail = '''
         
                 select a.* ,b.GoodsName,
                 c.PhotoID ,c.PhotoName,c.PhotoPath,c.ThumbnailPath,c.SortNo
@@ -158,17 +164,17 @@ def get_orders_by_page(token_type,shop):
                 left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
                 left join tb_photo c on c.LinkID=a.GoodsID and c.IsChecked=1 and c.IsVisable=1
                 where OrderNo=%s
-                '''        
+                '''
         for row in result_set:
-            temp=row_map_converter(row)
-            order_detail_result_set=db.engine.execute(sql_detail,(temp['order_no']))
-            order_detail_arr=[]
+            temp = row_map_converter(row)
+            order_detail_result_set = db.engine.execute(sql_detail, (temp['order_no']))
+            order_detail_arr = []
             for item in order_detail_result_set:
                 order_detail_arr.append(row_map_converter(item))
-                temp['goods']=order_detail_arr            
+                temp['goods'] = order_detail_arr
             arr.append(temp)
-        result['orders']=arr
-        count_Sql='''
+        result['orders'] = arr
+        count_Sql = '''
         
         select count(*) as TotalCount  FROM
                 tb_order_s TOS
@@ -179,54 +185,58 @@ def get_orders_by_page(token_type,shop):
         WHERE
                 TOS.ShopID = %s  ORDER BY SubmitTime desc 
         '''
-        row=db.engine.execute(count_Sql,(shop.shop_id)).fetchone()
+        row = db.engine.execute(count_Sql, (shop.shop_id)).fetchone()
         if row:
-            result['total_count']=row['TotalCount']
-        result['page']=page
-        result['page_size']=page_size
-    except Exception,e:
+            result['total_count'] = row['TotalCount']
+        result['page'] = page
+        result['page_size'] = page_size
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-@shopcenter_controller.route('/m1/private/shopcenter/up_goods_by_id',methods=['POST'])    
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/up_goods_by_id', methods=['POST'])
 @check_token
-def up_goods_by_id(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def up_goods_by_id(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        sql='update tb_goodsinfo_s set Status=1 where GoodsID = %s'
-        db.engine.execute(sql,(data['goods_id']))
+        data = request.get_json()
+        sql = 'update tb_goodsinfo_s set Status=1 where GoodsID = %s'
+        db.engine.execute(sql, (data['goods_id']))
         db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-@shopcenter_controller.route('/m1/private/shopcenter/down_goods_by_id',methods=['POST'])    
+        result['code'] = 0
+        result['msg'] = e.message
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/down_goods_by_id', methods=['POST'])
 @check_token
-def down_goods_by_id(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def down_goods_by_id(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        sql='update tb_goodsinfo_s set Status=0 where GoodsID = %s'
-        db.engine.execute(sql,(data['goods_id']))
-        db.session.commit()        
-    except Exception,e:
+        data = request.get_json()
+        sql = 'update tb_goodsinfo_s set Status=0 where GoodsID = %s'
+        db.engine.execute(sql, (data['goods_id']))
+        db.session.commit()
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=1
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-@shopcenter_controller.route('/m1/private/shopcenter/get_msgs_by_page',methods=['POST'])    
+        result['code'] = 1
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_msgs_by_page', methods=['POST'])
 @check_token
-def get_msgs_by_page(token_type,shop):
-    data=request.get_json()
-    page=int(data.get('page',1))
-    page_size=int(data.get('page_size',20))      
-    result={'code':1,'msg':'ok'}
+def get_msgs_by_page(token_type, shop):
+    data = request.get_json()
+    page = int(data.get('page', 1))
+    page_size = int(data.get('page_size', 20))
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        sql=''' select
+        sql = ''' select
                 m.MessageID,
                 m.SenderType,
                 m.Sender,
@@ -241,51 +251,53 @@ def get_msgs_by_page(token_type,shop):
                 left join tb_constent_m c on m.IsRead =c.ItemID and c.typeID=015
                 where m.ReceiverType=1 and m.Receiver=%s order by m.SendTime desc limit %s,%s
         '''
-        result_set=db.engine.execute(sql,(shop.shop_id,page-1,page_size))
-        arr=[]
+        result_set = db.engine.execute(sql, (shop.shop_id, page - 1, page_size))
+        arr = []
         for row in result_set:
-            temp=row_map_converter(row)
+            temp = row_map_converter(row)
             arr.append(temp)
-        result['msgs']=arr
-        count_sql='''
+        result['msgs'] = arr
+        count_sql = '''
         select count(*) as total_count from tb_message_w m
  left join tb_constent_m c on m.IsRead =c.ItemID and c.typeID=015
  where m.ReceiverType=1 and m.Receiver=%s order by m.SendTime desc
         '''
-        row=db.engine.execute(count_sql,(shop.shop_id)).fetchone()
+        row = db.engine.execute(count_sql, (shop.shop_id)).fetchone()
         if row:
-            result['total_count']=row['total_count']
-        result['page']=page
-        result['page_size']=page_size
-    except Exception,e:
+            result['total_count'] = row['total_count']
+        result['page'] = page
+        result['page_size'] = page_size
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
-@shopcenter_controller.route('/m1/private/shopcenter/update_msg_2_is_read',methods=['POST'])    
+
+@shopcenter_controller.route('/m1/private/shopcenter/update_msg_2_is_read', methods=['POST'])
 @check_token
-def update_msg_2_is_read(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def update_msg_2_is_read(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        sql='''
+        data = request.get_json()
+        sql = '''
         UPDATE tb_message_w SET IsRead =1 WHERE MessageID =%s
         '''
-        db.engine.execute(sql,(data['msg_id']))
+        db.engine.execute(sql, (data['msg_id']))
         db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-@shopcenter_controller.route('/m1/private/shopcenter/get_goods_type_root',methods=['POST','GET'])    
-@check_token        
-def get_goods_type_root(token_type,shop):
-    result={'code':1,'msg':'ok'}
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_goods_type_root', methods=['POST', 'GET'])
+@check_token
+def get_goods_type_root(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''
+        sql = '''
         SELECT
             tgs.ShopID,
             tgs.GoodsTypeID,
@@ -300,33 +312,33 @@ def get_goods_type_root(token_type,shop):
             AND tgs.GoodsTypeID = tgm.GoodsTypeID
             AND tgs.ParentID IS NULL
             ORDER BY tgs.SortNo desc
-        '''   
-        result_set=db.engine.execute(sql,(shop.shop_id))
-        arr=[]
+        '''
+        result_set = db.engine.execute(sql, (shop.shop_id))
+        arr = []
         for row in result_set:
-            temp={}
-            temp['shop_id']=int(row['ShopID'])
-            temp['goods_type_id']=int(row['GoodsTypeID'])
-            temp['goods_type_name']=row['GoodsTypeName']
-            temp['parent_id']=row['ParentID']
-            temp['sort_no']=row['SortNo']
+            temp = {}
+            temp['shop_id'] = int(row['ShopID'])
+            temp['goods_type_id'] = int(row['GoodsTypeID'])
+            temp['goods_type_name'] = row['GoodsTypeName']
+            temp['parent_id'] = row['ParentID']
+            temp['sort_no'] = row['SortNo']
             arr.append(temp)
-        result['shop_goods_type_root']=arr        
-    except Exception,e:
+        result['shop_goods_type_root'] = arr
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
 
-@shopcenter_controller.route('/m1/private/shopcenter/get_shop_goods_type_child',methods=['POST'])    
-@check_token  
-def get_shop_goods_type_child(token_type,shop):
-    result={'code':1,'msg':'ok'}
+@shopcenter_controller.route('/m1/private/shopcenter/get_shop_goods_type_child', methods=['POST'])
+@check_token
+def get_shop_goods_type_child(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        parent_id=data['parent_id']
-        sql='''SELECT
+        data = request.get_json()
+        parent_id = data['parent_id']
+        sql = '''SELECT
     tgs.ShopID,
     tgs.GoodsTypeID,
     tgm.GoodsTypeName,
@@ -340,103 +352,101 @@ def get_shop_goods_type_child(token_type,shop):
         AND tgs.ParentID = %s
     ORDER BY tgs.SortNo desc'''
 
-        result_set=db.engine.execute(sql,(shop.shop_id,parent_id))
-        arr=[]
+        result_set = db.engine.execute(sql, (shop.shop_id, parent_id))
+        arr = []
         for row in result_set:
-            temp={}
-            temp['shop_id']=int(row['ShopID'])
-            temp['goods_type_id']=int(row['GoodsTypeID'])
-            temp['goods_type_name']=row['GoodsTypeName']
-            temp['parent_id']=row['ParentID']
-            temp['sort_no']=row['SortNo']
-            arr.append(temp)  
-        result['shop_goods_type_child']=arr        
+            temp = {}
+            temp['shop_id'] = int(row['ShopID'])
+            temp['goods_type_id'] = int(row['GoodsTypeID'])
+            temp['goods_type_name'] = row['GoodsTypeName']
+            temp['parent_id'] = row['ParentID']
+            temp['sort_no'] = row['SortNo']
+            arr.append(temp)
+        result['shop_goods_type_child'] = arr
 
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-    
-    
-@shopcenter_controller.route("/m1/private/shopcenter/upload_goods_photo",methods=['POST'])
-def upload_goods_photo(token_type,shop):
-    result={'code':1,'msg':'ok'}
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route("/m1/private/shopcenter/upload_goods_photo", methods=['POST'])
+def upload_goods_photo(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
         if request.method == 'POST':
             file = request.files['file']
             extension = os.path.splitext(file.filename)[1]
             f_name = str(uuid.uuid4()) + extension
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], f_name))
-            
-        
-    except Exception,e:
+
+
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-    
-        
-@shopcenter_controller.route("/m1/private/shopcenter/add_goods_info",methods=['POST'])
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route("/m1/private/shopcenter/add_goods_info", methods=['POST'])
 @check_token
-def add_goods_info(token_type,shop):
-    result={'code':1,'msg':'ok'}
-    
+def add_goods_info(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+
     try:
-        data=request.get_json()
-        bar_code=data['bar_code']
-        goods_type_id=data['goods_type_id']
-        goods_type_ids=data['goods_type_ids']
-        goods_name=data['goods_name']
-        sale_price=data['sale_price']
-        photos=data['photos']
-        goods_info=GoodsInfo()
-        goods_info.bar_code=bar_code
-        goods_info.goods_type_id=goods_type_id
-        goods_info.goods_type_ids=goods_type_ids
-        goods_info.goods_name=goods_name
-        goods_info.sale_price=sale_price
-        
-        goods_info.goods_brand=data.get('goods_brand')
-        goods_info.goods_locality=data.get('goods_locality')
-        goods_info.goods_spec=data.get('goods_spec')
-        goods_info.remark=data.get('remark')
-        goods_info.set_num=data.get('set_num')
-        goods_info.set_price=data.get('set_price')
-        goods_info.can_edit='1'
-        goods_info.discount=data.get('discount',1)
-        goods_info.shop_id=shop.shop_id
-        goods_info.warning_num=0
-        goods_info.sort_no=0
-        goods_info.status=0
-        goods_info.create_time=datetime.now()
+        data = request.get_json()
+        bar_code = data['bar_code']
+        goods_type_id = data['goods_type_id']
+        goods_type_ids = data['goods_type_ids']
+        goods_name = data['goods_name']
+        sale_price = data['sale_price']
+        photos = data['photos']
+        goods_info = GoodsInfo()
+        goods_info.bar_code = bar_code
+        goods_info.goods_type_id = goods_type_id
+        goods_info.goods_type_ids = goods_type_ids
+        goods_info.goods_name = goods_name
+        goods_info.sale_price = sale_price
+
+        goods_info.goods_brand = data.get('goods_brand')
+        goods_info.goods_locality = data.get('goods_locality')
+        goods_info.goods_spec = data.get('goods_spec')
+        goods_info.remark = data.get('remark')
+        goods_info.set_num = data.get('set_num')
+        goods_info.set_price = data.get('set_price')
+        goods_info.can_edit = '1'
+        goods_info.discount = data.get('discount', 1)
+        goods_info.shop_id = shop.shop_id
+        goods_info.warning_num = 0
+        goods_info.sort_no = 0
+        goods_info.status = 0
+        goods_info.create_time = datetime.now()
         db.session.add(goods_info)
         db.session.commit()
-        
-        #新增销售价格履历
-        insert_saleprice_sql='''Insert Into TB_SALEPRICE_S (
+
+        # 新增销售价格履历
+        insert_saleprice_sql = '''Insert Into TB_SALEPRICE_S (
         GoodsID,SalePrice,StartTime)
         values (%s,%s,%s) '''
-        db.engine.execute(insert_saleprice_sql,(goods_info.goods_id,goods_info.sale_price,datetime.now()))
+        db.engine.execute(insert_saleprice_sql, (goods_info.goods_id, goods_info.sale_price, datetime.now()))
         db.session.commit()
         # 添加图片
         for p_item in photos:
-            
-            photo=Photo()
-            photo.link_id=goods_info.goods_id
-            photo.is_checked='1'
-            photo.is_visable='1'
-            photo.photo_path=p_item['photo_path']
-            photo.thumbnail_path=p_item['thumbnail_path']
+            photo = Photo()
+            photo.link_id = goods_info.goods_id
+            photo.is_checked = '1'
+            photo.is_visable = '1'
+            photo.photo_path = p_item['photo_path']
+            photo.thumbnail_path = p_item['thumbnail_path']
             db.session.add(photo)
             db.session.commit()
-        #添加商铺类别，只存前两级类别表
-        goods_type_id_arr=goods_info.goods_type_ids.split(',')
+        # 添加商铺类别，只存前两级类别表
+        goods_type_id_arr = goods_info.goods_type_ids.split(',')
         goods_type_id_arr.reverse()
-        level=0
+        level = 0
         for type_id in goods_type_ids:
-            temp_sql='''
+            temp_sql = '''
             INSERT INTO tb_goodstype_s (
     ShopID,
     GoodsTypeID,
@@ -450,45 +460,47 @@ def add_goods_info(token_type,shop):
     WHERE
     GoodsTypeID =%s AND NOT EXISTS (select * from tb_goodstype_s where ShopID = %s AND GoodsTypeID = %s)
             '''
-            if level<2:
-                
-                db.engine.execute(temp_sql,(goods_info.shop_id,type_id,goods_info.shop_id,type_id))
+            if level < 2:
+                db.engine.execute(temp_sql, (goods_info.shop_id, type_id, goods_info.shop_id, type_id))
                 db.session.commit()
-            level+=1
-    except Exception,e:
+            level += 1
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-#@shopcenter_controller.route('')       
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+# @shopcenter_controller.route('')
 def update_goods_by_id():
     pass
-@shopcenter_controller.route('/m1/private/shopcenter/delete_goods_by_id',methods=['POST'])
-@check_token
-def delete_goods_by_id(token_type,shop):
-    
-    result={'code':1,'msg':'ok'}
-    try:
-        data=request.get_json()
-        goods_id=data['goods_id']
-        sql='delete from tb_goodsinfo_s where GoodsID=%s and ShopID=%s'
-        db.engine.execute(sql,(goods_id,shop.shop_id))
-        db.session.commit()
-    except Exception,e:
-        current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
 
-@shopcenter_controller.route('/m1/private/shopcenter/get_goods_info_by_bar_code',methods=['POST'])
+
+@shopcenter_controller.route('/m1/private/shopcenter/delete_goods_by_id', methods=['POST'])
 @check_token
-def get_goods_info_by_bar_code(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def delete_goods_by_id(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        bar_code=data['bar_code']
-        sql='''
+        data = request.get_json()
+        goods_id = data['goods_id']
+        sql = 'delete from tb_goodsinfo_s where GoodsID=%s and ShopID=%s'
+        db.engine.execute(sql, (goods_id, shop.shop_id))
+        db.session.commit()
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_goods_info_by_bar_code', methods=['POST'])
+@check_token
+def get_goods_info_by_bar_code(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        data = request.get_json()
+        bar_code = data['bar_code']
+        sql = '''
                 SELECT g.*,
             IFNULL(p.ThumbnailPath,'./Content/images/web/nowprinting2.jpg') AS ThumbnailPath,
             IFNULL(o.SaleQuantity,0) AS TotalSale
@@ -513,29 +525,28 @@ def get_goods_info_by_bar_code(token_type,shop):
         
             and BarCode = %s 
                 '''
-        row=db.engine.execute(sql,(data['bar_code'])).fetchone()  
+        row = db.engine.execute(sql, (data['bar_code'])).fetchone()
         if row:
-            result['goods']=row_map_converter(row)
+            result['goods'] = row_map_converter(row)
         else:
-            result['goods']=None
-    except Exception,e:
+            result['goods'] = None
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-    
-@shopcenter_controller.route('/m1/private/shopcenter/get_delivery_member',methods=['POST'])
-@check_token    
-def get_delivery_member(token_type,shop):
-    
-    result={'code':1,'msg':'ok'}
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_delivery_member', methods=['POST'])
+@check_token
+def get_delivery_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        is_validate=data['is_validate']
-        if is_validate==-1:
-        
-            sql='''
+        data = request.get_json()
+        is_validate = data['is_validate']
+        if is_validate == -1:
+
+            sql = '''
         
     SELECT
         m.id,
@@ -551,7 +562,8 @@ def get_delivery_member(token_type,shop):
         b.Phone,
         IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
         m.Remark,
-        d.DeliveryStatus
+        d.DeliveryStatus,
+        b.Avatar
         FROM
             tb_deliveryman m
         INNER JOIN tb_buyer b ON m.BuyerID = b.BuyerID
@@ -562,11 +574,11 @@ def get_delivery_member(token_type,shop):
         GROUP BY
             m.BuyerID
         '''
-            
-            rows=db.engine.execute(sql,(shop.shop_id))
-            
+
+            rows = db.engine.execute(sql, (shop.shop_id))
+
         else:
-            sql='''
+            sql = '''
             
                 SELECT
                     m.id,
@@ -581,7 +593,8 @@ def get_delivery_member(token_type,shop):
                         ) AS BuyerName,
                     b.Phone,
                     IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
-                    m.Remark
+                    m.Remark,
+                    b.Avatar
                     FROM
                         tb_deliveryman m
                     INNER JOIN tb_buyer b ON m.BuyerID = b.BuyerID
@@ -593,29 +606,32 @@ def get_delivery_member(token_type,shop):
                     GROUP BY
                         m.BuyerID
                     '''
-            
-            rows=db.engine.execute(sql,(shop.shop_id,is_validate))            
-                
-        result['delivery_members']=rows_array_converter(rows)
-    except Exception,e:
+
+            rows = db.engine.execute(sql, (shop.shop_id, is_validate))
+
+        result['delivery_members'] = rows_array_converter(rows)
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-        
-    return Response(json.dumps(result),content_type='application/json')
-@shopcenter_controller.route('/m1/private/shopcenter/get_all_shop_member',methods=['GET'])
-@check_token 
-def get_all_shop_member(token_type,shop):
-    
-    result={'code':1,'msg':'ok'}
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_all_shop_member', methods=['GET'])
+@check_token
+def get_all_shop_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''SELECT
+        sql = '''SELECT
     IFNULL(IF(b.NickName = '',NULL,b.NickName),b.Account) AS BuyerName,
     a.CreateTime,
     a.`Level`,
     a.Remark,
     a.ShopID,
     a.BuyerID,
+    b.Phone,
+    b.Avatar,
     IFNULL(c.SaleMoney,0) as SaleMoney
     FROM
         tb_member a
@@ -626,23 +642,21 @@ def get_all_shop_member(token_type,shop):
         GROUP BY ShopID,BuyerID) c
     ON c.ShopID = a.ShopID and c.BuyerID = a.BuyerID
     WHERE a.ShopID = %s'''
-        rows=db.engine.execute(sql,(shop.shop_id))
-        result['members']=rows_array_converter(rows)
-    except Exception,e:
+        rows = db.engine.execute(sql, (shop.shop_id))
+        result['members'] = rows_array_converter(rows)
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-        
-    
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
 
-@shopcenter_controller.route('/m1/private/shopcenter/get_shop_member_and_is_not_delivery_man',methods=['GET'])
-@check_token 
-def get_shop_member_and_is_not_delivery_man(token_type,shop):
-    result={'code':1,'msg':'ok'}
+@shopcenter_controller.route('/m1/private/shopcenter/get_shop_member_and_is_not_delivery_man', methods=['GET'])
+@check_token
+def get_shop_member_and_is_not_delivery_man(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''
+        sql = '''
         SELECT
     IFNULL(
 
@@ -658,6 +672,8 @@ def get_shop_member_and_is_not_delivery_man(token_type,shop):
     a.Remark,
     a.ShopID,
     a.BuyerID,
+    b.Phone,
+    b.Avatar,
     IFNULL(c.SaleMoney, 0) AS SaleMoney
     FROM
         tb_member a
@@ -689,151 +705,150 @@ def get_shop_member_and_is_not_delivery_man(token_type,shop):
         AND BuyerID = a.BuyerID
     )
         '''
-        rows=db.engine.execute(sql,(shop.shop_id,shop.shop_id))
-        result['members']=rows_array_converter(rows)
-    except Exception,e:
+        rows = db.engine.execute(sql, (shop.shop_id, shop.shop_id))
+        result['members'] = rows_array_converter(rows)
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-        
-    return Response(json.dumps(result),content_type='application/json')
-        
-    
-@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_member',methods=['POST'])
-@check_token     
-def add_delivery_member(token_type,shop):
-    result={'code':1,'msg':'ok'}
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_member', methods=['POST'])
+@check_token
+def add_delivery_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        delivery_man=DeliveryMan()
-        delivery_man.shop_id=shop.shop_id
-        delivery_man.buyer_id=data['buyer_id']
-        delivery_man.is_validate='1'
-        delivery_man.remark=data.get('remark','')
+        data = request.get_json()
+        delivery_man = DeliveryMan()
+        delivery_man.shop_id = shop.shop_id
+        delivery_man.buyer_id = data['buyer_id']
+        delivery_man.is_validate = '1'
+        delivery_man.remark = data.get('remark', '')
         db.session.add(delivery_man)
         db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
-@shopcenter_controller.route('/m1/private/shopcenter/validate_delivery_member',methods=['POST'])
-@check_token     
-def validate_delivery_member(token_type,shop):
-    result={'code':1,'msg':'ok'}
+
+@shopcenter_controller.route('/m1/private/shopcenter/validate_delivery_member', methods=['POST'])
+@check_token
+def validate_delivery_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        remark=data.get('remark','')
+        data = request.get_json()
+        remark = data.get('remark', '')
 
-        dm=DeliveryMan.query.filter_by(shop_id=shop.shop_id,buyer_id=data['buyer_id']).first()
+        dm = DeliveryMan.query.filter_by(shop_id=shop.shop_id, buyer_id=data['buyer_id']).first()
         if dm:
-            dm.is_validate='1'
-            db.remark=remark
+            dm.is_validate = '1'
+            db.remark = remark
             db.session.commit()
-        
-    except Exception,e:
-        current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')        
-        
-        
 
-@shopcenter_controller.route('/m1/private/shopcenter/del_delivery_member',methods=['POST'])
-@check_token     
-def del_delivery_member(token_type,shop):
-    result={'code':1,'msg':'ok'}
-    try:
-        data=request.get_json()
-        sql='''delete from tb_deliveryman where ShopID=%s and BuyerID=%s'''
-        db.engine.execute(sql,(shop.shop_id,data['buyer_id']))
-        db.session.commit()
-        
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')        
-        
-@shopcenter_controller.route('/m1/private/shopcenter/del_shop_member',methods=['POST'])
-@check_token      
-def del_shop_member(token_type,shop):
-    result={'code':1,'msg':'ok'}
-    try:
-        data=request.get_json()
-        sql='''delete from tb_member where ShopID=%s and BuyerID=%s'''
-        db.engine.execute(sql,(shop.shop_id,data['buyer_id']))
-        db.session.commit()
-    except Exception,e:
-        current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
-    
-    
-#店铺指定
-@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_ps',methods=['POST'])
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/del_delivery_member', methods=['POST'])
 @check_token
-def add_delivery_list_info_by_ps(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def del_delivery_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        order_no=data['order_no']
-        delivery_money=data['delivery_money']
-        buyer_id=data['buyer_id']
-        sql='''insert into tb_deliverylist (OrderNo,ShopID,BuyerID,DeliveryMoney,DeliveryStatus,ReceiveTime)
+        data = request.get_json()
+        sql = '''delete from tb_deliveryman where ShopID=%s and BuyerID=%s'''
+        db.engine.execute(sql, (shop.shop_id, data['buyer_id']))
+        db.session.commit()
+
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/del_shop_member', methods=['POST'])
+@check_token
+def del_shop_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        data = request.get_json()
+        sql = '''delete from tb_member where ShopID=%s and BuyerID=%s'''
+        db.engine.execute(sql, (shop.shop_id, data['buyer_id']))
+        db.session.commit()
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
+
+# 店铺指定
+@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_ps', methods=['POST'])
+@check_token
+def add_delivery_list_info_by_ps(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        data = request.get_json()
+        order_no = data['order_no']
+        delivery_money = data['delivery_money']
+        buyer_id = data['buyer_id']
+        sql = '''insert into tb_deliverylist (OrderNo,ShopID,BuyerID,DeliveryMoney,DeliveryStatus,ReceiveTime)
     values (%s,%s,%s,%s,%s,%s)'''
-        db.engine.execute(sql,(order_no,shop.shop_id,buyer_id,delivery_money,1,datetime.now()))
+        db.engine.execute(sql, (order_no, shop.shop_id, buyer_id, delivery_money, 1, datetime.now()))
         db.session.commit()
-#更新订单状态为已发货
-        order= Order.query.filter_by(order_no=order_no).first()
+        # 更新订单状态为已发货
+        order = Order.query.filter_by(order_no=order_no).first()
         if order:
-            order.status=1 #已发货
+            order.status = 1  # 已发货
             db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
 
-    
-#抢单配送
-@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_qd',methods=['POST'])
+# 抢单配送
+@shopcenter_controller.route('/m1/private/shopcenter/add_delivery_list_info_by_qd', methods=['POST'])
 @check_token
-def add_delivery_list_info_by_qd(token_type,shop):
-    
-    result={'code':1,'msg':'ok'}
-    data=request.get_json()
+def add_delivery_list_info_by_qd(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+    data = request.get_json()
     try:
-        order_no=data['order_no']
-        delivery_money=data['delivery_money']        
-        sql='''insert into tb_deliverylist (OrderNo,ShopID,DeliveryMoney,DeliveryStatus)
+        order_no = data['order_no']
+        delivery_money = data['delivery_money']
+        sql = '''insert into tb_deliverylist (OrderNo,ShopID,DeliveryMoney,DeliveryStatus)
     values (%s,%s,%s,%s)'''
-        db.engine.execute(sql,(order_no,shop.shop_id,delivery_money,0))
-        
-    except Exception,e:
+        db.engine.execute(sql, (order_no, shop.shop_id, delivery_money, 0))
+
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-        
-    return Response(json.dumps(result),content_type='application/json')
-        
-    
-@shopcenter_controller.route('/m1/private/shopcenter/get_delivery_list_by_page',methods=['POST'])   
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_delivery_list_by_page', methods=['POST'])
 @check_token
-def get_delivery_list_by_page(token_type,shop):
-    result={'code':1,'msg':'ok'}
-    
-    data=request.get_json()
-    
+def get_delivery_list_by_page(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+
+    data = request.get_json()
+
     try:
-        page=data.get('page',1)
-        page_size=data.get('page_size',20)
-        buyer_id=data.get('buyer_id',None)
-        order_no=data.get('order_no',None)
-        sql='''SELECT d.id,
+        page = data.get('page', 1)
+        page_size = data.get('page_size', 20)
+        buyer_id = data.get('buyer_id', None)
+        order_no = data.get('order_no', None)
+        sql = '''SELECT d.id,
         d.SubmitTime,
         d.OrderNo,
         IFNULL(
@@ -845,6 +860,7 @@ def get_delivery_list_by_page(token_type,shop):
             b.Account
             ) AS BuyerName,
         b.Phone,
+        b.Avatar,
     (o.SaleMoney + o.Freight) AS orderMoney,
         o.Freight,
     o.PayStatus,
@@ -860,99 +876,148 @@ def get_delivery_list_by_page(token_type,shop):
         AND c.TypeID = '021'
         WHERE
             d.ShopID = %s'''
-        values=[]
+        values = []
         values.append(shop.shop_id)
-        
+
         if buyer_id:
-            sql+=' and d.BuyerID=%s'
+            sql += ' and d.BuyerID=%s'
             values.append(buyer_id)
         if order_no:
-            sql+=' and d.OrderNo=%s'
+            sql += ' and d.OrderNo=%s'
             values.append(order_no)
-            
-        sql+=' ORDER BY d.ReceiveTime DESC limit %s , %s'
-        values.append((page-1)*page_size)
+
+        sql += ' ORDER BY d.ReceiveTime DESC limit %s , %s'
+        values.append((page - 1) * page_size)
         values.append(page_size)
 
-        rows=db.engine.execute(sql,tuple(values))
-        result['delivery_list']=rows_array_converter(rows)
-        
-    except Exception,e:
+        rows = db.engine.execute(sql, tuple(values))
+        result['delivery_list'] = rows_array_converter(rows)
+
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    
-    return Response(json.dumps(result),content_type='application/json')
-#--------------------------12.28新增------------------------
+        result['code'] = 0
+        result['msg'] = e.message
 
-@shopcenter_controller.route('/m1/private/shopcenter/update_shop_info',methods=['POST'])
+    return Response(json.dumps(result), content_type='application/json')
+
+
+# --------------------------12.28新增------------------------
+
+@shopcenter_controller.route('/m1/private/shopcenter/update_shop_info', methods=['POST'])
 @check_token
-def update_shop_info(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def update_shop_info(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
 
-    data=request.get_json()
+    data = request.get_json()
     current_app.logger.info(data)
     try:
-        shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
+        shop_info = ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
         if shop_info:
-            if data.get('shop_phone',None):
-                shop_info.shop_phone=data['shop_phone']
-            if data.get('link_man',None):
-                shop_info.link_man=data['link_man']
-            if data.get('with_draw_account',None):
-                shop_info.with_draw_account=data['with_draw_account']
-            if data.get('weixin',None):
-                shop_info.weixin=data['weixin']
-            if data.get('operating_status',None):
-                shop_info.operating_status=str(data['operating_status'])
+            if data.get('shop_phone', None):
+                shop_info.shop_phone = data['shop_phone']
+            if data.get('link_man', None):
+                shop_info.link_man = data['link_man']
+            if data.get('with_draw_account', None):
+                shop_info.with_draw_account = data['with_draw_account']
+            if data.get('weixin', None):
+                shop_info.weixin = data['weixin']
+            if data.get('operating_status', None):
+                shop_info.operating_status = str(data['operating_status'])
             db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
+        result['code'] = 0
+        result['msg'] = e.message
 
-    return Response(json.dumps(result),content_type='application/json')
+    return Response(json.dumps(result), content_type='application/json')
 
-@shopcenter_controller.route('/m1/private/shopcenter/save_shop_address',methods=['POST'])
+
+@shopcenter_controller.route('/m1/private/shopcenter/save_shop_address', methods=['POST'])
 @check_token
-def save_shop_address(token_type,shop):
-    result={'code':1,'msg':'ok'}
-    data=request.get_json()
+def save_shop_address(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+    data = request.get_json()
 
     try:
-        shop_info=ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
+        shop_info = ShopInfo.query.filter_by(shop_id=shop.shop_id).first()
         if shop_info:
-            shop_info.shop_address=data['shop_address']
-            shop_info.xzb=data['xzb']
-            shop_info.yzb=data['yzb']
-            shop_info.mktxzb=data['mktxzb']
-            shop_info.mktyzb=data['mktyzb']
+            shop_info.shop_address = data['shop_address']
+            shop_info.xzb = data['xzb']
+            shop_info.yzb = data['yzb']
+            shop_info.mktxzb = data['mktxzb']
+            shop_info.mktyzb = data['mktyzb']
             db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
+        result['code'] = 0
+        result['msg'] = e.message
 
-    return Response(json.dumps(result),content_type='application/json')
+    return Response(json.dumps(result), content_type='application/json')
 
-@shopcenter_controller.route('/m1/private/shopcenter/get_supply_shop_list',methods=['GET'])
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_supply_shop_list', methods=['GET'])
 @check_token
-def get_supply_shop_list(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def get_supply_shop_list(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''SELECT S.ShopID,S.ShopPhoto,S.Account,S.ShopName,S.ShopType,S.Email,
+        sql = '''SELECT S.ShopID,S.ShopPhoto,S.Account,S.ShopName,S.ShopType,S.Email,
 						S.ShopPhone,S.LinkMan,S.Mobile,S.ShopAddress,S.RegistDate
 				   FROM TB_SHOPINFO_S S
 				   where S.`status`=0 and IsSupplyShop = 1
 				order by IsTop desc,SortNo desc,Status'''
-        rows=db.engine.execute(sql)
-        result['shop_list']=rows_array_converter(rows)
-    except Exception,e:
+        rows = db.engine.execute(sql)
+        result['shop_list'] = rows_array_converter(rows)
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
+        result['code'] = 0
+        result['msg'] = e.message
 
-    return Response(json.dumps(result),content_type='application/json')
+    return Response(json.dumps(result), content_type='application/json')
 
 
+@shopcenter_controller.route('/m1/private/shopcenter/update_member', methods=['POST'])
+@check_token
+def update_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        data = request.json
+        member = Member.query.filter_by(shop_id=shop.shop_id, buyer_id=data['buyer_id']).first()
+        if member and data.get('remark', None):
+            member.remark = data.get('remark', '')
+            db.session.commit()
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
 
+
+@shopcenter_controller.route('/m1/private/shopcenter/get_goods_types_tree', methods=['GET'])
+@check_token
+def get_goods_types_tree(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
+    try:
+        get_types(result,0)
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')
+
+
+def get_types(parent, parentId):
+    if parentId and parentId > 0:
+        sql = '''select * from tb_goodstype_m where ParentID=%s'''
+        rows = db.engine.execute(sql, (parentId))
+    else:
+        sql = ''' select * from tb_goodstype_m where ParentID is NULL '''
+        rows = db.engine.execute(sql)
+    tmp = rows_array_converter(rows)
+    if len(tmp) > 0:
+        parent['childs'] = tmp
+        for item in tmp:
+            get_types(item, item['goodstype_id'])
+
+    else:
+        return
