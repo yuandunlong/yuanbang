@@ -736,6 +736,22 @@ def add_delivery_member(token_type, shop):
     return Response(json.dumps(result), content_type='application/json')
 
 
+@shopcenter_controller.route('/m1/private/shopcenter/update_delivery_member', methods=['POST'])
+@check_token
+def update_delivery_member(token_type,shop):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.get_json()
+        d=DeliveryMan.query.filter_by(shop_id=shop.shop_id,buyer_id=data['buyer_id']).first()
+        if d:
+            d.remark=data.get('remark','')
+            db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
 @shopcenter_controller.route('/m1/private/shopcenter/validate_delivery_member', methods=['POST'])
 @check_token
 def validate_delivery_member(token_type, shop):
@@ -1017,6 +1033,8 @@ def get_goods_type_parent(token_type,shop):
         rows=db.engine.execute(sql)
 
         result['shop_goods_type_parent']=rows_array_converter(rows)
+        for item in result['shop_goods_type_parent']:
+            item['parent_id']=''
 
     except Exception, e:
         current_app.logger.exception(e)
