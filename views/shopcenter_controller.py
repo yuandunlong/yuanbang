@@ -1204,4 +1204,38 @@ def shop_stock(token_type,shop):
         current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
-    return Response(json.dumps(result),content_type='application')
+    return Response(json.dumps(result),content_type='application/json')
+
+@shopcenter_controller.route('/m1/private/shopcenter/update_goods_info', methods=['POST'])
+@check_token
+def update_goods_info(token_type,shop):
+
+    result={"code":1,'msg':'ok'}
+    try:
+        data=request.json
+        goods_info= GoodsInfo.query.filter_by(goods_id=data['goods_id']).first()
+        sale_price=data.get('sale_price',None)
+        waring_num=data.get('warning_num',None)
+        goods_spec=data.get('goods_spec',None)
+        goods_name=data.get('goods_name',None)
+        discount=data.get('discount',None)
+
+        if goods_info:
+            if sale_price:
+                goods_info.sale_price=sale_price
+            if waring_num:
+                goods_info.warning_num=waring_num
+            if goods_spec:
+                goods_info.goods_spec=goods_spec
+            if goods_name:
+                goods_info.goods_name=goods_name
+            if discount
+                goods_info.discount=discount
+
+            db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+
+    return Response(json.dumps(result),content_type="application/json")
