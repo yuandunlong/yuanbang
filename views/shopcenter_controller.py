@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import json, Response, Blueprint, request, json, current_app
-from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member,Activity
+from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity
 from datetime import datetime
 import os
 from views.utils import check_token, row_map_converter, rows_array_converter
@@ -545,7 +545,7 @@ def get_delivery_member(token_type, shop):
     try:
         data = request.get_json()
         is_validate = data['is_validate']
-        if is_validate == -1 or is_validate=="-1":
+        if is_validate == -1 or is_validate == "-1":
 
             sql = '''
         
@@ -740,19 +740,20 @@ def add_delivery_member(token_type, shop):
 
 @shopcenter_controller.route('/m1/private/shopcenter/update_delivery_member', methods=['POST'])
 @check_token
-def update_delivery_member(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def update_delivery_member(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.get_json()
-        d=DeliveryMan.query.filter_by(shop_id=shop.shop_id,buyer_id=data['buyer_id']).first()
+        data = request.get_json()
+        d = DeliveryMan.query.filter_by(shop_id=shop.shop_id, buyer_id=data['buyer_id']).first()
         if d:
-            d.remark=data.get('remark','')
+            d.remark = data.get('remark', '')
             db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
 
 @shopcenter_controller.route('/m1/private/shopcenter/validate_delivery_member', methods=['POST'])
 @check_token
@@ -1003,8 +1004,8 @@ def update_member(token_type, shop):
         member = Member.query.filter_by(shop_id=shop.shop_id, buyer_id=data['buyer_id']).first()
         if member and data.get('remark', None):
             member.remark = data.get('remark', '')
-            if data.get('level',None):
-                member.level=str(data.get('level'))
+            if data.get('level', None):
+                member.level = str(data.get('level'))
             db.session.commit()
     except Exception, e:
         current_app.logger.exception(e)
@@ -1018,7 +1019,7 @@ def update_member(token_type, shop):
 def get_goods_types_tree(token_type, shop):
     result = {'code': 1, 'msg': 'ok'}
     try:
-        get_types(result,0)
+        get_types(result, 0)
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
@@ -1026,17 +1027,18 @@ def get_goods_types_tree(token_type, shop):
 
     return Response(json.dumps(result), content_type='application/json')
 
+
 @shopcenter_controller.route('/m1/private/shopcenter/get_goods_type_parent', methods=['GET'])
 @check_token
-def get_goods_type_parent(token_type,shop):
+def get_goods_type_parent(token_type, shop):
     result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''select * from tb_goodstype_m where ParentID is NULL ''';
-        rows=db.engine.execute(sql)
+        sql = '''select * from tb_goodstype_m where ParentID is NULL ''';
+        rows = db.engine.execute(sql)
 
-        result['shop_goods_type_parent']=rows_array_converter(rows)
+        result['shop_goods_type_parent'] = rows_array_converter(rows)
         for item in result['shop_goods_type_parent']:
-            item['parent_id']=''
+            item['parent_id'] = ''
 
     except Exception, e:
         current_app.logger.exception(e)
@@ -1047,12 +1049,12 @@ def get_goods_type_parent(token_type,shop):
 
 @shopcenter_controller.route('/m1/private/shopcenter/get_goods_type_child', methods=['POST'])
 @check_token
-def get_goods_type_child(token_type,shop):
+def get_goods_type_child(token_type, shop):
     result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''select * from tb_goodstype_m where ParentID = %s ''';
-        rows=db.engine.execute(sql,(request.json['parent_id']))
-        result['shop_goods_type_child']=rows_array_converter(rows)
+        sql = '''select * from tb_goodstype_m where ParentID = %s ''';
+        rows = db.engine.execute(sql, (request.json['parent_id']))
+        result['shop_goods_type_child'] = rows_array_converter(rows)
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
@@ -1060,12 +1062,12 @@ def get_goods_type_child(token_type,shop):
     return Response(json.dumps(result), content_type='application/json')
 
 
-@shopcenter_controller.route('/m1/private/shopcenter/get_shop_activities_list', methods=['GET','POST'])
+@shopcenter_controller.route('/m1/private/shopcenter/get_shop_activities_list', methods=['GET', 'POST'])
 @check_token
-def get_shop_activities_list(token_type,shop):
+def get_shop_activities_list(token_type, shop):
     result = {'code': 1, 'msg': 'ok'}
     try:
-        sql='''SELECT
+        sql = '''SELECT
 					ID,
 					Title,
 					Count,
@@ -1084,13 +1086,14 @@ def get_shop_activities_list(token_type,shop):
 				ORDER BY
 					IsTop DESC,
 					SortNo DESC  ''';
-        rows=db.engine.execute(sql,(shop.shop_id))
-        result['activities']=rows_array_converter(rows)
+        rows = db.engine.execute(sql, (shop.shop_id))
+        result['activities'] = rows_array_converter(rows)
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
         result['msg'] = e.message
     return Response(json.dumps(result), content_type='application/json')
+
 
 def get_types(parent, parentId):
     if parentId and parentId > 0:
@@ -1108,134 +1111,157 @@ def get_types(parent, parentId):
     else:
         return
 
-@shopcenter_controller.route('/m1/private/shopcenter/add_activities_info', methods=['GET','POST'])
+
+@shopcenter_controller.route('/m1/private/shopcenter/add_activities_info', methods=['GET', 'POST'])
 @check_token
-def add_activities_info(token_type,shop):
+def add_activities_info(token_type, shop):
     result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.json
-        activity=Activity()
-        activity.shop_id=shop.shop_id
-        activity.content=data.get('content','')
-        activity.title=data.get('title','')
-        activity.sort_no=data.get('sort_no',1)
-        activity.seo_key_word=data.get('seo_key_word','')
-        activity.seo_title=data.get('seo_title','')
-        activity.seo_content=data.get('seo_content','')
-        activity.is_hot=str(data.get('is_hot','0'))
-        activity.is_top=str(data.get('is_top','0'))
-        activity.publish_time=datetime.now()
-        activity.publisher=shop.shop_name
+        data = request.json
+        activity = Activity()
+        activity.shop_id = shop.shop_id
+        activity.content = data.get('content', '')
+        activity.title = data.get('title', '')
+        activity.sort_no = data.get('sort_no', 1)
+        activity.seo_key_word = data.get('seo_key_word', '')
+        activity.seo_title = data.get('seo_title', '')
+        activity.seo_content = data.get('seo_content', '')
+        activity.is_hot = str(data.get('is_hot', '0'))
+        activity.is_top = str(data.get('is_top', '0'))
+        activity.publish_time = datetime.now()
+        activity.publisher = shop.shop_name
         db.session.add(activity)
         db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
 
 @shopcenter_controller.route('/m1/private/shopcenter/update_activities_info', methods=['POST'])
 @check_token
-def update_activities_info(token_type,shop):
+def update_activities_info(token_type, shop):
     result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.json
-        activity=Activity.query.get(data['activity_id'])
+        data = request.json
+        activity = Activity.query.get(data['activity_id'])
         if activity:
-            activity.content=data.get('content','')
-            activity.title=data.get('title','')
-            activity.sort_no=data.get('sort_no',1)
-            activity.seo_key_word=data.get('seo_key_word','')
-            activity.seo_title=data.get('seo_title','')
-            activity.seo_content=data.get('seo_content','')
-            activity.is_hot=str(data.get('is_hot','0'))
-            activity.is_top=str(data.get('is_top','0'))
-            activity.publish_time=datetime.now()
-            activity.publisher=shop.shop_name
+            activity.content = data.get('content', '')
+            activity.title = data.get('title', '')
+            activity.sort_no = data.get('sort_no', 1)
+            activity.seo_key_word = data.get('seo_key_word', '')
+            activity.seo_title = data.get('seo_title', '')
+            activity.seo_content = data.get('seo_content', '')
+            activity.is_hot = str(data.get('is_hot', '0'))
+            activity.is_top = str(data.get('is_top', '0'))
+            activity.publish_time = datetime.now()
+            activity.publisher = shop.shop_name
             db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
 
 @shopcenter_controller.route('/m1/private/shopcenter/del_activities', methods=['POST'])
 @check_token
-def del_activities(token_type,shop):
+def del_activities(token_type, shop):
     result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.json
+        data = request.json
         Activity.query.filter_by(id=data['activity_id']).delete()
         db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
 
 @shopcenter_controller.route('/m1/private/shopcenter/shop_stock', methods=['POST'])
 @check_token
-def shop_stock(token_type,shop):
-    result={'code':1,'msg':'ok'}
+def shop_stock(token_type, shop):
+    result = {'code': 1, 'msg': 'ok'}
     try:
-        data=request.json
-        sql_e=''' select * from  TB_PURCHASEINTENTION_S where ShopID=%s and GoodsID=%s '''
-        row=db.engine.execute(sql_e,(shop.shop_id,data["goods_id"])).fetchone()
+        data = request.json
+        sql_e = ''' select * from  TB_PURCHASEINTENTION_S where ShopID=%s and GoodsID=%s '''
+        row = db.engine.execute(sql_e, (shop.shop_id, data["goods_id"])).fetchone()
         if row:
-            sql_u='''UPDATE TB_PURCHASEINTENTION_S
+            sql_u = '''UPDATE TB_PURCHASEINTENTION_S
 					SET Quantity = %s, CreateTime = %s,Price = %s
 					WHERE
 						ShopID = %s
 					AND GoodsID = %s
 					AND IsHandled = 0'''
-            db.engine.execute(sql_u,(data['quantity'],datetime.now(),data['price'],shop.shop_id,data['goods_id']))
+            db.engine.execute(sql_u, (data['quantity'], datetime.now(), data['price'], shop.shop_id, data['goods_id']))
             db.session.commit()
         else:
 
-            sql ='''INSERT INTO
+            sql = '''INSERT INTO
     				TB_PURCHASEINTENTION_S
     				(`ShopID`, `GoodsID`,Price, `Quantity`, `CreateTime`,IsHandled)
     			VALUES
     				(%s, %s, %s, %s, %s, '0')'''
 
-            db.engine.execute(sql,(shop.shop_id,data['goods_id'],data['price'],data['quantity'],datetime.now()))
+            db.engine.execute(sql, (shop.shop_id, data['goods_id'], data['price'], data['quantity'], datetime.now()))
             db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
-    return Response(json.dumps(result),content_type='application/json')
+        result['code'] = 0
+        result['msg'] = e.message
+    return Response(json.dumps(result), content_type='application/json')
+
 
 @shopcenter_controller.route('/m1/private/shopcenter/update_goods_info', methods=['POST'])
 @check_token
-def update_goods_info(token_type,shop):
-
-    result={"code":1,'msg':'ok'}
+def update_goods_info(token_type, shop):
+    result = {"code": 1, 'msg': 'ok'}
     try:
-        data=request.json
-        goods_info= GoodsInfo.query.filter_by(goods_id=data['goods_id']).first()
-        sale_price=data.get('sale_price',None)
-        waring_num=data.get('warning_num',None)
-        goods_spec=data.get('goods_spec',None)
-        goods_name=data.get('goods_name',None)
-        discount=data.get('discount',None)
-
+        data = request.json
+        goods_info = GoodsInfo.query.filter_by(goods_id=data['goods_id']).first()
+        sale_price = data.get('sale_price', None)
+        waring_num = data.get('warning_num', None)
+        goods_spec = data.get('goods_spec', None)
+        goods_name = data.get('goods_name', None)
+        discount = data.get('discount', None)
+        goods_locality = data.get('goods_locality', None)
+        goods_brand = data.get("goods_brand", None)
+        set_num = data.get('set_num', None)
+        set_price = data.get('set_price', None)
+        goods_type_id = data.get('goods_type_id', None)
+        goods_type_ids = data.get('goods_type_ids', None)
+        sort_no = data.get('sort_no', None)
         if goods_info:
             if sale_price:
-                goods_info.sale_price=sale_price
+                goods_info.sale_price = sale_price
             if waring_num:
-                goods_info.warning_num=waring_num
+                goods_info.warning_num = waring_num
             if goods_spec:
-                goods_info.goods_spec=goods_spec
+                goods_info.goods_spec = goods_spec
             if goods_name:
-                goods_info.goods_name=goods_name
+                goods_info.goods_name = goods_name
             if discount:
-                goods_info.discount=discount
-
+                goods_info.discount = discount
+            if goods_locality:
+                goods_info.goods_locality = goods_locality
+            if goods_brand:
+                goods_info.goods_brand = goods_brand
+            if set_num:
+                goods_info.set_num = set_num
+            if set_price:
+                goods_info.set_price = set_price
+            if goods_type_id:
+                goods_info.goods_type_id = goods_type_id
+            if goods_type_ids:
+                goods_info.goods_type_ids = goods_type_ids
+            if sort_no:
+                goods_info.sort_no = sort_no
             db.session.commit()
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
+        result['code'] = 0
+        result['msg'] = e.message
 
-    return Response(json.dumps(result),content_type="application/json")
+    return Response(json.dumps(result), content_type="application/json")
