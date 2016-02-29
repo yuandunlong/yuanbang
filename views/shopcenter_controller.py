@@ -545,7 +545,7 @@ def get_delivery_member(token_type, shop):
     try:
         data = request.get_json()
         is_validate = data['is_validate']
-        if is_validate == -1:
+        if is_validate == -1 or is_validate=="-1":
 
             sql = '''
         
@@ -563,7 +563,9 @@ def get_delivery_member(token_type, shop):
         b.Phone,
         IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
         m.Remark,
+        m.IsValidate,
         d.DeliveryStatus,
+
         b.Avatar
         FROM
             tb_deliveryman m
