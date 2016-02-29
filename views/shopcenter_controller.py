@@ -1229,7 +1229,7 @@ def update_goods_info(token_type,shop):
                 goods_info.goods_spec=goods_spec
             if goods_name:
                 goods_info.goods_name=goods_name
-            if discount
+            if discount:
                 goods_info.discount=discount
 
             db.session.commit()
