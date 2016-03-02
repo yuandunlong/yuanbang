@@ -1233,6 +1233,8 @@ def update_goods_info(token_type, shop):
         goods_type_id = data.get('goods_type_id', None)
         goods_type_ids = data.get('goods_type_ids', None)
         sort_no = data.get('sort_no', None)
+        photos = data.get('photos', None)
+
         if goods_info:
             if sale_price:
                 goods_info.sale_price = sale_price
@@ -1258,6 +1260,26 @@ def update_goods_info(token_type, shop):
                 goods_info.goods_type_ids = goods_type_ids
             if sort_no:
                 goods_info.sort_no = sort_no
+            if photos:
+                for p_item in photos:
+                    if p_item.get('photo_id', None):
+                        photo = Photo()
+                        photo.link_id = goods_info.goods_id
+                        photo.is_checked = '1'
+                        photo.is_visable = '1'
+                        photo.photo_path = p_item['photo_path']
+                        photo.thumbnail_path = p_item['thumbnail_path']
+                        db.session.add(photo)
+                        db.session.commit()
+                    else:
+                        photo = Photo.query.get(p_item['photo_id'])
+                        if photo:
+                            photo.link_id = goods_info.goods_id
+                            photo.is_checked = '1'
+                            photo.is_visable = '1'
+                            photo.photo_path = p_item['photo_path']
+                            photo.thumbnail_path = p_item['thumbnail_path']
+                            db.session.commit()
             db.session.commit()
     except Exception, e:
         current_app.logger.exception(e)
