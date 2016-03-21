@@ -1344,3 +1344,40 @@ def get_goods_info_for_edit(token_type, shop):
         result['msg'] = e.message
 
     return Response(json.dumps(result), content_type='application/json')
+
+#获取货源意向
+@shopcenter_controller.route('/m1/private/shopcenter/get_purchase_intention', methods=['POST','GET'])
+@check_token
+def get_purchase_intention(token_type,shop):
+    result={"code":1,'msg':'ok'}
+    try:
+        sql='''SELECT
+					a.id,
+					c.barcode,
+					a.ShopID,
+					c.GoodsName,
+					a.Price,
+					a.Quantity,
+					a.CreateTime,
+					c.GoodsSpec,
+					c.GoodsBrand,
+					a.IsHandled,
+					d.ItemName
+				FROM
+					tb_purchaseintention_s a
+				LEFT JOIN tb_shopinfo_s b ON a.ShopID = b.ShopID
+				LEFT JOIN tb_goodsinfo_s c ON a.GoodsID = c.GoodsID
+				LEFT JOIN tb_constent_m d ON a.IsHandled = d.ItemID
+				AND d.TypeID = 020
+				WHERE
+					a.ShopID = %s'''
+        rows=db.engine.execute(sql,(shop.shop_id))
+
+        result['goods']=rows_array_converter(rows)
+
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+
+    return Response(json.dumps(result),content_type='application/json')
