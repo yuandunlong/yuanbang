@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from flask import json, Response, Blueprint, request, json, current_app
-from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity,Purchase,GoodsType
+from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity, Purchase, GoodsType
 from datetime import datetime
 import os
-from views.utils import check_token, row_map_converter, rows_array_converter,result_set_converter
+from views.utils import check_token, row_map_converter, rows_array_converter, result_set_converter
 
 shopcenter_controller = Blueprint('shopcenter_controller', __name__)
 
@@ -1008,9 +1008,9 @@ def update_member(token_type, shop):
         data = request.json
         member = Member.query.filter_by(shop_id=shop.shop_id, buyer_id=data['buyer_id']).first()
         if member:
-            if data.get('remark', None):
+            if data.get('remark', None) != None:
                 member.remark = data.get('remark', '')
-            if data.get('level', None):
+            if data.get('level', None) != None:
                 member.level = str(data.get('level'))
             db.session.commit()
     except Exception, e:
@@ -1185,6 +1185,7 @@ def del_activities(token_type, shop):
         result['msg'] = e.message
     return Response(json.dumps(result), content_type='application/json')
 
+
 ##添加货源意向
 @shopcenter_controller.route('/m1/private/shopcenter/shop_stock', methods=['POST'])
 @check_token
@@ -1294,25 +1295,26 @@ def update_goods_info(token_type, shop):
 
     return Response(json.dumps(result), content_type="application/json")
 
+
 @shopcenter_controller.route('/m1/private/shopcenter/update_goods_quantity', methods=['POST'])
 @check_token
 def update_goods_quantity(token_type, shop):
     result = {"code": 1, 'msg': 'ok'}
 
     try:
-        data=request.json
+        data = request.json
 
-        p= Purchase.query.filter_by(goods_id=data['goods_id']).first()
+        p = Purchase.query.filter_by(goods_id=data['goods_id']).first()
         if p:
-            p.quantity=data['quantity']
+            p.quantity = data['quantity']
             db.session.commit()
 
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
+        result['code'] = 0
+        result['msg'] = e.message
 
-    return Response(json.dumps(result),content_type='application/json')
+    return Response(json.dumps(result), content_type='application/json')
 
 
 @shopcenter_controller.route('/m1/private/shopcenter/get_goods_info_for_edit', methods=['POST'])
@@ -1321,25 +1323,24 @@ def get_goods_info_for_edit(token_type, shop):
     result = {"code": 1, 'msg': 'ok'}
 
     try:
-        data=request.json
-        goods_id=data['goods_id']
-        goods= GoodsInfo.query.filter_by(goods_id=goods_id).first()
+        data = request.json
+        goods_id = data['goods_id']
+        goods = GoodsInfo.query.filter_by(goods_id=goods_id).first()
         if goods:
-            result['goods']=goods.get_map()
-            photos= Photo.query.filter_by(link_id=goods.goods_id,is_visable='1',is_checked=1).all()
-            result['goods']['photos']=result_set_converter(photos)
-            goods_type_name= GoodsType.query.filter_by(goods_type_id=goods.goods_type_id).first()
+            result['goods'] = goods.get_map()
+            photos = Photo.query.filter_by(link_id=goods.goods_id, is_visable='1', is_checked=1).all()
+            result['goods']['photos'] = result_set_converter(photos)
+            goods_type_name = GoodsType.query.filter_by(goods_type_id=goods.goods_type_id).first()
             if goods_type_name:
-                result['goods']['goods_type_name']=goods_type_name.get_map()
+                result['goods']['goods_type_name'] = goods_type_name.get_map()
 
         else:
-            result['goods']=None
+            result['goods'] = None
 
 
-    except Exception,e:
+    except Exception, e:
         current_app.logger.exception(e)
-        result['code']=0
-        result['msg']=e.message
+        result['code'] = 0
+        result['msg'] = e.message
 
-    return Response(json.dumps(result),content_type='application/json')
-
+    return Response(json.dumps(result), content_type='application/json')
