@@ -2,6 +2,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import json
 import datetime, time
+import  inspect
+from decimal import Decimal
 
 db = SQLAlchemy()
 
@@ -16,6 +18,8 @@ class BaseModel(db.Model):
             data = self.__getattribute__(field)
             if inspect.ismethod(data):
                 continue
+            if isinstance(data,Decimal):
+                data=str(data)
             fields[field] = data
         return fields
 
@@ -252,7 +256,7 @@ class ShopInfo(db.Model):
         return result
 
 
-class GoodsType(db.Model):
+class GoodsType(BaseModel):
     __tablename__ = 'tb_goodstype_m'
     goods_type_id = db.Column('GoodsTypeID', db.Integer, primary_key=True)
     goods_type_name = db.Column('GoodsTypeName', db.String(100))
