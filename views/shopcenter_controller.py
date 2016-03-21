@@ -560,6 +560,7 @@ def get_delivery_member(token_type, shop):
                 ),
             b.Account
             ) AS BuyerName,
+        b.BuyerID,
         b.Phone,
         IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
         m.Remark,
@@ -593,9 +594,10 @@ def get_delivery_member(token_type, shop):
                             NULL,
                             b.NickName
                             ),
-                        b.Account
+                        b.Account,
                         ) AS BuyerName,
                     b.Phone,
+                    b.BuyerID,
                     IFNULL(SUM(d.DeliveryMoney),0) AS DeliveryMoney,
                     m.Remark,
                      m.IsValidate,
@@ -1005,11 +1007,12 @@ def update_member(token_type, shop):
     try:
         data = request.json
         member = Member.query.filter_by(shop_id=shop.shop_id, buyer_id=data['buyer_id']).first()
-        if member and data.get('remark', None):
-            member.remark = data.get('remark', '')
-        if data.get('level', None):
-            member.level = str(data.get('level'))
-        db.session.commit()
+        if member:
+            if data.get('remark', None):
+                member.remark = data.get('remark', '')
+            if data.get('level', None):
+                member.level = str(data.get('level'))
+            db.session.commit()
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
