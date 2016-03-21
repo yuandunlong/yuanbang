@@ -1242,6 +1242,8 @@ def update_goods_info(token_type, shop):
         sort_no = data.get('sort_no', None)
         photos = data.get('photos', None)
 
+        quantity=data.get('quantity',None)
+
         if goods_info:
             if sale_price:
                 goods_info.sale_price = sale_price
@@ -1287,6 +1289,12 @@ def update_goods_info(token_type, shop):
                             photo.photo_path = p_item['photo_path']
                             photo.thumbnail_path = p_item['thumbnail_path']
                             db.session.commit()
+            if quantity!=None:
+                p = Purchase.query.filter_by(goods_id=data['goods_id']).first()
+                if p:
+                    p.quantity = data['quantity']
+                    db.session.commit()
+
             db.session.commit()
     except Exception, e:
         current_app.logger.exception(e)
@@ -1333,6 +1341,13 @@ def get_goods_info_for_edit(token_type, shop):
             goods_type_name = GoodsType.query.filter_by(goods_type_id=goods.goods_type_id).first()
             if goods_type_name:
                 result['goods']['goods_type_name'] = goods_type_name.get_map()
+
+            p=Purchase.query.filter_by(goods_id=goods_id).first()
+
+            if p:
+                result['goods']['quantity']=p.quantity
+            else:
+                result['goods']['quantity']=0
 
         else:
             result['goods'] = None
