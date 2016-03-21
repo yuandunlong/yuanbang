@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import json, Response, Blueprint, request, json, current_app
-from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity
+from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity,Purchase
 from datetime import datetime
 import os
 from views.utils import check_token, row_map_converter, rows_array_converter
@@ -1179,7 +1179,7 @@ def del_activities(token_type, shop):
         result['msg'] = e.message
     return Response(json.dumps(result), content_type='application/json')
 
-
+##添加货源意向
 @shopcenter_controller.route('/m1/private/shopcenter/shop_stock', methods=['POST'])
 @check_token
 def shop_stock(token_type, shop):
@@ -1287,3 +1287,23 @@ def update_goods_info(token_type, shop):
         result['msg'] = e.message
 
     return Response(json.dumps(result), content_type="application/json")
+
+@shopcenter_controller.route('/m1/private/shopcenter/update_goods_quantity', methods=['POST'])
+@check_token
+def update_goods_quantity(token_type, shop):
+    result = {"code": 1, 'msg': 'ok'}
+
+    try:
+        data=request.json
+
+        p= Purchase.query.filter_by(goods_id=data['goods_id']).first()
+        if p:
+            p.quantity=data['quantity']
+            db.session.commit()
+
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+
+    return Response(json.dumps(result),content_type='application/json')

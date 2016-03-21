@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint,current_app
 from flask import request
-from flask import json,jsonify,Response
+from flask import json,Response
 from utils import check_token
 from database.models import Order,ShopInfo
 import pingpp
