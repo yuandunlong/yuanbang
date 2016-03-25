@@ -3,7 +3,7 @@ from flask import Blueprint,current_app
 from flask import request,copy_current_request_context
 from flask import Response,json
 from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo
-from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter,send_mail
+from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter,send_mail,rows_array_converter
 from datetime import datetime
 import string
 import base64
@@ -154,7 +154,10 @@ def submit_order_by_shopcart(token_type,user_info):
         data=request.get_json()
         pay_type=data.get('pay_type',0)#0货到付款 1在线支付
         use_coupons=data.get('use_coupons',None)
+        get_coupons=data.get('get_coupons',None)
         buyerAddress=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
+
+        rv=[]
         if not buyerAddress:
             raise Exception('user dont have default address')
         carGrouptList=getOrderCartList(user_info.buyer_id, buyerAddress.address_id)
@@ -173,8 +176,21 @@ def submit_order_by_shopcart(token_type,user_info):
             order.remark=data.get('remark','')
             order.status='0' #已提交
             order.pay_type=pay_type
+            get_coupon=0
             if use_coupons:
-                order.use_coupon=use_coupons.get('shop_id',0)
+                for use_coupon in use_coupons:
+                    if int(use_coupon['shop_id'])==int(order.shop_id):
+                        sql='''insert into tb_coupon (CouponType,ShopID,BuyerID,OrderNO,CouponMoney) values(%s,%s,%s,%s,%s)'''
+                        db.engine.execute(sql,('1',order.shop_id,user_info.buyer_id,order.order_no,use_coupon['coupon_money']))
+                        order.use_coupon=use_coupon['coupon_money']
+            if get_coupons:
+                for get_coupon in get_coupons:
+                    if int(get_coupon['shop_id']==int(order.shop_id)):
+                        get_coupon=get_coupon['coupon_money']
+            order.get_coupon=get_coupon
+
+            order.sale_money=float(order.sale_money)-float(order.use_coupon)
+
             db.session.add(order)
             goods_list=getGoodsList(order.shop_id,order.buyer_id)
             
@@ -193,6 +209,17 @@ def submit_order_by_shopcart(token_type,user_info):
                 order_detail.quantity=quantity
                 order_detail.discount_price=goods_info['discount_price'] 
                 db.session.add(order_detail)
+            r_map={}
+            r_map['order_no']=order.order_no
+            r_map['shop_id']=order.shop_id
+            r_map['sale_money']=str(order.sale_money)
+            r_map['use_coupon']=str(order.use_coupon)
+            r_map['get_coupon']=str(order.get_coupon)
+            r_map['freight']=str(order.freight)
+            r_map['has_alipay']=order_info['has_alipay']
+            r_map['has_online_bank']=order_info['has_online_bank']
+            rv.append(r_map)
+
             message=Message()
             message.sender_type='3'
             message.sender_name='系统消息'
@@ -202,7 +229,6 @@ def submit_order_by_shopcart(token_type,user_info):
             message.send_title=r'您有一个新订单：'+order.order_no
             message.send_content=r'''您有一个新的订单：<a style='text-decoration:underline' href='index.php/Display/OrderDetailPage?OrderNo=".$OrderNo."'>".$OrderNo."</a><br/><div class='date'>点击订单编号查看详细信息！</div> '''
             message.send_time=datetime.now()
-                
             db.session.add(message)
             db.session.commit()
             send_email_2_shop(order.shop_id, order.order_no)
@@ -212,7 +238,7 @@ def submit_order_by_shopcart(token_type,user_info):
         '''
         db.engine.execute(delete_cart_sql,(user_info.buyer_id))
         db.session.commit()
-
+        result['orders']=rv
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
@@ -246,6 +272,36 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         
         shop_list=GetShopListFromCart(mktxzb, mktyzb, user_info, is_selected)
         for shop in shop_list:
+
+            ##判断用户是否是第一次下单
+            orders= Order.query.all()
+
+            if orders:
+                shop['first_order']=False
+            else:
+                shop['first_order']=True
+
+            #获取已经有的商铺优惠券
+            sql='''
+            SELECT
+						IFNULL(
+							sum(
+								CASE
+								WHEN CouponType = '0' THEN
+									CouponMoney
+								ELSE
+									-CouponMoney
+								END
+							),
+							0
+						) AS CouponMoney
+					FROM
+						tb_coupon
+					WHERE
+						ShopID = %s
+					AND BuyerID =%s'''
+            shopCoupons = db.engine.execute(sql,(shop['shop_id'], user_info.buyer_id))
+            shop['shopCoupons']=rows_array_converter(shopCoupons)
             goods=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, is_selected)
             shop['goods']=goods
         result['orders']=shop_list
@@ -379,74 +435,151 @@ def getOrderCartList(user_id,address_id):
 def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
     arr=[]
     try:
-        sql='''
-                SELECT
-               a.GoodsID,
-	       c.ShopID,
-               c.ShopName,
-               c.OrderAmount,
-               c.FarthestDistance/1000 as FarthestDistance,
-               c.Freight as FreightPerKilometre
-              
-                '''
-        
         if mktxzb and mktyzb:
-            sql+=''', ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2))/1000,2) AS Distance,'''
-	    sql+='''
-    
-		    IF (
-		        ROUND(
-		            SQRT(
-		                POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
-		                ),
-		            2
-		            ) > c.FreeDistance,
-		        CEIL(
-		            ROUND(
-		                SQRT(
-		                    POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
-		                    ),
-		                2
-		                ) - FreeDistance
-		            ) /1000* Freight,
-		        0
-		        ) AS TotalFreight '''
-	sql+=''',sum(
+            sql='''
 
-                    IF (
-                        a.Quantity >= b.SetNum,
-                        round(b.SetPrice * a.Quantity, 2),
-                        round(
-                            round(b.SalePrice * b.Discount, 2) * a.Quantity,
-                            2
-                        )
-                    )
-                    )AS Money
-                    FROM
-                    tb_shoppingcart a
-                            LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
-                            LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
-                    WHERE
-                        a.BuyerID = %s
+            SELECT
+						tmp.ShopID,
+						tmp.ShopName,
+						tmp.OrderAmount,
+						tmp.FreeDistance,
+						tmp.FarthestDistance,
+						tmp.Distance,
+        				tmp.Freight as BaseFreight,
+						tmp.ExtraOrderAmount,
+						tmp.ExtraFreight,
+						tmp.Money,
+        				tmp.CouponMoney,
+        				IFNULL(tmp.OrderCount,0) as OrderCount,
+        				tmp.FirstGiveCoupon,
+        				tmp.GiveLimit,
+        				tmp.GiveCoupon,
+        				tmp.UseLimit,
+        				tmp.CanUseCoupon,
+						IF (
+							tmp.Distance > tmp.FreeDistance,
+							CEIL(
+								tmp.Distance - tmp.FreeDistance
+							) * tmp.Freight + IF(tmp.Money < tmp.ExtraOrderAmount,tmp.ExtraFreight,0),
+							0 + IF(tmp.Money < tmp.ExtraOrderAmount,tmp.ExtraFreight,0)
+						) AS Freight
+				FROM (
+					SELECT
+						c.ShopID,
+						c.ShopName,
+						c.OrderAmount,
+						c.FreeDistance / 1000 AS FreeDistance,
+						c.Freight,
+						c.FarthestDistance / 1000 AS FarthestDistance,
+						ROUND(
+							SQRT(
+								POW(%s - c.mktxzb, 2) + POW(%s - c.mktyzb, 2)
+							) / 1000,
+							2
+						) AS Distance,
+						c.ExtraOrderAmount,
+						c.ExtraFreight,
+						sum(
+							IF (
+								a.Quantity >= b.SetNum,
+								round(b.SetPrice * a.Quantity, 2),
+								round(
+									round(b.SalePrice * b.Discount, 2) * a.Quantity,
+									2
+								)
+							)
+						) AS Money,
+        				sum(
+        					case when b.CanGetCoupon = 1 then
+							IF (
+								a.Quantity >= b.SetNum,
+								round(b.SetPrice * a.Quantity, 2),
+								round(
+									round(b.SalePrice * b.Discount, 2) * a.Quantity,
+									2
+								)
+							)
+        					else 0 end
+						) AS CouponMoney,
+        				d.OrderCount,
+        				c.FirstGiveCoupon,
+        				c.GiveLimit,
+        				c.GiveCoupon,
+        				c.UseLimit,
+        				c.CanUseCoupon
+					FROM
+						tb_shoppingcart a
+					LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+					LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
+        			LEFT JOIN (select count(1) as OrderCount,ShopID,BuyerID from tb_order_s group by ShopID,BuyerID) d
+        			on d.ShopID = c.ShopID and d.BuyerID = a.BuyerID
+					WHERE
+						a.BuyerID = %s
             '''
-        if is_selected=='1' or is_selected==1:
-            sql+='and a.IsSelected=1 '
-        sql+=''' GROUP BY
-                        c.ShopID,
-                        c.ShopName
-                        ORDER BY
-                            a.CreateTime desc
-                '''
-        if mktxzb and mktyzb:
-            result_set=db.engine.execute(sql,(mktxzb,mktyzb,mktxzb,mktyzb,mktxzb,mktyzb,user_info.buyer_id))
+
+            if int(is_selected)==1:
+        			sql=sql+" and a.IsSelected=1 "
+            sql=sql+'''GROUP BY
+						c.ShopID,
+						c.ShopName,
+						c.OrderAmount,
+						FreeDistance,
+						c.Freight,
+						FarthestDistance,
+						Distance,
+						c.ExtraOrderAmount,
+						c.ExtraFreight) tmp'''
+            result_set=db.engine.execute(sql,(mktxzb,mktyzb,user_info.buyer_id))
+
+            arr=rows_array_converter(result_set)
         else:
+            sql='''
+            SELECT
+						c.ShopID,
+						c.ShopName,
+						c.OrderAmount,
+						c.FreeDistance / 1000 AS FreeDistance,
+						c.Freight,
+						c.FarthestDistance / 1000 AS FarthestDistance,
+						c.ExtraOrderAmount,
+						c.ExtraFreight,
+						sum(
+							IF (
+								a.Quantity >= b.SetNum,
+								round(b.SetPrice * a.Quantity, 2),
+								round(
+									round(b.SalePrice * b.Discount, 2) * a.Quantity,
+									2
+								)
+							)
+						) AS Money,
+        				c.FirstGiveCoupon,
+        				c.GiveLimit,
+        				c.GiveCoupon,
+        				c.UseLimit,
+        				c.CanUseCoupon
+					FROM
+						tb_shoppingcart a
+					LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
+					LEFT JOIN tb_shopinfo_s c ON b.ShopID = c.ShopID
+					WHERE
+						a.BuyerID = %s'''
+
+            if int(is_selected)==1:
+	        	sql=sql+" and a.IsSelected=1 "
+			sql=sql+'''	GROUP BY
+						c.ShopID,
+						c.ShopName,
+						c.OrderAmount,
+						FreeDistance,
+						c.Freight,
+						FarthestDistance,
+						c.ExtraOrderAmount,
+						c.ExtraFreight'''
             result_set=db.engine.execute(sql,(user_info.buyer_id))
-        for row in result_set:
-            arr.append(row_map_converter(row))
-                
+            arr=rows_array_converter(result_set)
     except Exception,e:
         current_app.logger.exception(e)
-        
     return arr
    
    

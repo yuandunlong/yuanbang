@@ -3,7 +3,7 @@ from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
 from utils import check_token
-from database.models import Order,ShopInfo
+from database.models import Order,ShopInfo,db
 import pingpp
 
 pingpp.api_key = 'sk_test_y9azT8SKKWv9WDW9G4unTW9G'
