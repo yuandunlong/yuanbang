@@ -524,6 +524,7 @@ class DeliveryList(BaseModel):
     shop_id = db.Column('ShopID', db.String(20))
     buyer_id = db.Column('BuyerID', db.String(20))
     delivery_money = db.Column('DeliveryMoney', db.DECIMAL)
+    #3已结算
     delivery_status = db.Column('DeliveryStatus', db.String(1))
     submit_time = db.Column('SubmitTime', db.DateTime)
     receive_time = db.Column('ReceiveTime', db.DateTime)

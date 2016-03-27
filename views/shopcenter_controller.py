@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import json, Response, Blueprint, request, json, current_app
-from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity, Purchase, GoodsType
+from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity, Purchase, GoodsType,DeliveryList
 from datetime import datetime
 import os
 from views.utils import check_token, row_map_converter, rows_array_converter, result_set_converter
@@ -924,6 +924,30 @@ def get_delivery_list_by_page(token_type, shop):
         result['msg'] = e.message
 
     return Response(json.dumps(result), content_type='application/json')
+
+@shopcenter_controller.route('/m1/private/shopcenter/update_delivery_list_status', methods=['POST'])
+@check_token
+def update_delivery_list_status(token_type, shop):
+
+    result = {'code':1,'msg':'ok'}
+    try:
+        data=request.json
+        id=data['deliverylist_id']
+        delivery_status=data['delivery_status']
+        re= DeliveryList.query.get(id)
+        if re:
+            re.delivery_status=delivery_status
+            db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')
+
+
+
+
 
 
 # --------------------------12.28新增------------------------
