@@ -567,7 +567,8 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
 
             if int(is_selected)==1:
 	        	sql=sql+" and a.IsSelected=1 "
-			sql=sql+'''	GROUP BY
+            else:
+			    sql=sql+'''	GROUP BY
 						c.ShopID,
 						c.ShopName,
 						c.OrderAmount,
