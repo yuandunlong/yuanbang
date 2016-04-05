@@ -176,7 +176,7 @@ def submit_order_by_shopcart(token_type,user_info):
             order.remark=data.get('remark','')
             order.status='0' #已提交
             order.pay_type=pay_type
-            get_coupon=0
+            get_coupon_money=0
             if use_coupons:
                 for use_coupon in use_coupons:
                     if int(use_coupon['shop_id'])==int(order.shop_id):
@@ -186,9 +186,10 @@ def submit_order_by_shopcart(token_type,user_info):
             if get_coupons:
                 for get_coupon in get_coupons:
                     if int(get_coupon['shop_id']==int(order.shop_id)):
-                        get_coupon=get_coupon['coupon_money']
-            order.get_coupon=get_coupon
-
+                        get_coupon_money=get_coupon['coupon_money']
+            order.get_coupon=get_coupon_money
+            if not order.use_coupon:
+                order.use_coupon=0
             order.sale_money=float(order.sale_money)-float(order.use_coupon)
 
             db.session.add(order)
@@ -234,7 +235,7 @@ def submit_order_by_shopcart(token_type,user_info):
             send_email_2_shop(order.shop_id, order.order_no)
         #删除购物车
         delete_cart_sql='''
-        delete from tb_shoppingcart where BuyerID=%s and IsSelected=1
+        delete from tb_shoppingcart where BuyerID=%s and IsSelected='1'
         '''
         db.engine.execute(delete_cart_sql,(user_info.buyer_id))
         db.session.commit()
@@ -409,7 +410,7 @@ def getOrderCartList(user_id,address_id):
         AND s.AddressID = %s
         WHERE
         a.BuyerID = %s
-        AND a.IsSelected = 1
+        AND a.IsSelected = '1'
         GROUP BY
         a.BuyerID,
         c.ShopID,
