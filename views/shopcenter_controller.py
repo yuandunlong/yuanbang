@@ -576,7 +576,6 @@ def get_delivery_member(token_type, shop):
         AND d.ShopID = m.ShopID
         WHERE
             m.ShopID = %s
-            and (m.IsValidate=1 or m.IsValidate=0)
         GROUP BY
             m.BuyerID
         '''
