@@ -594,7 +594,7 @@ def get_delivery_member(token_type, shop):
                             NULL,
                             b.NickName
                             ),
-                        b.Account,
+                        b.Account
                         ) AS BuyerName,
                     b.Phone,
                     b.BuyerID,
@@ -1295,7 +1295,7 @@ def update_goods_info(token_type, shop):
                 goods_info.sort_no = sort_no
             if photos:
                 for p_item in photos:
-                    if p_item.get('photo_id', None):
+                    if not p_item.get('photo_id', None):
                         photo = Photo()
                         photo.link_id = goods_info.goods_id
                         photo.is_checked = '1'
@@ -1305,20 +1305,29 @@ def update_goods_info(token_type, shop):
                         db.session.add(photo)
                         db.session.commit()
                     else:
-                        photo = Photo.query.get(p_item['photo_id'])
-                        if photo:
-                            photo.link_id = goods_info.goods_id
-                            photo.is_checked = '1'
-                            photo.is_visable = '1'
-                            photo.photo_path = p_item['photo_path']
-                            photo.thumbnail_path = p_item['thumbnail_path']
-                            db.session.commit()
+                        if p_item['photo_path']=='':
+                            Photo.query.filter_by(photo_id=p_item['photo_id']).delete()
+                        else:
+                            photo = Photo.query.get(p_item['photo_id'])
+                            if photo:
+                                photo.link_id = goods_info.goods_id
+                                photo.is_checked = '1'
+                                photo.is_visable = '1'
+                                photo.photo_path = p_item['photo_path']
+                                photo.thumbnail_path = p_item['thumbnail_path']
+                                db.session.commit()
             if quantity!=None:
                 p = Purchase.query.filter_by(goods_id=data['goods_id']).first()
                 if p:
                     p.quantity = data['quantity']
                     db.session.commit()
-
+                else:
+                    purchase=Purchase()
+                    purchase.quantity=data['quantity']
+                    purchase.batch_no=1
+                    purchase.goods_id=data['goods_id']
+                    db.session.add(purchase)
+                    db.session.commit()
             db.session.commit()
     except Exception, e:
         current_app.logger.exception(e)
