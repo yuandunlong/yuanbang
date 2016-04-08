@@ -2,6 +2,7 @@
 from flask import json, Response, Blueprint, request, json, current_app
 from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity, Purchase, GoodsType,DeliveryList
 from datetime import datetime
+import datetime as dt
 import os
 from views.utils import check_token, row_map_converter, rows_array_converter, result_set_converter
 
@@ -1326,6 +1327,9 @@ def update_goods_info(token_type, shop):
                     purchase.quantity=data['quantity']
                     purchase.batch_no=1
                     purchase.goods_id=data['goods_id']
+                    purchase.buy_price=0
+                    purchase.start_time=datetime.now()
+                    purchase.end_time=datetime.now()+dt.timedelta(days=365)
                     db.session.add(purchase)
                     db.session.commit()
             db.session.commit()
