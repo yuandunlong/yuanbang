@@ -48,7 +48,7 @@ def get_order_charge(token_type,user_info):
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
 
-@pingpay_controller.route('/m1/private/order/paynotify',methods=['POST'])   
+@pingpay_controller.route('/m1/public/order/paynotify',methods=['POST'])
 def pay_notify_hooks():
     try:
         data=request.get_json()
@@ -60,7 +60,7 @@ def pay_notify_hooks():
             db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
-    return Response("ok")
+    return Response(status=200)
     
     
     
