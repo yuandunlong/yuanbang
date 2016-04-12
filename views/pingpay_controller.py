@@ -56,8 +56,9 @@ def pay_notify_hooks():
             result=data['data']['object']
             order_no=result['order_no']
             order=Order.query.filter_by(order_no=order_no).first()
-            order.pay_status='1' #已支付
-            db.session.commit()
+            if order:
+                order.pay_status='1' #已支付
+                db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
     return Response(status=200)
