@@ -127,12 +127,14 @@ def cancle_order(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
+        cancel_reason=data.get('cancel_reason','')
         order=Order.query.filter_by(order_no=data['order_no']).first()
         
         if order:
             #当订单状态!=3（交易取消）时
             if order.status!='3':
                 order.status='3'
+                order.cancel_reason=cancel_reason
         sql='''UPDATE tb_purchase_s s
             INNER JOIN tb_orderdetail_s o ON s.GoodsID=o.GoodsID AND s.BatchNo=o.BatchNo
             SET s.Quantity = s.Quantity + o.Quantity
@@ -247,8 +249,24 @@ def submit_order_by_shopcart(token_type,user_info):
     return Response(json.dumps(result),content_type='application/json')
 
 
+@order_controller.route('/m1/private/complete_order',methods=['POST'])
+def complete_order(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.json
+        order_no=data['order_no']
+        sql='''update tb_order_s set Status=2 where OrderNo=%s'''
+        db.engine.execute(sql,(order_no))
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
 
-#支付订单
+
+
+
 
 
     

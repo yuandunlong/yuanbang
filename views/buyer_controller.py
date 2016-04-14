@@ -2,7 +2,7 @@
 from flask import Blueprint,current_app
 from flask import request
 from flask import json, jsonify, Response
-from database.models import Buyer, BuyerAddress, Order, Message, Attention, db,Member,DeliveryMan
+from database.models import Buyer, BuyerAddress, Order, Message, Attention, db,Member,DeliveryMan,DeliveryList
 from utils import check_token, result_set_converter,rows_array_converter
 from datetime import datetime
 buyer_controller = Blueprint("buyer_controller", __name__)
@@ -229,6 +229,84 @@ def update_buyer_info(token_type,buyer):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type="application/json")
-        
+
+
+@buyer_controller.route('/m1/private/get_my_delivery_list_by_page', methods=['POST'])
+@check_token
+def get_delivery_list_by_page(token_type, buyer):
+    result = {'code': 1, 'msg': 'ok'}
+
+    data = request.get_json()
+
+    try:
+        page = data.get('page', 1)
+        page_size = data.get('page_size', 20)
+        order_no = data.get('order_no', None)
+        sql = '''SELECT d.id,
+        d.SubmitTime,
+        d.OrderNo,
+        IFNULL(
+            IF (
+                b.NickName = '',
+                NULL,
+                b.NickName
+                ),
+            b.Account
+            ) AS BuyerName,
+        b.Phone,
+        b.Avatar,
+    (o.SaleMoney + o.Freight) AS orderMoney,
+        o.Freight,
+    o.PayStatus,
+        d.DeliveryMoney,
+        c.ItemName,
+    d.DeliveryStatus,
+    CONCAT('+',(o.SaleMoney + o.Freight)-d.DeliveryMoney) as giveMoney
+    FROM
+        tb_deliverylist d
+    LEFT JOIN tb_buyer b ON b.BuyerID = d.BuyerID
+    LEFT JOIN tb_constent_m c ON c.ItemID = d.DeliveryStatus
+    INNER JOIN tb_order_s o ON o.OrderNo = d.OrderNo
+        AND c.TypeID = '021'
+        WHERE
+            d.BuyerID = %s'''
+        values = []
+        values.append(buyer.buyer_id)
+        if order_no:
+            sql += ' and d.OrderNo=%s'
+            values.append(order_no)
+
+        sql += ' ORDER BY d.ReceiveTime DESC limit %s , %s'
+        values.append((page - 1) * page_size)
+        values.append(page_size)
+
+        rows = db.engine.execute(sql, tuple(values))
+        result['delivery_list'] = rows_array_converter(rows)
+
+    except Exception, e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')
     
-     
+
+@buyer_controller.route('/m1/private/update_delivery_list_status', methods=['POST'])
+@check_token
+def update_delivery_list_status(token_type, shop):
+
+    result = {'code':1,'msg':'ok'}
+    try:
+        data=request.json
+        id=data['deliverylist_id']
+        delivery_status=data['delivery_status']
+        re= DeliveryList.query.get(id)
+        if re:
+            re.delivery_status=delivery_status
+            db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')

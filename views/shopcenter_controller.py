@@ -402,6 +402,9 @@ def add_goods_info(token_type, shop):
         goods_type_ids = data['goods_type_ids']
         goods_name = data['goods_name']
         sale_price = data['sale_price']
+        warning_num = data.get('warning_num',0)
+        sort_no = data.get('sort_no',0)
+        quantity = data.get('quantity',None)
         photos = data['photos']
         goods_info = GoodsInfo()
         goods_info.bar_code = bar_code
@@ -419,8 +422,8 @@ def add_goods_info(token_type, shop):
         goods_info.can_edit = '1'
         goods_info.discount = data.get('discount', 1)
         goods_info.shop_id = shop.shop_id
-        goods_info.warning_num = 0
-        goods_info.sort_no = 0
+        goods_info.warning_num = warning_num
+        goods_info.sort_no = sort_no
         goods_info.status = 0
         goods_info.create_time = datetime.now()
         db.session.add(goods_info)
@@ -465,6 +468,22 @@ def add_goods_info(token_type, shop):
                 db.engine.execute(temp_sql, (goods_info.shop_id, type_id, goods_info.shop_id, type_id))
                 db.session.commit()
             level += 1
+
+        if quantity!=None:
+            p = Purchase.query.filter_by(goods_id=data['goods_id']).first()
+            if p:
+                p.quantity = data['quantity']
+                db.session.commit()
+            else:
+                purchase=Purchase()
+                purchase.quantity=data['quantity']
+                purchase.batch_no=1
+                purchase.goods_id=data['goods_id']
+                purchase.buy_price=0
+                purchase.start_time=datetime.now()
+                purchase.end_time=datetime.now()+dt.timedelta(days=365)
+                db.session.add(purchase)
+                db.session.commit()
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
@@ -525,7 +544,7 @@ def get_goods_info_by_bar_code(token_type, shop):
             AND p.IsChecked = '1'
 
              LEFT JOIN tb_goodstype_m m ON g.GoodsTypeID = m.GoodsTypeID
-            and BarCode = %s 
+            where BarCode = %s
                 '''
         row = db.engine.execute(sql, (bar_code)).fetchone()
         if row:

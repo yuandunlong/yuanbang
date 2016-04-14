@@ -6,7 +6,7 @@ from utils import check_token
 from database.models import Order,ShopInfo,db
 import pingpp
 
-pingpp.api_key = 'sk_test_y9azT8SKKWv9WDW9G4unTW9G'
+pingpp.api_key = 'app_HCur9S9iLGG0a58i'
 
 pingpay_controller=Blueprint('pingpay_controller',__name__)
 
