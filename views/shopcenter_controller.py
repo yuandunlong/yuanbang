@@ -1457,6 +1457,7 @@ def get_purchase_intention(token_type,shop):
 
 
 @shopcenter_controller.route('/m1/private/shopcenter/complete_order',methods=['POST'])
+@check_token
 def complete_order(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:

@@ -250,6 +250,7 @@ def submit_order_by_shopcart(token_type,user_info):
 
 
 @order_controller.route('/m1/private/complete_order',methods=['POST'])
+@check_token
 def complete_order(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
