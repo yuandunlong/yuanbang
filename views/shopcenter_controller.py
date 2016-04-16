@@ -406,7 +406,7 @@ def add_goods_info(token_type, shop):
         warning_num = data.get('warning_num',0)
         sort_no = data.get('sort_no',0)
         quantity = data.get('quantity',None)
-        photos = data['photos']
+        photos = data.get('photos',None)
         goods_info = GoodsInfo()
         goods_info.bar_code = bar_code
         goods_info.goods_type_id = goods_type_id
@@ -437,15 +437,16 @@ def add_goods_info(token_type, shop):
         db.engine.execute(insert_saleprice_sql, (goods_info.goods_id, goods_info.sale_price, datetime.now()))
         db.session.commit()
         # 添加图片
-        for p_item in photos:
-            photo = Photo()
-            photo.link_id = goods_info.goods_id
-            photo.is_checked = '1'
-            photo.is_visable = '1'
-            photo.photo_path = p_item['photo_path']
-            photo.thumbnail_path = p_item['thumbnail_path']
-            db.session.add(photo)
-            db.session.commit()
+        if photos:
+            for p_item in photos:
+                photo = Photo()
+                photo.link_id = goods_info.goods_id
+                photo.is_checked = '1'
+                photo.is_visable = '1'
+                photo.photo_path = p_item['photo_path']
+                photo.thumbnail_path = p_item['thumbnail_path']
+                db.session.add(photo)
+                db.session.commit()
         # 添加商铺类别，只存前两级类别表
         goods_type_id_arr = goods_info.goods_type_ids.split(',')
         goods_type_id_arr.reverse()
