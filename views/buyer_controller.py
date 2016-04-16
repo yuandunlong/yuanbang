@@ -274,7 +274,7 @@ def get_delivery_list_by_page(token_type, buyer):
     LEFT JOIN tb_constent_m c ON c.ItemID = d.DeliveryStatus
     INNER JOIN tb_order_s o ON o.OrderNo = d.OrderNo
         AND c.TypeID = '021'
-    Left join tb_shopinfos s on s.ShopID=o.ShopID
+    Left join tb_shopinfo_s s on s.ShopID=o.ShopID
 
         WHERE
             d.BuyerID = %s'''
