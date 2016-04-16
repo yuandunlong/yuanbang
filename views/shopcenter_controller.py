@@ -1452,3 +1452,19 @@ def get_purchase_intention(token_type,shop):
         result['msg']=e.message
 
     return Response(json.dumps(result),content_type='application/json')
+
+
+@shopcenter_controller.route('/m1/private/shopcenter/complete_order',methods=['POST'])
+def complete_order(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        data=request.json
+        order_no=data['order_no']
+        sql='''update tb_order_s set Status=2 where OrderNo=%s'''
+        db.engine.execute(sql,(order_no))
+        db.session.commit()
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['code']=0
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
