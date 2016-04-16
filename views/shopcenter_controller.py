@@ -144,6 +144,7 @@ def get_orders_by_page(token_type, shop):
                 TOS.Status,
                 TCM.ItemName AS StatusName,
                 TOS.PayStatus,
+                TOS.PayType,
                 TOS.UpdateTime,
                 PCM.ItemName AS PayStatusName
         FROM
