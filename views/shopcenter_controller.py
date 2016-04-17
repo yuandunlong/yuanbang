@@ -1479,13 +1479,16 @@ def cancle_order(token_type,user_info):
     try:
         data=request.get_json()
         cancel_reason=data.get('cancel_reason','')
-        order=Order.query.filter_by(order_no=data['order_no']).first()
-
-        if order:
-            #当订单状态!=3（交易取消）时
-            if order.status!='3':
-                order.status='3'
-                order.cancel_reason=cancel_reason
+        # order=Order.query.filter_by(order_no=data['order_no']).first()
+        #
+        # if order:
+        #     #当订单状态!=3（交易取消）时
+        #     if order.status!='3':
+        #         order.status='3'
+        #         order.cancel_reason=cancel_reason
+        sql1='''update tb_order_s set Status=3,CancelReason =%s where OrderNo=%s'''
+        db.engine.execute(sql1,(cancel_reason,data['order_no']))
+        db.session.commit()
         sql='''UPDATE tb_purchase_s s
             INNER JOIN tb_orderdetail_s o ON s.GoodsID=o.GoodsID AND s.BatchNo=o.BatchNo
             SET s.Quantity = s.Quantity + o.Quantity
