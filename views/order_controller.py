@@ -2,7 +2,7 @@
 from flask import Blueprint,current_app
 from flask import request,copy_current_request_context
 from flask import Response,json
-from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo
+from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo,Comment
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter,send_mail,rows_array_converter
 from datetime import datetime
 import string
@@ -75,8 +75,10 @@ def get_order_list(token_type,user_info):
             order_map['goods']=order_detail_arr
 
             sqlc='''select count(*) as count from tb_comment where CommentType=1 and OrderNo=%s'''
-            temp= db.engine.execute(sqlc,(order_map['order_no'])).fetchone()
-            if temp['count']>0:
+
+            #temp= db.engine.execute(sqlc,(order_map['order_no'])).fetchone()
+            c=Comment.query.filter_by(comment_type='1',order_no=order_map['order_no']).first()
+            if c:
                 order_map['isAppraise']=1
             else:
                 order_map['isAppraise']=0
