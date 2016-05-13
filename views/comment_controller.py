@@ -85,11 +85,12 @@ def submit_comment(token_type,user_info):
             comment.level=data['level']
             comment.content=data['content']
             comment.del_flag='0'
+            comment.order_no=order_no
             comment.comment_type='1'
             comment.commit_time=datetime.now()
             comment.is_read='0'
             db.session.add(comment)
-        db.session.commit()
+            db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
