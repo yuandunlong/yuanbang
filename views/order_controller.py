@@ -76,7 +76,7 @@ def get_order_list(token_type,user_info):
 
             sqlc='''select count(*) as count from tb_comment where CommentType=1 and OrderNo=%s'''
             temp= db.engine.execute(sqlc,(order_map['order_no'])).fetchone()
-            if temp>0:
+            if temp['count']>0:
                 order_map['isAppraise']=1
             else:
                 order_map['isAppraise']=0
