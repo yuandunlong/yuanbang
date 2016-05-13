@@ -73,6 +73,13 @@ def get_order_list(token_type,user_info):
             for item in order_detail_result_set:
                 order_detail_arr.append(row_map_converter(item))
             order_map['goods']=order_detail_arr
+
+            sqlc='''select count(*) as count from tb_comment where CommentType=1 and OrderNo=%s'''
+            temp= db.engine.execute(sqlc,(order_map['order_no'])).fetchone()
+            if temp>0:
+                order_map['isAppraise']=1
+            else:
+                order_map['isAppraise']=0
             orders.append(order_map)
         result['orders']=orders
     except Exception, e:
@@ -373,15 +380,7 @@ def buy_again_by_order_no(token_type,user_info):
       
 def getOrderCartList(user_id,address_id):
     sql='''
-    
-       SELECT
-    tmp.BuyerID,
-    tmp.ShopID,
-    tmp.ShopName,
-    tmp.HasAlipay,
-    tmp.HasOnlineBank,
-    tmp.sumTheShop,
-
+       SELECT tmp.BuyerID,tmp.ShopID,tmp.ShopName,tmp.HasAlipay,tmp.HasOnlineBank,tmp.sumTheShop,
     IF (
         tmp.Distance > tmp.FreeDistance,
         CEIL(
@@ -394,10 +393,7 @@ def getOrderCartList(user_id,address_id):
             ),
         0 + IF ( tmp.sumTheShop < tmp.ExtraOrderAmount, tmp.ExtraFreight, 0 )
         ) AS Freight
-    FROM (
-        SELECT
-        a.BuyerID,
-        c.ShopID,
+    FROM (SELECT a.BuyerID,c.ShopID,
         c.ShopName,
         c.HasAlipay,
         c.HasOnlineBank,
@@ -414,7 +410,6 @@ def getOrderCartList(user_id,address_id):
         c.ExtraOrderAmount,
         c.ExtraFreight,
         SUM(
-
             IF (
                 a.Quantity >= b.SetNum,
                 round(b.SetPrice * a.Quantity, 2),
@@ -581,7 +576,8 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
         				c.GiveLimit,
         				c.GiveCoupon,
         				c.UseLimit,
-        				c.CanUseCoupon
+        				c.CanUseCoupon,
+        				0 as CouponMoney
 					FROM
 						tb_shoppingcart a
 					LEFT JOIN tb_goodsinfo_s b ON a.GoodsID = b.GoodsID
@@ -603,6 +599,10 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
 						c.ExtraFreight'''
             result_set=db.engine.execute(sql,(user_info.buyer_id))
             arr=rows_array_converter(result_set)
+
+            for row in arr:
+                row['coupon_money']=float(row['money'])/float(row['use_limit'])*float['can_use_coupon']
+                row['coupon_money']=str(row['coupon_money'])
     except Exception,e:
         current_app.logger.exception(e)
     return arr

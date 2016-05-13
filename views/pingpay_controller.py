@@ -31,7 +31,7 @@ def get_order_charge(token_type,user_info):
         #多个订单一起支付问题---》=速度有点慢目前不支持
             ch = pingpp.Charge.create(
             order_no=order_no,
-            amount=int(order.sale_money*100), #订单总金额
+            amount=int((order.sale_money+order.freight)*100), #订单总金额
             app=dict(id='app_HCur9S9iLGG0a58i'),
             channel=channel,
             currency='cny',
