@@ -29,7 +29,7 @@ log_roll_handler.setFormatter(Formatter(
 app=Flask(__name__)
 db.init_app(app)
 app.config.from_pyfile('app.cfg')
-log_roll_handler.setLevel(logging.INFO)
+log_roll_handler.setLevel(logging.WARN)
 app.logger.addHandler(log_roll_handler)
 app.register_blueprint(token_controller)
 app.register_blueprint(buyer_controller)
