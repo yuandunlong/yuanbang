@@ -1339,9 +1339,10 @@ def update_goods_info(token_type, shop):
                                 photo.thumbnail_path = p_item['thumbnail_path']
                                 db.session.commit()
             if quantity!=None:
-                p = Purchase.query.filter_by(goods_id=data['goods_id']).first()
+                p = Purchase.query.filter_by(goods_id=data['goods_id']).order_by(Purchase.batch_no.desc()).first()
                 if p:
                     p.quantity = data['quantity']
+                    p.end_time=datetime.now()+dt.timedelta(days=3650)
                     db.session.commit()
                 else:
                     purchase=Purchase()
@@ -1350,7 +1351,7 @@ def update_goods_info(token_type, shop):
                     purchase.goods_id=data['goods_id']
                     purchase.buy_price=0
                     purchase.start_time=datetime.now()
-                    purchase.end_time=datetime.now()+dt.timedelta(days=365)
+                    purchase.end_time=datetime.now()+dt.timedelta(days=3650)
                     db.session.add(purchase)
                     db.session.commit()
             db.session.commit()
