@@ -92,6 +92,8 @@ def be_delivery_man(token_type,buyer):
             delivery_man=DeliveryMan()
             delivery_man.shop_id=shop_id
             delivery_man.buyer_id=buyer.buyer_id
+            delivery_man.is_active='1'
+            delivery_man.is_validate='0'
             db.session.add(delivery_man)
             db.session.commit()
     except Exception,e:
