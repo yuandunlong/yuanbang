@@ -266,6 +266,7 @@ def get_delivery_list_by_page(token_type, buyer):
     o.PayStatus,
         d.DeliveryMoney,
         c.ItemName,
+        o.PayType,
     d.DeliveryStatus,
     CONCAT('+',(o.SaleMoney + o.Freight)-d.DeliveryMoney) as giveMoney
     FROM
