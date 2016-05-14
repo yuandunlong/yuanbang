@@ -307,8 +307,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         for shop in shop_list:
 
             ##判断用户是否是第一次下单
-            orders= Order.query.all()
-
+            orders= Order.query.filter_by(buyer_id=user_info.buyer_id,shop_id=shop['shop_id']).first()
             if orders:
                 shop['first_order']=False
             else:
@@ -603,6 +602,7 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
             arr=rows_array_converter(result_set)
 
             for row in arr:
+                print row
                 row['coupon_money']=float(row['money'])/float(row['use_limit'])*float['can_use_coupon']
                 row['coupon_money']=str(row['coupon_money'])
     except Exception,e:
