@@ -604,7 +604,7 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
             current_app.logger.info("==================")
         for row in arr:
                 print row
-                row['coupon_money']=float(row['money'])/float(row['use_limit'])*float['can_use_coupon']
+                row['coupon_money']=int(float(row['money'])/float(row['use_limit']))*float(row['can_use_coupon'])
                 row['coupon_money']=str(row['coupon_money'])
     except Exception,e:
         current_app.logger.exception(e)
