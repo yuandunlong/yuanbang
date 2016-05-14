@@ -601,7 +601,7 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
             result_set=db.engine.execute(sql,(user_info.buyer_id))
             arr=rows_array_converter(result_set)
             print "==============================="
-            current_app.logger.warning("==================")
+            current_app.logger.info("==================")
             for row in arr:
                 print row
                 row['coupon_money']=float(row['money'])/float(row['use_limit'])*float['can_use_coupon']
