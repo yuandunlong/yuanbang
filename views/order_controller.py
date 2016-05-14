@@ -602,7 +602,7 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
             arr=rows_array_converter(result_set)
             print "==============================="
             current_app.logger.info("==================")
-            for row in arr:
+        for row in arr:
                 print row
                 row['coupon_money']=float(row['money'])/float(row['use_limit'])*float['can_use_coupon']
                 row['coupon_money']=str(row['coupon_money'])
