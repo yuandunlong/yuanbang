@@ -321,3 +321,18 @@ def update_delivery_list_status(token_type, shop):
         result['msg'] = e.message
 
     return Response(json.dumps(result), content_type='application/json')
+
+@buyer_controller.route('/m1/private/get_delivery_list_counts', methods=['GET'])
+@check_token
+def get_delivery_list_counts(token_type,user_info):
+    result = {'code':1,'msg':'ok'}
+    try:
+        sql='select count(DeliveryStatus) as counts,DeliveryStatus  from tb_deliverylist where BuyerID=%s group by DeliveryStatus '
+        rows=db.engine.execute(sql,(user_info.buyer_id))
+        result['delivery_list_counts']=rows_array_converter(rows)
+    except Exception as e:
+        current_app.logger.exception(e)
+        result['code'] = 0
+        result['msg'] = e.message
+
+    return Response(json.dumps(result), content_type='application/json')
