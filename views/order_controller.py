@@ -343,8 +343,23 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         result['msg']=e.message
         
     return Response(json.dumps(result),content_type='application/json')
+
+
+@order_controller.route('/m1/private/get_orders_count',methods=['GET'])
+@check_token
+def get_orders_count(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        sql="select count(OrderNo) as count,status from tb_order_s where BuyerID='%s' group by status";
+        rows= db.engine.execute(sql,(user_info.buyer_id))
+        result['orders_counts']=rows_array_converter(rows)
+    except Exception,e:
+        result['msg']=e.message
+    return Response(json.dumps(result),content_type='application/json')
+
+
         
-@order_controller.route('/m1/private/buy_again_by_order_no',methods=['POST'])
+@order_controller.route('/m1/private/buy_again_by_order_no',methods=['GET'])
 @check_token
 def buy_again_by_order_no(token_type,user_info):
     
