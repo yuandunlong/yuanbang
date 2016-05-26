@@ -359,7 +359,7 @@ def get_orders_count(token_type,user_info):
 
 
         
-@order_controller.route('/m1/private/buy_again_by_order_no',methods=['GET'])
+@order_controller.route('/m1/private/buy_again_by_order_no',methods=['POST'])
 @check_token
 def buy_again_by_order_no(token_type,user_info):
     
@@ -371,21 +371,20 @@ def buy_again_by_order_no(token_type,user_info):
         order_details=OrderDetail.query.filter_by(order_no=order_no).all()
         if order_details:
             db.engine.execute('update tb_shoppingcart set IsSelected=0 where BuyerID=%s',(user_info.buyer_id))
-        for  order_detail in order_details:
+        for order_detail in order_details:
             shop_cart=ShopCart.query.filter_by(buyer_id=user_info.buyer_id,goods_id=order_detail.goods_id).first()
             if shop_cart:
-		shop_cart.is_selected='1'
-		shop_cart.create_time=datetime.now()
-		db.session.commit()
+                db.engine.execute("update tb_shoppingcart set IsSelected=1 where BuyerID=%s and  GoodsID= %s",(user_info.buyer_id,order_detail.goods_id))
+                db.session.commit()
             else:
-		shop_cart=ShopCart()
-		shop_cart.buyer_id=user_info.buyer_id
-		shop_cart.quantity=order_detail.quantity
-		shop_cart.goods_id=order_detail.goods_id
-		shop_cart.is_selected='1'
-		shop_cart.create_time=datetime.now()
-		db.session.add(shop_cart)
-		db.session.commit()
+                shop_cart=ShopCart()
+                shop_cart.buyer_id=user_info.buyer_id
+                shop_cart.quantity=order_detail.quantity
+                shop_cart.goods_id=order_detail.goods_id
+                shop_cart.is_selected='1'
+                shop_cart.create_time=datetime.now()
+                db.session.add(shop_cart)
+                db.session.commit()
         db.session.commit()
         result=get_preview_orders_by_shopcart_for_buyer_again(token_type, user_info)
         
