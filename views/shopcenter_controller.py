@@ -81,7 +81,7 @@ def get_goods_by_page(token_type, shop):
         if order_by == 'summaryasc':
             sql += 'order by Saleprice,Quantity asc'
         sql += ' limit %s,%s'
-        result_set = db.engine.execute(sql, (shop.shop_id, page - 1, page_size))
+        result_set = db.engine.execute(sql, (shop.shop_id, (page - 1)*page_size, page_size))
         arr = []
         for row in result_set:
             temp = row_map_converter(row)
