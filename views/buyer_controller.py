@@ -191,11 +191,13 @@ def query_coupons_by_shop_id(token_type,buyer):
             FROM
                 tb_coupon c
             LEFT JOIN tb_shopinfo_s s ON c.ShopID = s.ShopID
-            WHERE c.BuyerID = %s
+            WHERE c.BuyerID = %s and c.CouponType='1'
             AND c.ShopID = %s    ''' 
         
         rows=db.engine.execute(sql,(buyer.buyer_id,data['shop_id']))
-        result['coupons']=rows_array_converter(rows)
+        r=rows_array_converter(rows)
+        r.reverse()
+        result['coupons']=r
         
     except Exception,e:
         current_app.logger.exception(e)
