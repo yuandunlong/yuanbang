@@ -153,7 +153,9 @@ def get_all_my_coupons(token_type,buyer):
     GROUP BY c.ShopID,s.ShopName
         '''
         rows=db.engine.execute(sql,(buyer.buyer_id))
-        result['coupons']=rows_array_converter(rows).reverse()
+        r=rows_array_converter(rows)
+        r.reverse()
+        result['coupons']=r
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
