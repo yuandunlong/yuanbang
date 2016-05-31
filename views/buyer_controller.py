@@ -162,7 +162,7 @@ def get_all_my_coupons(token_type,buyer):
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
 
-
+#这个就是显示所有的优惠券的使用情况吧
 @buyer_controller.route('/m1/private/query_coupons_by_shop_id', methods=['POST'])       
 @check_token
 def query_coupons_by_shop_id(token_type,buyer):
@@ -191,13 +191,18 @@ def query_coupons_by_shop_id(token_type,buyer):
             FROM
                 tb_coupon c
             LEFT JOIN tb_shopinfo_s s ON c.ShopID = s.ShopID
-            WHERE c.BuyerID = %s and c.CouponType='1'
+            WHERE c.BuyerID = %s
             AND c.ShopID = %s    ''' 
         
         rows=db.engine.execute(sql,(buyer.buyer_id,data['shop_id']))
         r=rows_array_converter(rows)
         r.reverse()
-        result['coupons']=r
+        rr=[]
+        for temp in r:
+            if temp["coupon_money"]!=0:
+                rr.append(temp)
+                
+        result['coupons']=rr
         
     except Exception,e:
         current_app.logger.exception(e)
