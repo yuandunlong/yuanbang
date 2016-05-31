@@ -12,11 +12,14 @@ def get_shopcart_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         shop_list=GetShopListFromCart(None, None, user_info, 0)
+        temp=[];
         for shop in shop_list:
-            arr=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, 0)
-            shop['goods']=arr
+            if str(shop['shop_id']).isdigit():
+                temp.append(shop)
+                arr=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, 0)
+                shop['goods']=arr
 
-        result['shopcarts']=shop_list
+        result['shopcarts']=temp
     except Exception ,e:
         current_app.logger.exception(e)
         result['msg']=e.message

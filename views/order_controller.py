@@ -304,7 +304,13 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         is_selected=data.get('is_selected',None)
         
         shop_list=GetShopListFromCart(mktxzb, mktyzb, user_info, is_selected)
+        temp=[]
         for shop in shop_list:
+
+            if not str(shop['shop_id']).isdigit():
+                continue
+
+            temp.append(shop)
 
             ##判断用户是否是第一次下单
             orders= Order.query.filter_by(buyer_id=user_info.buyer_id,shop_id=shop['shop_id']).first()
@@ -336,7 +342,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
             shop['shopCoupons']=rows_array_converter(shopCoupons)
             goods=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, is_selected)
             shop['goods']=goods
-        result['orders']=shop_list
+        result['orders']=temp
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
