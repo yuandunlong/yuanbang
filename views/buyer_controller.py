@@ -201,7 +201,7 @@ def query_coupons_by_shop_id(token_type,buyer):
         for temp in r:
             if temp["coupon_money"]!=0:
                 rr.append(temp)
-                
+                    
         result['coupons']=rr
         
     except Exception,e:

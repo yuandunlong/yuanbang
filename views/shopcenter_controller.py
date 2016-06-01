@@ -407,7 +407,11 @@ def add_goods_info(token_type, shop):
         sort_no = data.get('sort_no',0)
         quantity = data.get('quantity',None)
         photos = data.get('photos',None)
-        goods_info = GoodsInfo()
+        goods_info=GoodsInfo.query.filter_by(bar_code=bar_code).first()
+        edit_flag=True
+        if not  goods_info:
+            edit_flag=False
+            goods_info = GoodsInfo()
         goods_info.bar_code = bar_code
         goods_info.goods_type_id = goods_type_id
         goods_info.goods_type_ids = goods_type_ids
@@ -427,8 +431,11 @@ def add_goods_info(token_type, shop):
         goods_info.sort_no = sort_no
         goods_info.status = 0
         goods_info.create_time = datetime.now()
-        db.session.add(goods_info)
-        db.session.commit()
+        if edit_flag:
+            db.session.commit()
+        else:
+            db.session.add(goods_info)
+            db.session.commit()
 
         # 新增销售价格履历
         insert_saleprice_sql = '''Insert Into TB_SALEPRICE_S (
@@ -454,17 +461,17 @@ def add_goods_info(token_type, shop):
         for type_id in goods_type_ids:
             temp_sql = '''
             INSERT INTO tb_goodstype_s (
-    ShopID,
-    GoodsTypeID,
-    ParentID
-    ) SELECT
-    %s,
-    GoodsTypeID,
-    ParentID
-    FROM
-        tb_goodstype_m
-    WHERE
-    GoodsTypeID =%s AND NOT EXISTS (select * from tb_goodstype_s where ShopID = %s AND GoodsTypeID = %s)
+                ShopID,
+                GoodsTypeID,
+                ParentID
+                ) SELECT
+                %s,
+                GoodsTypeID,
+                ParentID
+                FROM
+                    tb_goodstype_m
+                WHERE
+                GoodsTypeID =%s AND NOT EXISTS (select * from tb_goodstype_s where ShopID = %s AND GoodsTypeID = %s)
             '''
             if level < 2:
                 db.engine.execute(temp_sql, (goods_info.shop_id, type_id, goods_info.shop_id, type_id))
@@ -472,7 +479,7 @@ def add_goods_info(token_type, shop):
             level += 1
 
         if quantity!=None:
-            p = Purchase.query.filter_by(goods_id=data['goods_id']).first()
+            p = Purchase.query.filter_by(goods_id=data['goods_id']).order_by(Purchase.batch_no.desc()).first()
             if p:
                 p.quantity = data['quantity']
                 db.session.commit()
@@ -493,9 +500,7 @@ def add_goods_info(token_type, shop):
     return Response(json.dumps(result), content_type='application/json')
 
 
-# @shopcenter_controller.route('')
-def update_goods_by_id():
-    pass
+
 
 
 @shopcenter_controller.route('/m1/private/shopcenter/delete_goods_by_id', methods=['POST'])
@@ -1402,7 +1407,7 @@ def get_goods_info_for_edit(token_type, shop):
             if goods_type_name:
                 result['goods']['goods_type_name'] = goods_type_name.get_map()
 
-            p=Purchase.query.filter_by(goods_id=goods_id).first()
+            p=Purchase.query.filter_by(goods_id=goods_id).order_by(Purchase.batch_no.desc()).first()
 
             if p:
                 result['goods']['quantity']=p.quantity
