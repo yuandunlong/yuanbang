@@ -1362,6 +1362,31 @@ def update_goods_info(token_type, shop):
                     db.session.add(purchase)
                     db.session.commit()
             db.session.commit()
+
+             # 添加商铺类别，只存前两级类别表
+            goods_type_id_arr = goods_info.goods_type_ids.split(',')
+            goods_type_id_arr.reverse()
+            level = 0
+            for type_id in goods_type_id_arr:
+                type_id.strip()
+                temp_sql = '''
+                INSERT INTO tb_goodstype_s (
+                    ShopID,
+                    GoodsTypeID,
+                    ParentID
+                    ) SELECT
+                    %s,
+                    GoodsTypeID,
+                    ParentID
+                    FROM
+                        tb_goodstype_m
+                    WHERE
+                    GoodsTypeID =%s AND NOT EXISTS (select * from tb_goodstype_s where ShopID = %s AND GoodsTypeID = %s)
+                '''
+                if level < 2:
+                    db.engine.execute(temp_sql, (goods_info.shop_id, type_id, goods_info.shop_id, type_id))
+                    db.session.commit()
+                level += 1
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
