@@ -407,7 +407,7 @@ def add_goods_info(token_type, shop):
         sort_no = data.get('sort_no',0)
         quantity = data.get('quantity',None)
         photos = data.get('photos',None)
-        goods_info=GoodsInfo.query.filter_by(bar_code=bar_code).first()
+        goods_info=GoodsInfo.query.filter_by(bar_code=bar_code,shop_id=shop.shop_id).first()
         edit_flag=True
         if not  goods_info:
             edit_flag=False
@@ -458,7 +458,8 @@ def add_goods_info(token_type, shop):
         goods_type_id_arr = goods_info.goods_type_ids.split(',')
         goods_type_id_arr.reverse()
         level = 0
-        for type_id in goods_type_ids:
+        for type_id in goods_type_id_arr:
+            type_id.strip()
             temp_sql = '''
             INSERT INTO tb_goodstype_s (
                 ShopID,
