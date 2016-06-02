@@ -65,7 +65,7 @@ def get_goods_by_page(token_type, shop):
     ) a ON g.GoodsID = a.GoodsID
     LEFT JOIN tb_constent_m t ON t.TypeID=14 AND g.Status=t.ItemID
     WHERE
-            g.ShopID =%s 
+            g.ShopID =%s group by g.GoodsID
         '''
 
         if order_by == 'saleasc':
