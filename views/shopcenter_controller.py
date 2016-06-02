@@ -407,10 +407,11 @@ def add_goods_info(token_type, shop):
         sort_no = data.get('sort_no',0)
         quantity = data.get('quantity',None)
         photos = data.get('photos',None)
-        goods_info=GoodsInfo.query.filter_by(bar_code=bar_code,shop_id=shop.shop_id).first()
-        edit_flag=True
-        if not  goods_info:
-            edit_flag=False
+        goods_info = GoodsInfo.query.filter_by(bar_code=bar_code,shop_id=shop.shop_id).first()
+        edit_flag = False
+        if  goods_info:
+            edit_flag = True
+        else:
             goods_info = GoodsInfo()
         goods_info.bar_code = bar_code
         goods_info.goods_type_id = goods_type_id
