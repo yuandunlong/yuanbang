@@ -273,6 +273,7 @@ def get_delivery_list_by_page(token_type, buyer):
         o.SendAddress,
         o.Receiver,
         o.phone,
+        o.Remark,
     o.PayStatus,
         d.DeliveryMoney,
         c.ItemName,
@@ -308,7 +309,7 @@ def get_delivery_list_by_page(token_type, buyer):
         result['msg'] = e.message
 
     return Response(json.dumps(result), content_type='application/json')
-    
+
 
 @buyer_controller.route('/m1/private/update_delivery_list_status', methods=['POST'])
 @check_token
