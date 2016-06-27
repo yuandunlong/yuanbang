@@ -258,7 +258,7 @@ def get_shop_goods_by_type():
         and g.Status = 0
         and (g.GoodsTypeIDs like %s or g.GoodsTypeIDs like %s)
 
-        GROUP BY g.GoodsID 
+        GROUP BY g.GoodsID
         
         '''
         

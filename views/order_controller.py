@@ -2,7 +2,7 @@
 from flask import Blueprint,current_app
 from flask import request,copy_current_request_context
 from flask import Response,json
-from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo,Comment
+from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo,Comment,Coupon
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter,send_mail,rows_array_converter
 from datetime import datetime
 import string
@@ -272,6 +272,20 @@ def complete_order(token_type,user_info):
         sql='''update tb_order_s set Status=2 where OrderNo=%s'''
         db.engine.execute(sql,(order_no))
         db.session.commit()
+        order=Order.query.filter_by(order_no=order_no).first()
+
+        get_coupon=order.get_coupon
+
+        if get_coupon>0:
+            coupon=Coupon()
+            coupon.buyer_id=order.buyer_id
+            coupon.order_no=order_no
+            coupon.coupon_money=get_coupon
+            coupon.coupon_type='0'
+            coupon.remark=''
+            coupon.shop_id=order.shop_id
+            db.session.add(coupon)
+            db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
