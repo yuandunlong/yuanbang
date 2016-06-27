@@ -748,10 +748,46 @@ def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
         is_selected='1'
         
         shop_list=GetShopListFromCart(mktxzb, mktyzb, user_info, is_selected)
+        temp=[]
         for shop in shop_list:
+            # goods=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, is_selected)
+            # shop['goods']=goods
+            if not str(shop['shop_id']).isdigit():
+                continue
+
+            temp.append(shop)
+
+            ##判断用户是否是第一次下单
+            orders= Order.query.filter_by(buyer_id=user_info.buyer_id,shop_id=shop['shop_id']).first()
+            if orders:
+                shop['first_order']=False
+            else:
+                shop['first_order']=True
+
+            #获取已经有的商铺优惠券
+            sql='''
+            SELECT
+						IFNULL(
+							sum(
+								CASE
+								WHEN CouponType = '0' THEN
+									CouponMoney
+								ELSE
+									-CouponMoney
+								END
+							),
+							0
+						) AS CouponMoney
+					FROM
+						tb_coupon
+					WHERE
+						ShopID = %s
+					AND BuyerID =%s'''
+            shopCoupons = db.engine.execute(sql,(shop['shop_id'], user_info.buyer_id))
+            shop['shopCoupons']=rows_array_converter(shopCoupons)
             goods=GetGoodsListFromCart(shop['shop_id'], user_info.buyer_id, is_selected)
             shop['goods']=goods
-        result['orders']=shop_list
+        result['orders']=temp
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
