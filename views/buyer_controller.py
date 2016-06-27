@@ -273,7 +273,7 @@ def get_delivery_list_by_page(token_type, buyer):
         o.SendAddress,
         o.Receiver,
         o.phone,
-        o.Remark,
+        o.Remark as OrderRemark,
     o.PayStatus,
         d.DeliveryMoney,
         c.ItemName,
