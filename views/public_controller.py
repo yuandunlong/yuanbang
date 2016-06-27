@@ -570,22 +570,24 @@ def search_goods_in_shop_by_page():
                 OR  m.GoodsTypeName LIKE %s
                 OR  g.Remark LIKE %s) and g.ShopID=%s
 
+                group by g.GoodsId
+
         '''
 
         if order_by=='saleasc':
-            sql+='ORDER BY IFNULL(o.Quantity,0) asc'
+            sql+=' ORDER BY IFNULL(o.Quantity,0) asc'
         elif order_by=='saledesc':
-            sql+='ORDER BY IFNULL(o.Quantity,0) desc '
+            sql+=' ORDER BY IFNULL(o.Quantity,0) desc '
         elif order_by=='distancedesc':
-            sql+='ORDER BY Distance desc '
+            sql+=' ORDER BY Distance desc '
         elif order_by=='distanceasc':
-            sql+='ORDER BY Distance asc'
+            sql+=' ORDER BY Distance asc'
         elif order_by=='pricedesc':
-            sql+='ORDER BY round(g.SalePrice * g.Discount, 2) desc '
+            sql+=' ORDER BY round(g.SalePrice * g.Discount, 2) desc '
         elif order_by=='priceasc':
-            sql+='ORDER BY round(g.SalePrice * g.Discount, 2) asc'
+            sql+=' ORDER BY round(g.SalePrice * g.Discount, 2) asc'
         else:
-            sql+='ORDER BY Distance asc'
+            sql+=' ORDER BY Distance asc'
 
         sql+=' limit %s,%s'
 
