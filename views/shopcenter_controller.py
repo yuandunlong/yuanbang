@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import json, Response, Blueprint, request, json, current_app
-from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity, Purchase, GoodsType,DeliveryList
+from database.models import db, GoodsInfo, Photo, DeliveryMan, ShopInfo, Order, Member, Activity, Purchase, GoodsType,DeliveryList,Coupon
 from datetime import datetime
 import datetime as dt
 import os
@@ -1500,6 +1500,21 @@ def complete_order(token_type,user_info):
         sql='''update tb_order_s set Status=2 where OrderNo=%s'''
         db.engine.execute(sql,(order_no))
         db.session.commit()
+
+        order=Order.query.filter_by(order_no=order_no).first()
+
+        get_coupon=order.get_coupon
+
+        if get_coupon>0:
+            coupon=Coupon()
+            coupon.buyer_id=order.buyer_id
+            coupon.order_no=order_no
+            coupon.coupon_money=get_coupon
+            coupon.coupon_type='0'
+            coupon.remark=''
+            coupon.shop_id=order.shop_id
+            db.session.add(coupon)
+            db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
