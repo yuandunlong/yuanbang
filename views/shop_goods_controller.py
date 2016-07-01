@@ -277,7 +277,7 @@ def get_shop_goods_by_type():
         shop_id=str(data['shop_id'])
         if data.get('goods_type_id'):
             goods_type_id=str(data['goods_type_id'])
-            result_set=db.engine.execute(sql,(shop_id,goods_type_id+'%','%'+goods_type_id+'%'))
+            result_set=db.engine.execute(sql,(shop_id,goods_type_id+',%','%,'+goods_type_id+',%'))
         else:
             another_sql='''
             
