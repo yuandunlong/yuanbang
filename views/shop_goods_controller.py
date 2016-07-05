@@ -360,7 +360,7 @@ def get_latest_shop_goods():
         AND p.IsChecked = '1'
         WHERE
             g.ShopID = %s
-        and g.Status = 0  group by g.GoodsID 
+        and g.Status = 0  group by g.GoodsID
         '''
         order_by=data.get('order_by',None)
         if order_by=='saleasc':

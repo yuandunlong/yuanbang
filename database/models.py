@@ -153,6 +153,15 @@ class Buyer(db.Model):
                   }
         return json.dumps(self.get_json)
 
+class Community(BaseModel):
+    __tablename__='tb_community_m'
+    community_id=db.Column('communityId',db.Integer,primary_key=True)
+    community_name=db.Column('communityName',db.String(50))
+    xzb = db.Column('xzb', db.DECIMAL)
+    yzb = db.Column('yzb', db.DECIMAL)
+    mktxzb = db.Column('mktxzb', db.DECIMAL)
+    mktyzb = db.Column('mktyzb', db.DECIMAL)
+
 
 class BuyerAddress(db.Model):
     __tablename__ = 'tb_buyeraddress'
@@ -168,6 +177,7 @@ class BuyerAddress(db.Model):
     mktxzb = db.Column('mktxzb', db.DECIMAL)
     mktyzb = db.Column('mktyzb', db.DECIMAL)
     is_default = db.Column('IsDefault', db.String(1))
+    community_id=db.Column('communityId',db.Integer)
 
     def get_map(self):
         result = {'address_id': self.address_id, 'buyer_id': int(self.buyer_id), 'address': self.address,
@@ -175,7 +185,7 @@ class BuyerAddress(db.Model):
                   'phone': self.phone, 'province': self.province, 'detail_address': self.detail_address,
                   'xzb': str(self.xzb),
                   'yzb': str(self.yzb), 'mktxzb': str(self.mktxzb), 'mktyzb': str(self.mktyzb),
-                  'is_default': self.is_default}
+                  'is_default': self.is_default,'community_id':self.community_id}
         return result
 
 

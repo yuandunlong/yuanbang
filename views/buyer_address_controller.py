@@ -2,8 +2,8 @@
 from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
-from database.models import BuyerAddress,db
-from utils import check_token,jw_2_mkt
+from database.models import BuyerAddress,db,Community
+from utils import check_token,jw_2_mkt,result_set_converter
 from decimal import Decimal
 buyer_address_controller=Blueprint('buyer_address_controller',__name__)
 @buyer_address_controller.route('/m1/private/add_address',methods=['POST'])
@@ -17,6 +17,7 @@ def add_address(token_type,user_info):
         buyer_address.consignee=data.get('consignee')
         buyer_address.phone=data.get('phone')
         buyer_address.detail_address=data.get('detail_address')
+        community_id=data.get('community_id',None)
         xzb=data.get('xzb','')
         if xzb=='':
             xzb=0
@@ -29,6 +30,9 @@ def add_address(token_type,user_info):
         buyer_address.mktxzb=Decimal(data['mktxzb'])
         buyer_address.mktyzb=Decimal(data['mktyzb'])
         buyer_address.is_default=str(data.get('is_default'))
+        if community_id:
+            buyer_address.community_id=community_id
+
         #如果是默认地址
         if buyer_address.is_default=="1" or buyer_address.is_default==1:
             db.engine.execute('update tb_buyeraddress set IsDefault=0 where BuyerID=%s',(user_info.buyer_id))
@@ -73,6 +77,9 @@ def update_address(token_type,user_info):
             if mktxzb and mktyzb:
                 buyer_address.mktxzb=Decimal(mktxzb)
                 buyer_address.mktyzb=Decimal(mktyzb)
+            community_id=data.get('community_id',None)
+            if community_id:
+                buyer_address.community_id=community_id
             db.session.commit()
     except Exception,e:
         current_app.logger.exception(e)
@@ -91,7 +98,12 @@ def get_addresses_by_user(token_type,info):
         buyer_addresses=[]
         if result:
             for buyer_address in result_set:
-                buyer_addresses.append(buyer_address.get_map())
+                communityId=buyer_address.community_id
+                c=Community.query.filter_by(community_id=communityId).first()
+                tmp=buyer_address.get_map()
+                tmp['community']=tmp
+                buyer_addresses.append(tmp)
+
         result['buyer_addresses']=buyer_addresses
     except Exception,e:
         current_app.logger.exception(e)
@@ -132,5 +144,16 @@ def delete_address(token_type,user_info):
         
     return Response(json.dumps(result),content_type="application/json")
         
-     
-   
+@buyer_address_controller.route('/m1/private/get_all_communities',methods=['GET'])
+@check_token
+def get_all_communities(token_type,user_info):
+    result={'code':1,'msg':'ok'}
+    try:
+        result_set=Community.query.all()
+        result['communities']=result_set_converter(result_set)
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['msg']=e.message
+        result['code']=0
+    return Response(json.dumps(result),content_type="application/json")
+
