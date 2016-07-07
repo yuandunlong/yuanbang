@@ -159,7 +159,7 @@ def get_all_communities(token_type,user_info):
 
 @buyer_address_controller.route('/m1/private/get_communities_by_xyzb',methods=['POST'])
 @check_token
-def get_communities_by_xyzb():
+def get_communities_by_xyzb(token_type,user_info):
 
     result={'code':1,'msg':'ok'}
     data= request.json
