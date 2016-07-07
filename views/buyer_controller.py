@@ -61,11 +61,11 @@ def get_buyer_info(token_type, info):
                 if cId:
                     c=Community.query.filter_by(community_id=cId).first()
                     if c:
-                        temp['community']=c.get_map()
+                        item['community']=c.get_map()
                     else:
-                        temp['community']={}
+                        item['community']={}
                 else:
-                    temp['community']={}
+                    item['community']={}
             result['buyer_address'] = result_set_converter(result_set)
     except Exception, e:
         current_app.logger.exception(e)
