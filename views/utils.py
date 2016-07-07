@@ -60,7 +60,7 @@ def row_map_converter(row):
     for (k,v) in row.items():
         if isinstance(v,datetime) or isinstance(v,Decimal):
             v=str(v)
-        if k.endswith('ID'):
+        if k.endswith('ID') or k.endswith('Id'):
             key=k.lower()[:-2]+'_id'
             if str.isdigit(str(v)):
                 temp[key]=int(v)

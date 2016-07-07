@@ -3,7 +3,7 @@ from flask import Blueprint,current_app
 from flask import request
 from flask import json,Response
 from database.models import BuyerAddress,db,Community
-from utils import check_token,jw_2_mkt,result_set_converter
+from utils import check_token,jw_2_mkt,result_set_converter,rows_array_converter
 from decimal import Decimal
 buyer_address_controller=Blueprint('buyer_address_controller',__name__)
 @buyer_address_controller.route('/m1/private/add_address',methods=['POST'])
@@ -156,4 +156,27 @@ def get_all_communities(token_type,user_info):
         result['msg']=e.message
         result['code']=0
     return Response(json.dumps(result),content_type="application/json")
+
+@buyer_address_controller.route('/m1/private/get_communities_by_xyzb',methods=['POST'])
+@check_token
+def get_communities_by_xyzb():
+
+    result={'code':1,'msg':'ok'}
+    data= request.json
+    mktxzb=data.get('mktxzb',None)
+    mktyzb=data.get('mktyzb',None)
+    try:
+        sql='''select c.communityId,c.communityName,ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2)),2) AS Distance from tb_community_m c where ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2)),2)<=500 order by Distance'''
+
+        if mktyzb and mktxzb:
+            rows=db.engine.execute(sql,(mktxzb,mktyzb))
+            result['communities']=rows_array_converter(rows)
+        else:
+            result['communities']=[]
+    except Exception,e:
+        current_app.logger.exception(e)
+        result['msg']=e.message
+        result['code']=0
+    return Response(json.dumps(result),content_type='application/json')
+
 
