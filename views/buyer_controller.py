@@ -2,8 +2,8 @@
 from flask import Blueprint,current_app
 from flask import request
 from flask import json, jsonify, Response
-from database.models import Buyer, BuyerAddress, Order, Message, Attention, db,Member,DeliveryMan,DeliveryList
-from utils import check_token, result_set_converter,rows_array_converter
+from database.models import Buyer, BuyerAddress, Order, Message, Attention, db,Member,DeliveryMan,DeliveryList,Community
+from utils import check_token, result_set_converter,rows_array_converter,row_map_converter
 from datetime import datetime
 buyer_controller = Blueprint("buyer_controller", __name__)
 
@@ -55,6 +55,13 @@ def get_buyer_info(token_type, info):
                 result['attention_goods'] = goods_arr
         if what.count('buyer_address') > 0:
             result_set = BuyerAddress.query.filter_by(buyer_id=info.buyer_id).all()
+            temp=result_set_converter(result_set)
+            for item in temp:
+                cId=item['community_id']
+                if cId:
+                    c=Community.query.filter_by(community_id=cId).first
+                    if c:
+                        temp['community']=c.get_map()
             result['buyer_address'] = result_set_converter(result_set)
     except Exception, e:
         current_app.logger.exception(e)
