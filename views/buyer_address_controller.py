@@ -169,7 +169,7 @@ def get_communities_by_xyzb():
         sql='''select c.communityId,c.communityName,ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2)),2) AS Distance from tb_community_m c where ROUND(SQRT(POW(%s - c.mktxzb, 2) + POW(%s- c.mktyzb, 2)),2)<=500 order by Distance'''
 
         if mktyzb and mktxzb:
-            rows=db.engine.execute(sql,(mktxzb,mktyzb))
+            rows=db.engine.execute(sql,(mktxzb,mktyzb,mktxzb,mktyzb))
             result['communities']=rows_array_converter(rows)
         else:
             result['communities']=[]
