@@ -66,7 +66,7 @@ def get_buyer_info(token_type, info):
                         item['community_name']=''
                 else:
                     item['community_name']=''
-            result['buyer_address'] = result_set_converter(temp)
+            result['buyer_address'] = temp
     except Exception, e:
         current_app.logger.exception(e)
         result['code'] = 0
