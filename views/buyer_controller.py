@@ -59,7 +59,7 @@ def get_buyer_info(token_type, info):
             for item in temp:
                 cId=item['community_id']
                 if cId:
-                    c=Community.query.filter_by(community_id=cId).first
+                    c=Community.query.filter_by(community_id=cId).first()
                     if c:
                         temp['community']=c.get_map()
             result['buyer_address'] = result_set_converter(result_set)
