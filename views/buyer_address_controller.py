@@ -78,7 +78,7 @@ def update_address(token_type,user_info):
                 buyer_address.mktxzb=Decimal(mktxzb)
                 buyer_address.mktyzb=Decimal(mktyzb)
             community_id=data.get('community_id',None)
-            if community_id:
+            if community_id and int(community_id)>0:
                 buyer_address.community_id=community_id
             db.session.commit()
     except Exception,e:

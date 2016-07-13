@@ -48,10 +48,11 @@ def get_order_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         sql='''
-        select a.OrderNo,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime,a.PayType,
-        c.ShopName
+        select a.OrderNo,a.ShopID,a.communityId,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime,a.PayType,
+        c.ShopName,d.communityName
         from tb_order_s a 
-        left join tb_shopinfo_s c on a.ShopID=c.ShopID 
+        left join tb_shopinfo_s c on a.ShopID=c.ShopID
+        left join tb_community_m d on d.communityId
         where BuyerID=%s order by a.SubmitTime desc
         '''
         sql_detail='''
