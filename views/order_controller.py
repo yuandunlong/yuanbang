@@ -48,10 +48,12 @@ def get_order_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         sql='''
-        select a.OrderNo,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime,a.PayType,
+        select a.OrderNo,d.communityName,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime,a.PayType,
         c.ShopName
         from tb_order_s a 
         left join tb_shopinfo_s c on a.ShopID=c.ShopID
+        left join tb_buyeraddress b on b.AddressID=a.AddressID
+        left join tb_community_m d on d.communityId=b.communityId
         where BuyerID=%s order by a.SubmitTime desc
         '''
         sql_detail='''
@@ -63,7 +65,6 @@ def get_order_list(token_type,user_info):
         left join tb_photo c on c.LinkID=a.GoodsID and c.IsChecked=1 and c.IsVisable=1
         where OrderNo=%s
         '''
-        print sql
         result_set=db.engine.execute(sql,(user_info.buyer_id))
         orders=[]
         for row in result_set:
