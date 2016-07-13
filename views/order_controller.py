@@ -54,7 +54,7 @@ def get_order_list(token_type,user_info):
         left join tb_shopinfo_s c on a.ShopID=c.ShopID
         left join tb_buyeraddress b on b.AddressID=a.AddressID
         left join tb_community_m d on d.communityId=b.communityId
-        where BuyerID=%s order by a.SubmitTime desc
+        where a.BuyerID=%s order by a.SubmitTime desc
         '''
         sql_detail='''
 
