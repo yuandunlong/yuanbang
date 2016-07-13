@@ -2,7 +2,7 @@
 from flask import Blueprint,current_app
 from flask import request,copy_current_request_context
 from flask import Response,json
-from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo,Comment,Coupon
+from database.models import OrderDetail,db,Order,BuyerAddress,Purchase,Message,ShopCart,ShopInfo,Comment,Coupon,Community
 from utils import check_token,build_order_no,DecimalEncoder,row_map_converter,sub_map,result_set_converter,send_mail,rows_array_converter
 from datetime import datetime
 import string
@@ -48,11 +48,10 @@ def get_order_list(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
         sql='''
-        select a.OrderNo,a.ShopID,a.communityId,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime,a.PayType,
-        c.ShopName,d.communityName
+        select a.OrderNo,a.ShopID,a.BuyerID,a.SaleMoney,a.SubmitTime,a.SendTime,a.ConfirmTime,a.Freight,a.AddressID,a.SendAddress,a.Receiver,a.Phone,a.Remark,a.Status,a.PayStatus,a.UpdateTime,a.PayType,
+        c.ShopName
         from tb_order_s a 
         left join tb_shopinfo_s c on a.ShopID=c.ShopID
-        left join tb_community_m d on d.communityId
         where BuyerID=%s order by a.SubmitTime desc
         '''
         sql_detail='''
@@ -173,10 +172,20 @@ def submit_order_by_shopcart(token_type,user_info):
         get_coupons=data.get('get_coupons',None)
         buyerAddress=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
 
+
+
         rv=[]
         if not buyerAddress:
             raise Exception('user dont have default address')
         carGrouptList=getOrderCartList(user_info.buyer_id, buyerAddress.address_id)
+        communityId=buyerAddress.community_id
+
+        community= Community.query.filter_by(community_id=communityId).first()
+        detailAddress=''
+        if community:
+            detailAddress=buyerAddress.detail_address+community.community_name
+        else:
+            detailAddress=buyerAddress.detail_address
         for order_info in carGrouptList:
             order=Order()
             order.order_no=build_order_no()
@@ -186,7 +195,7 @@ def submit_order_by_shopcart(token_type,user_info):
             order.freight=order_info['freight']
             order.submit_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             order.address_id=buyerAddress.address_id
-            order.send_address=buyerAddress.detail_address
+            order.send_address=detailAddress
             order.receiver=buyerAddress.consignee
             order.phone=buyerAddress.phone
             order.remark=data.get('remark','')

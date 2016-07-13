@@ -146,8 +146,6 @@ def get_orders_by_page(token_type, shop):
                 TOS.PayStatus,
                 TOS.PayType,
                 TOS.UpdateTime,
-                d.communityName,
-                TOS.communityId,
                 PCM.ItemName AS PayStatusName
         FROM
                 tb_order_s TOS
@@ -155,7 +153,6 @@ def get_orders_by_page(token_type, shop):
         AND TOS. STATUS = TCM.ItemID
         LEFT JOIN tb_constent_m PCM ON PCm.TypeID = '010'
         AND TOS.PayStatus = PCM.ItemID
-        left join tb_community_m d on d.communityId=TOS.communityId
         WHERE
                 TOS.ShopID = %s  ORDER BY SubmitTime desc limit %s,%s
         '''
