@@ -184,7 +184,7 @@ def submit_order_by_shopcart(token_type,user_info):
         community= Community.query.filter_by(community_id=communityId).first()
         detailAddress=''
         if community:
-            detailAddress=buyerAddress.detail_address+community.community_name
+            detailAddress=community.community_name+" "+buyerAddress.detail_address
         else:
             detailAddress=buyerAddress.detail_address
         for order_info in carGrouptList:
