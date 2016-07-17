@@ -63,7 +63,7 @@ def get_order_list(token_type,user_info):
         from tb_orderdetail_s a
         left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
         left join tb_photo c on c.LinkID=a.GoodsID and c.IsChecked=1 and c.IsVisable=1
-        where OrderNo=%s
+        where OrderNo=%s GROUP BY OrderNo
         '''
         result_set=db.engine.execute(sql,(user_info.buyer_id))
         orders=[]
@@ -713,7 +713,7 @@ def GetGoodsListFromCart(shop_id,buyer_id,is_selected):
         
         if is_selected==1 or is_selected=='1':
             sql+='and a.IsSelected=1'
-        sql+=' ORDER BY a.CreateTime desc'
+        sql+='group by b.GoodsID  ORDER BY a.CreateTime desc'
         
         result_set=db.engine.execute(sql,(shop_id,buyer_id))
         for row in result_set:
