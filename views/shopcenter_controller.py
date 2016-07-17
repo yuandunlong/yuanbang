@@ -158,7 +158,7 @@ def get_orders_by_page(token_type, shop):
         LEFT JOIN tb_constent_m PCM ON PCm.TypeID = '010'
         AND TOS.PayStatus = PCM.ItemID
         WHERE
-                TOS.ShopID = %s  ORDER BY SubmitTime desc limit %s,%s
+                TOS.ShopID = %s   ORDER BY SubmitTime desc limit %s,%s
         '''
         result_set = db.engine.execute(sql, (shop.shop_id, (page - 1) * page_size, page_size))
         arr = []
@@ -169,7 +169,7 @@ def get_orders_by_page(token_type, shop):
                 from tb_orderdetail_s a
                 left join tb_goodsinfo_s b on b.GoodsID=a.GoodsID
                 left join tb_photo c on c.LinkID=a.GoodsID and c.IsChecked=1 and c.IsVisable=1
-                where OrderNo=%s
+                where OrderNo=%s group by a.GoodsID
                 '''
         for row in result_set:
             temp = row_map_converter(row)
