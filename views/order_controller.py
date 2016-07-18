@@ -712,7 +712,7 @@ def GetGoodsListFromCart(shop_id,buyer_id,is_selected):
         '''
         
         if is_selected==1 or is_selected=='1':
-            sql+='and a.IsSelected=1'
+            sql+='and a.IsSelected=1 '
         sql+='group by b.GoodsID  ORDER BY a.CreateTime desc'
         
         result_set=db.engine.execute(sql,(shop_id,buyer_id))
