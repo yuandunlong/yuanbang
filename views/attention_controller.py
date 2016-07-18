@@ -35,7 +35,7 @@ def get_attention_goods(token_type,user_info):
         from tb_attention a 
         inner join tb_goodsinfo_s b on a.AttentionID=b.GoodsID and a.AttentionType=3
         left join tb_photo c on c.LinkID=b.GoodsID and c.IsChecked=1 and c.IsVisable=1
-        where BuyerID=%s GROUP  BY b.GoodsID 
+        where BuyerID=%s GROUP  BY b.GoodsID
         '''
         result_set=db.engine.execute(sql,(user_info.buyer_id))
         
