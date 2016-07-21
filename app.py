@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Flask,url_for,Response,json
 from flask import jsonify
 from views.token_controller import token_controller
@@ -73,7 +74,7 @@ def hello_world():
 	return jsonify({'hello':'world'})
 @app.route('/pay_success')
 def pay_success():
-	return Response("支付成功")
+	return Response(u'支付成功')
 UPLOAD_FOLDER = '../uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if __name__ == '__main__':
