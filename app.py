@@ -71,6 +71,9 @@ def site_map():
 @app.route('/')
 def hello_world():
 	return jsonify({'hello':'world'})
+@app.route('/pay_success')
+def pay_success():
+	return Response("支付成功")
 UPLOAD_FOLDER = '../uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if __name__ == '__main__':
