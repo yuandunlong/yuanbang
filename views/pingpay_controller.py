@@ -40,6 +40,7 @@ def get_order_charge(token_type, user_info):
                     subject=subject,
                     body='no body',
                     success_url='http://www.yuanbangshop.com:5000/pay_success',
+                    fail_url='http://www.yuanbangshop.com:5000/pay_fail'
                 )
             else:
                 ch = pingpp.Charge.create(

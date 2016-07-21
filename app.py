@@ -75,6 +75,9 @@ def hello_world():
 @app.route('/pay_success')
 def pay_success():
 	return Response(u'支付成功')
+@app.route('/pay_fail')
+def pay_fail():
+	return Response(u'支付失败')
 UPLOAD_FOLDER = '../uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 if __name__ == '__main__':
