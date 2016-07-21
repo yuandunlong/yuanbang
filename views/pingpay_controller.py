@@ -29,8 +29,7 @@ def get_order_charge(token_type, user_info):
             if shop_info:
                 subject = shop_info.shop_name + " 订单"
                 # 多个订单一起支付问题---》=速度有点慢目前不支持
-            if channel == 'jdpay_wap' and len(order_no) == 32:
-                order_no = order_no[2:]
+            if channel == 'jdpay_wap':
                 ch = pingpp.Charge.create(
                     order_no=order_no,
                     amount=int((order.sale_money + order.freight) * 100),  # 订单总金额
@@ -43,8 +42,6 @@ def get_order_charge(token_type, user_info):
                     success_url='http://www.yuanbangshop.com:5000/pay_success',
                 )
             else:
-                if channel == 'bfb' and len(order_no) == 32:
-                    order_no = order_no[13:]
                 ch = pingpp.Charge.create(
                     order_no=order_no,
                     amount=int((order.sale_money + order.freight) * 100),  # 订单总金额
