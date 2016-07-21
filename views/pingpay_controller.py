@@ -39,7 +39,11 @@ def get_order_charge(token_type, user_info):
                     client_ip=request.remote_addr,
                     subject=subject,
                     body='no body',
-                    success_url='http://www.yuanbangshop.com:5000/pay_success',
+                    extra={
+                        'success_url':'http://www.yuanbangshop.com:5000/pay_success',
+                        'fail_url':'http://www.yuanbangshop.com:5000/pay_fail'
+
+                    }
                 )
             else:
                 ch = pingpp.Charge.create(
