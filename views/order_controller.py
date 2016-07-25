@@ -30,7 +30,7 @@ def get_order_listss(token_type,user_info):
             temp=row_map_converter(row)
             order=sub_map(temp,['order_no','shop_id','shop_name','buyer_id','sale_money','submit_time','send_time','confirm_time',\
                                 'freight','send_address','receiver','phone','remark','status','update_time'])
-           
+
             goods=sub_map(temp,['goods_id','batch_no','sale_price','quantity','discount_price','goods_name',\
                                 'photo_id','photo_path','thumbnail_path','sort_no'])
             order['goods']=goods
@@ -90,13 +90,13 @@ def get_order_list(token_type,user_info):
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-        
+
 @order_controller.route('/m1/private/get_order_detail_by_order_no',methods=['POST'])
 @check_token
 def get_order_detail_by_order_no(token_type,user_info):
-    
+
     result={'code':1,'msg':'ok'}
-    
+
     try:
         query=request.get_json()
         order_no=query['order_no']
@@ -122,14 +122,14 @@ def delete_order(token_type,user_info):
         db.engine.execute(sql,(data['order_no']))
         db.engine.execute(detail_sql,(data['order_no']))
         db.session.commit()
-        
+
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-        
-        
+
+
 
 @order_controller.route('/m1/private/cancle_order',methods=['POST'])
 @check_token
@@ -155,7 +155,7 @@ def cancle_order(token_type,user_info):
             WHERE o.OrderNo=%s'''
         db.engine.execute(sql,(data['order_no']))
         db.session.commit()
-                
+
     except Exception,e:
         current_app.logger.exception(e)
         result['code']=0
@@ -220,7 +220,7 @@ def submit_order_by_shopcart(token_type,user_info):
 
             db.session.add(order)
             goods_list=getGoodsList(order.shop_id,order.buyer_id)
-            
+
             for goods_info in goods_list:
                 purchase=Purchase.query.filter_by(goods_id=goods_info['goods_id']).order_by(Purchase.batch_no).first()
                 quantity=goods_info['quantity']
@@ -234,7 +234,7 @@ def submit_order_by_shopcart(token_type,user_info):
                     order_detail.batch_no=purchase.batch_no
                 order_detail.sale_price=goods_info['sale_price']
                 order_detail.quantity=quantity
-                order_detail.discount_price=goods_info['discount_price'] 
+                order_detail.discount_price=goods_info['discount_price']
                 db.session.add(order_detail)
             r_map={}
             r_map['order_no']=order.order_no
@@ -308,7 +308,7 @@ def complete_order(token_type,user_info):
 
 
 
-    
+
 #下单前的界面get_preview_orders_by_shopcart
 @order_controller.route('/m1/private/get_preview_orders_by_shopcart',methods=['POST'])
 @check_token
@@ -320,14 +320,14 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         xzb=None
         yzb=None
         mktxzb=None
-        mktyzb=None        
+        mktyzb=None
         if  buyer_address:
             xzb=buyer_address.xzb
             yzb=buyer_address.yzb
             mktxzb=buyer_address.mktxzb
             mktyzb=buyer_address.mktyzb
         is_selected=data.get('is_selected',None)
-        
+
         shop_list=GetShopListFromCart(mktxzb, mktyzb, user_info, is_selected)
         temp=[]
         for shop in shop_list:
@@ -372,7 +372,7 @@ def get_preview_orders_by_shopcart(token_type,user_info):
         current_app.logger.exception(e)
         result['code']=0
         result['msg']=e.message
-        
+
     return Response(json.dumps(result),content_type='application/json')
 
 
@@ -389,16 +389,16 @@ def get_orders_count(token_type,user_info):
     return Response(json.dumps(result),content_type='application/json')
 
 
-        
+
 @order_controller.route('/m1/private/buy_again_by_order_no',methods=['POST'])
 @check_token
 def buy_again_by_order_no(token_type,user_info):
-    
+
     result={'code':1,'msg':'ok'}
     try:
         data=request.get_json()
         order_no=data['order_no']
-        
+
         order_details=OrderDetail.query.filter_by(order_no=order_no).all()
         if order_details:
             db.engine.execute('update tb_shoppingcart set IsSelected=0 where BuyerID=%s',(user_info.buyer_id))
@@ -418,12 +418,12 @@ def buy_again_by_order_no(token_type,user_info):
                 db.session.commit()
         db.session.commit()
         result=get_preview_orders_by_shopcart_for_buyer_again(token_type, user_info)
-        
+
     except Exception,e:
         result['msg']=e.message
     return Response(json.dumps(result),content_type='application/json')
-        
-      
+
+
 def getOrderCartList(user_id,address_id):
     sql='''
        SELECT tmp.BuyerID,tmp.ShopID,tmp.ShopName,tmp.HasAlipay,tmp.HasOnlineBank,tmp.sumTheShop,
@@ -490,7 +490,7 @@ def getOrderCartList(user_id,address_id):
         c.ExtraFreight ) tmp
     '''
     result_set=db.engine.execute(sql,(address_id,user_id))
-    
+
     arr=[]
     for row in result_set:
         row_map=row_map_converter(row)
@@ -657,8 +657,8 @@ def GetShopListFromCart(mktxzb,mktyzb,user_info,is_selected):
     except Exception,e:
         current_app.logger.exception(e)
     return arr
-   
-   
+
+
 def GetGoodsListFromCart(shop_id,buyer_id,is_selected):
     arr=[]
     try:
@@ -710,20 +710,20 @@ def GetGoodsListFromCart(shop_id,buyer_id,is_selected):
                 	a.BuyerID = %s
         
         '''
-        
+
         if is_selected==1 or is_selected=='1':
             sql+='and a.IsSelected=1 '
         sql+='group by b.GoodsID  ORDER BY a.CreateTime desc'
-        
+
         result_set=db.engine.execute(sql,(shop_id,buyer_id))
         for row in result_set:
             arr.append(row_map_converter(row))
     except Exception,e:
         current_app.logger.exception(e)
     return arr
-        
-     
-    
+
+
+
 def getGoodsList(shop_id,user_id):
     sql='''SELECT
         a.GoodsID,
@@ -759,19 +759,19 @@ def getGoodsList(shop_id,user_id):
 def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
     result={'code':1,'msg':'ok'}
     try:
-        
+
         buyer_address=BuyerAddress.query.filter_by(buyer_id=user_info.buyer_id,is_default='1').first()
         xzb=None
         yzb=None
         mktxzb=None
-        mktyzb=None        
+        mktyzb=None
         if  buyer_address:
             xzb=buyer_address.xzb
             yzb=buyer_address.yzb
             mktxzb=buyer_address.mktxzb
             mktyzb=buyer_address.mktyzb
         is_selected='1'
-        
+
         shop_list=GetShopListFromCart(mktxzb, mktyzb, user_info, is_selected)
         temp=[]
         for shop in shop_list:
@@ -822,148 +822,155 @@ def get_preview_orders_by_shopcart_for_buyer_again(token_type,user_info):
 @order_controller.route('/m1/email',methods=['GET'])
 def test_email():
     #thr = Thread(target=send_email_2_shop, args=[current_app, 21,'2015052097995551'])
-   # thr.start()    
+   # thr.start()
     send_email_2_shop(21, '2015052097995551')
     return Response('ok')
 
+
 def send_email_2_shop(shop_id,order_no):
     try:
-	order_sql='''
-        
-        
-        SELECT
-                o.OrderNo,
-                o.SubmitTime,
-                o.SendTime,
-                o.ConfirmTime,
-                o.Freight,
-                o.Receiver,
-                o.SendAddress,
-                o.Phone,
-                o.Remark,
-                (o.SaleMoney + o.Freight) AS SaleMoney,
-                o.ShopID,
-                b.Account,
-                b.NickName,
-                s.ShopName,
-                s.ShopPhone,
-                s.LinkMan,
-                s.Mobile,
-                s.ShopAddress,
-                s.Email,
-                c.ItemName AS Status
-        FROM
-                tb_order_s o
-        LEFT JOIN tb_shopinfo_s s on o.ShopID = s.ShopID
-        LEFT JOIN TB_BUYER b on b.BuyerID = o.BuyerID
-        LEFT JOIN TB_CONSTENT_M c on c.TypeID = '009' and o.Status = c.ItemID
-        WHERE
-                o.OrderNo = %s	
-        '''
-	order_row=db.engine.execute(order_sql,order_no).fetchone()
-	order=row_map_converter(order_row)
-	
-	    
-	detail_sql='''
-        SELECT
+        order_sql='''
+
+
+            SELECT
                     o.OrderNo,
-                    o.SalePrice,
-                    o.DiscountPrice,
-                    SUM(o.Quantity) AS Quantity,
-                    o.GoodsID,
-                    g.GoodsName,
-                    g.ShopID,
-                    p.ThumbnailPath AS PhotoPath
+                    o.SubmitTime,
+                    o.SendTime,
+                    o.ConfirmTime,
+                    o.Freight,
+                    o.Receiver,
+                    o.SendAddress,
+                    o.Phone,
+                    o.Remark,
+                    (o.SaleMoney + o.Freight) AS SaleMoney,
+                    o.ShopID,
+                    b.Account,
+                    b.NickName,
+                    s.ShopName,
+                    s.ShopPhone,
+                    s.LinkMan,
+                    s.Mobile,
+                    s.ShopAddress,
+                    s.Email,
+                    c.ItemName AS Status
             FROM
-                    TB_GOODSINFO_S g,
-                    TB_ORDERDETAIL_S o
-    
-            INNER JOIN TB_PHOTO p ON p.LinkID = o.GoodsID
-            AND p.IsVisable = 1 AND p.IsChecked = 1
+                    tb_order_s o
+            LEFT JOIN tb_shopinfo_s s on o.ShopID = s.ShopID
+            LEFT JOIN TB_BUYER b on b.BuyerID = o.BuyerID
+            LEFT JOIN TB_CONSTENT_M c on c.TypeID = '009' and o.Status = c.ItemID
             WHERE
                     o.OrderNo = %s
-            AND o.GoodsID = g.GoodsID
-            GROUP BY
-                    o.OrderNo,
-                    o.SalePrice,
-                    o.DiscountPrice,
-                    o.GoodsID,
-                    g.GoodsName,
-                    PhotoPath '''
-	order_details= db.engine.execute(detail_sql,order_no)
-	arr=[]
-	for row in order_details:
-	    arr.append(row_map_converter(row))
-	
-	order['order_detail']=arr
-	
-	temp_template=string.Template(''' 尊敬的${shop_name}店主：<br />&nbsp;&nbsp;&nbsp;&nbsp;您的店铺有新的订单，订单编号为:${order_no}
-        
-        <table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'>
-                                    <tbody>
-                                       <tr>
-                                                <td width='80' class='biaoti' >收货人：
-                                                        ${reciever}
-                                                </td>
-                                                <td width='80' class='biaoti' >联系电话：
-                                                        ${phone}
-                                                </td>
-                                                <td width='80' class='biaoti' >配送地址：
-                                                        ${send_address}
-                                                </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                        <table width='100%' border='1' cellspacing='0' cellpadding='5' class='ordergl ordersearch'>
-                                    <tbody>
-                                         <tr>
-                                            <td width='280' class='biaoti' align='center' colspan='2'>商品</td>
-                                            <td width='70' class='biaoti'>单价(元)</td>
-                                            <td width='50' height='26' class='biaoti'>数量</td>
-                                            <td width='120' class='biaoti'>合计(元)</td>
-                                        </tr>
-        ''')
-	
-	mail_body=temp_template.substitute(shop_name=order['shop_name'],order_no=order['order_no'],reciever=order['receiver'],phone=order['phone'],send_address=order['send_address'])
-	
-	temp_template=''
-	i=0
-	for order_detail in order['order_detail']:
-	    
-	    temp_template=string.Template('''<tr>
-	                        <td width='80' class='orderpic hang'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'><img src='${base_url}/${photo_path}' width='80px' height='80px' /></a></td>
-	                            <td width='200' class='hang' style='text-align: left'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'>${goods_name}</a></td>
-	                            <td width='70' class='hang'><s>${sale_price}</s><br/>${discount_price}</td>
-	                            <td width='50' class='hang'>${quantity}</td>" ''')
-	    mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',shop_id=order['shop_id'],goods_id=order_detail['goods_id'],photo_path=order_detail['photo_path'],goods_name=order_detail['goods_name'],sale_price=order_detail['sale_price'],discount_price=order_detail['discount_price'],quantity=order_detail['quantity'])
-	    
-	    if i==0:
-		temp_template=string.Template(''' <td width='120' class='rowspan' rowspan='${count}'>${sale_money}<br/>(含运费：${freight})</td>''')
-		mail_body+=temp_template.substitute(count=len(order['order_detail']),sale_money=order['sale_money'],freight=order['freight'])
-	    
-		
-	    i=i+1
-	    mail_body+='</tr>'
-	
-	mail_body+='''</tbody>
-                            </table><table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'><tbody>
-                                       <tr><td width='80' class='biaoti' >备注:'''
-	if order['remark']:
-	    
-	    mail_body+=order['remark']
-	else:
-	    mail_body+="无"
-	param=base64.encodestring(order['email']+order['shop_name'])
-	temp_template=string.Template('''</td></tr></tbody></table>
-                                请点击下列链接进行操作。<a href='${base_url}/ShopCenterManage/OrderListPage?p=${param}'>${base_url}/ShopCenterManage/OrderListPage?p=${param}</a>
-                                <br>(如果上面不是链接形式，请将地址手工粘贴到浏览器地址栏再访问)<br><br>此邮件为系统邮件，请勿直接回复''')
-	mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',param=param)
-	
-	send_mail([order['email']], '[远邦邻里网] 订单提醒邮件', mail_body)
-	
-	
+            '''
+        order_row=db.engine.execute(order_sql,order_no).fetchone()
+        order=row_map_converter(order_row)
+
+
+        detail_sql='''
+            SELECT
+                        o.OrderNo,
+                        o.SalePrice,
+                        o.DiscountPrice,
+                        SUM(o.Quantity) AS Quantity,
+                        o.GoodsID,
+                        g.GoodsName,
+                        g.ShopID,
+                        p.ThumbnailPath AS PhotoPath
+                FROM
+                        TB_GOODSINFO_S g,
+                        TB_ORDERDETAIL_S o
+
+                INNER JOIN TB_PHOTO p ON p.LinkID = o.GoodsID
+                AND p.IsVisable = 1 AND p.IsChecked = 1
+                WHERE
+                        o.OrderNo = %s
+                AND o.GoodsID = g.GoodsID
+                GROUP BY
+                        o.OrderNo,
+                        o.SalePrice,
+                        o.DiscountPrice,
+                        o.GoodsID,
+                        g.GoodsName,
+                        PhotoPath '''
+        order_details= db.engine.execute(detail_sql,order_no)
+        arr=[]
+        goodIds=[]
+        for row in order_details:
+            temp_order=row_map_converter(row)
+            if goodIds.index(temp_order['goods_id'])>0:
+                continue
+            else:
+                goodIds.append(temp_order['goods_id'])
+                arr.append(temp_order)
+
+        order['order_detail']=arr
+
+        temp_template=string.Template(''' 尊敬的${shop_name}店主：<br />&nbsp;&nbsp;&nbsp;&nbsp;您的店铺有新的订单，订单编号为:${order_no}
+
+            <table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'>
+                                        <tbody>
+                                           <tr>
+                                                    <td width='80' class='biaoti' >收货人：
+                                                            ${reciever}
+                                                    </td>
+                                                    <td width='80' class='biaoti' >联系电话：
+                                                            ${phone}
+                                                    </td>
+                                                    <td width='80' class='biaoti' >配送地址：
+                                                            ${send_address}
+                                                    </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                            <table width='100%' border='1' cellspacing='0' cellpadding='5' class='ordergl ordersearch'>
+                                        <tbody>
+                                             <tr>
+                                                <td width='280' class='biaoti' align='center' colspan='2'>商品</td>
+                                                <td width='70' class='biaoti'>单价(元)</td>
+                                                <td width='50' height='26' class='biaoti'>数量</td>
+                                                <td width='120' class='biaoti'>合计(元)</td>
+                                            </tr>
+            ''')
+
+        mail_body=temp_template.substitute(shop_name=order['shop_name'],order_no=order['order_no'],reciever=order['receiver'],phone=order['phone'],send_address=order['send_address'])
+
+        temp_template=''
+        i=0
+
+        for order_detail in order['order_detail']:
+
+            temp_template=string.Template('''<tr>
+                                <td width='80' class='orderpic hang'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'><img src='${base_url}/${photo_path}' width='80px' height='80px' /></a></td>
+                                    <td width='200' class='hang' style='text-align: left'><a href='${base_url}/Display/ShopGoodsInfoPage?ShopID=${shop_id}&GoodsID=${goods_id}'>${goods_name}</a></td>
+                                    <td width='70' class='hang'><s>${sale_price}</s><br/>${discount_price}</td>
+                                    <td width='50' class='hang'>${quantity}</td>" ''')
+            mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',shop_id=order['shop_id'],goods_id=order_detail['goods_id'],photo_path=order_detail['photo_path'],goods_name=order_detail['goods_name'],sale_price=order_detail['sale_price'],discount_price=order_detail['discount_price'],quantity=order_detail['quantity'])
+
+            if i==0:
+                temp_template=string.Template(''' <td width='120' class='rowspan' rowspan='${count}'>${sale_money}<br/>(含运费：${freight})</td>''')
+                mail_body+=temp_template.substitute(count=len(order['order_detail']),sale_money=order['sale_money'],freight=order['freight'])
+
+
+            i=i+1
+            mail_body+='</tr>'
+
+        mail_body+='''</tbody>
+                                </table><table width='100%' border='1' cellspacing='0' cellpadding='5' style='margin-bottom:5px;' bgcolor='#FFFFFF'><tbody>
+                                           <tr><td width='80' class='biaoti' >备注:'''
+        if order['remark']:
+
+            mail_body+=order['remark']
+        else:
+            mail_body+="无"
+        param=base64.encodestring(order['email']+order['shop_name'])
+        temp_template=string.Template('''</td></tr></tbody></table>
+                                    请点击下列链接进行操作。<a href='${base_url}/ShopCenterManage/OrderListPage?p=${param}'>${base_url}/ShopCenterManage/OrderListPage?p=${param}</a>
+                                    <br>(如果上面不是链接形式，请将地址手工粘贴到浏览器地址栏再访问)<br><br>此邮件为系统邮件，请勿直接回复''')
+        mail_body+=temp_template.substitute(base_url='http://www.yuanbangshop.com',param=param)
+
+        send_mail([order['email']], '[远邦邻里网] 订单提醒邮件', mail_body)
+
+
     except Exception,e:
 	current_app.logger.exception(e)
-   
-    
-    
+
+
