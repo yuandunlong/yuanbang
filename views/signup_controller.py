@@ -9,7 +9,7 @@ from werkzeug.contrib.cache import SimpleCache
 from datetime import datetime
 signup_controller=Blueprint('signup_controller',__name__)
 
-tempate='''http://106.ihuyi.cn/webservice/sms.php?method=Submit&account={0}&password={1}&mobile={2}&content=您的验证码是：【{3}】。请不要把验证码泄露给其他人。'''
+tempate='''http://106.ihuyi.cn/webservice/sms.php?method=Submit&account={0}&password={1}&mobile={2}&content=您的验证码是：【{3}】(谨防诈骗，勿向任何人泄露验证码)。如非本人操作，请及时修改密码。'''
 
 cache = SimpleCache(threshold=5000, default_timeout=300)
 @signup_controller.route('/m1/public/get_mobile_check_code',methods=['POST'])
